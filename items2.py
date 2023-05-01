@@ -7,7 +7,7 @@ from lxml import html
 
 Object = lambda **kwargs: type("Object", (), kwargs)
 
-def parse_html_tooltip(html_tooltip_tree):
+def parse_html_tooltip(id, html_tooltip_tree):
     descs = list()
     equip = list()
     chance_on_hit = list()
@@ -18,36 +18,51 @@ def parse_html_tooltip(html_tooltip_tree):
     spans1 = res.findall('table[1]/tr/td/span')
     for span in spans1:
         span_text = span.text
-        print(span_text)
         if (span_text != "Item Level " and span_text != '<Random enchantment>' and span_text != None):
             descs.append(span_text)
     spans = res.findall('table[2]/tr/td/span')
     for span in spans:
         span_text = span.text
+        # print(span_text)
         if (span_text is not None):
             if (span_text == 'Equip: '):
                 a_tag = span.findall('a')
-                if a_tag is not None and len(a_tag):
-                    equip.append(a_tag[0].text)
-                else:
+                if (len(a_tag)!=1):
+                    print(f'Check #{id}')
+                for tag in a_tag:
+                    tag_text = tag.text
+                    # print(tag.text)
+                    if tag_text is not None:
+                        equip.append(tag_text)
+                if a_tag is None or not len(a_tag):
                     print('ERROR')
 
             if (span_text == 'Chance on hit: '):
                 a_tag = span.findall('a')
-                if a_tag is not None and len(a_tag):
-                    chance_on_hit.append(a_tag[0].text)
-                else:
+                if (len(a_tag)!=1):
+                    print(f'Check #{id}')
+                for tag in a_tag:
+                    tag_text = tag.text
+                    # print(tag.text)
+                    if tag_text is not None:
+                        chance_on_hit.append(tag_text)
+                if a_tag is None or not len(a_tag):
                     print('ERROR')
 
             if (span_text == 'Use: '):
                 a_tag = span.findall('a')
-                if a_tag is not None and len(a_tag):
-                    use.append(a_tag[0].text)
-                else:
+                if (len(a_tag)!=1):
+                    print(f'Check #{id}')
+                for tag in a_tag:
+                    tag_text = tag.text
+                    # print(tag.text)
+                    if tag_text is not None:
+                        use.append(tag_text)
+                if a_tag is None or not len(a_tag):
                     print('ERROR')
 
             if (span_text.startswith('"') and span_text.endswith('"')):
-                flavor.append(span_text)
+                flavor.append(span_text[1:-1])
 
             if (span_text == '<Right Click to Read>'):
                 readable = True
@@ -60,7 +75,7 @@ def parse_html_tooltip(html_tooltip_tree):
                   readable = readable)
     
 def parse_wowhead_item_data(id, tree):
-    print(f'Item#{id}')
+    # print(f'Item#{id}')
     root = tree.getroot()
 
     xml_id = root.find('item').attrib['id']
@@ -79,23 +94,40 @@ def parse_wowhead_item_data(id, tree):
     json_equip = root.find('item/jsonEquip').text
     link = root.find('item/link').text
 
-    item = parse_html_tooltip(root.find('item/htmlTooltip'))
+    item = parse_html_tooltip(id, root.find('item/htmlTooltip'))
 
-def parse_item(id, tree):
-    print(f'Item#{id}')
+def parse_item_lists(id, tree):
+    # print(f'Item#{id}')
     root = tree.getroot()
 
     xml_id = root.find('item').attrib['id']
     name = root.find('item/name').text
 
-    item = parse_html_tooltip(root.find('item/htmlTooltip'))
+    item = parse_html_tooltip(id, root.find('item/htmlTooltip'))
     return Object(id = xml_id,
                   name = name,
-                  descs = str(item.descs),
-                  equips = str(item.equips), 
-                  hits = str(item.hits), 
-                  uses = str(item.uses), 
-                  flavor = str(item.flavor[0]) if len(item.flavor) else None, 
+                  descs = item.descs,
+                  equips = item.equips, 
+                  hits = item.hits, 
+                  uses = item.uses, 
+                  flavor = item.flavor, 
+                  readable = str(item.readable))
+
+def parse_item_str(id, tree):
+    # print(f'Item#{id}')
+    root = tree.getroot()
+
+    xml_id = root.find('item').attrib['id']
+    name = root.find('item/name').text
+
+    item = parse_html_tooltip(id, root.find('item/htmlTooltip'))
+    return Object(id = xml_id,
+                  name = name,
+                  descs = '\n'.join(item.descs) if len(item.descs) else None,
+                  equips = '\n'.join(item.equips) if len(item.equips) else None, 
+                  hits = '\n'.join(item.hits) if len(item.hits) else None, 
+                  uses = '\n'.join(item.uses) if len(item.uses) else None, 
+                  flavor = '\n'.join(item.flavor) if len(item.flavor) else None, 
                   readable = str(item.readable))
 
 def parse_items_from_xmls_to_db():
@@ -103,12 +135,12 @@ def parse_items_from_xmls_to_db():
 
     for root, dirs, files in os.walk('./items_xml'):
         for fileName in files:
-            print(fileName)
+            # print(fileName)
             tree = ET.parse(f'items_xml/{fileName}')
             root = tree.getroot()
             file_id = fileName.replace('.xml', '')
 
-            item = parse_item(file_id, tree)
+            item = parse_item_str(file_id, tree)
 
             item_xml = (item.id,item.name,item.descs,item.equips,item.hits,item.uses,item.flavor,item.readable)
             sql = ''' INSERT INTO items_classic(id,name,desc,equip,hit,use,flavor,readable)
@@ -128,9 +160,52 @@ def parse_items_lua():
         with open(f'items_temp.lua', 'w') as output_file:
             output_file.writelines(reencoded_items_lua)
 
+# update with translations
 def item_to_lua_line(item):
-    str = ''
-    return f'[{item.id}] = {{ "{item.name_ua}" ' + ''
+    print(item.equips)
+    res_str = ''
+    res_str+=f'[{item.id}] = {{ "{item.name}" '
+    if (item.descs):
+        arr = item.descs
+        if (len(arr) == 1):
+            res_str+=f', desc="{arr[0]}"'
+        else:
+            res_str+=', desc={ "' + '", "'.join(arr) + '" }'
+
+    if (item.equips):
+        arr = item.equips
+        if (len(arr) == 1):
+            res_str+=f', equip="{arr[0]}"'
+        else:
+            res_str+=', equip={ "' + '", "'.join(arr) + '" }'
+    if (item.hits):
+        arr = item.hits
+        if (len(arr) == 1):
+            res_str+=f', hit="{arr[0]}"'
+        else:
+            res_str+=', hit={ "' + '", "'.join(arr) + '" }'
+            
+    if (item.uses):
+        arr = item.uses
+        if (len(arr) == 1):
+            res_str+=f', use="{arr[0]}"'
+        else:
+            res_str+=', use={ "' + '", "'.join(arr) + '" }'
+            
+    if (item.flavor):
+        arr = item.flavor
+        if (len(arr) == 1):
+            res_str+=f', flavor="{arr[0]}"'
+        else:
+            res_str+=', flavor={ "' + '", "'.join(arr) + '" }'
+    
+    res_str+=f'}}, -- {item.name}'
+    res_str += ''.join([f', @desc {desc}' for desc in item.descs])
+    res_str += ''.join([f', @equip {equip}' for equip in item.equips])
+    res_str += ''.join([f', @hit {hit}' for hit in item.hits])
+    res_str += ''.join([f', @use {use}' for use in item.uses])
+    res_str += ''.join([f', @flavor {flavor}' for flavor in item.flavor])
+    return res_str
 
 
 
@@ -140,13 +215,11 @@ if __name__ == '__main__':
 
 
 
-
-
-    print("22250.xml")
-    tree = ET.parse(f'items_xml/22250.xml')
+    tree = ET.parse(f'items_xml/22691.xml')
     root = tree.getroot()
 
-    item = parse_item(22250, tree)
+    item = parse_item_lists(22691, tree)
+    print(item_to_lua_line(item))
 
 
 
