@@ -54,7 +54,7 @@ def parse_html_tooltip(id, html_tooltip_tree):
                 if (len(a_tag)!=1):
                     print(f'Check #{id}')
                 for tag in a_tag:
-                    tag_text = tag.text
+                    tag_text = tag.text 
                     # print(tag.text)
                     if tag_text is not None:
                         use.append(tag_text)
@@ -132,6 +132,7 @@ def parse_item_str(id, tree):
 
 def parse_items_from_xmls_to_db():
     conn = sqlite3.connect('wow_db.db')
+    cur = conn.cursor()
 
     for root, dirs, files in os.walk('./items_xml'):
         for fileName in files:
@@ -145,9 +146,8 @@ def parse_items_from_xmls_to_db():
             item_xml = (item.id,item.name,item.descs,item.equips,item.hits,item.uses,item.flavor,item.readable)
             sql = ''' INSERT INTO items_classic(id,name,desc,equip,hit,use,flavor,readable)
                 VALUES(?,?,?,?,?,?,?,?) '''
-            cur = conn.cursor()
             cur.execute(sql, item_xml)
-            conn.commit()
+    conn.commit()
 
 def parse_items_lua():
     with open('entries/item.lua', 'r') as input_file:
@@ -160,68 +160,147 @@ def parse_items_lua():
         with open(f'items_temp.lua', 'w') as output_file:
             output_file.writelines(reencoded_items_lua)
 
-# update with translations
 def item_to_lua_line(item):
-    print(item.equips)
     res_str = ''
-    res_str+=f'[{item.id}] = {{ "{item.name}" '
-    if (item.descs):
-        arr = item.descs
+    res_str+=f'[{item.id}] = {{ "{item.name_ua}"'
+    if (item.descs_ua):
+        arr = item.descs_ua
         if (len(arr) == 1):
             res_str+=f', desc="{arr[0]}"'
         else:
             res_str+=', desc={ "' + '", "'.join(arr) + '" }'
 
-    if (item.equips):
-        arr = item.equips
+    if (item.equips_ua):
+        arr = item.equips_ua
         if (len(arr) == 1):
             res_str+=f', equip="{arr[0]}"'
         else:
             res_str+=', equip={ "' + '", "'.join(arr) + '" }'
-    if (item.hits):
-        arr = item.hits
+    if (item.hits_ua):
+        arr = item.hits_ua
         if (len(arr) == 1):
             res_str+=f', hit="{arr[0]}"'
         else:
             res_str+=', hit={ "' + '", "'.join(arr) + '" }'
             
-    if (item.uses):
-        arr = item.uses
+    if (item.uses_ua):
+        arr = item.uses_ua
         if (len(arr) == 1):
             res_str+=f', use="{arr[0]}"'
         else:
             res_str+=', use={ "' + '", "'.join(arr) + '" }'
             
-    if (item.flavor):
-        arr = item.flavor
+    if (item.flavor_ua):
+        arr = item.flavor_ua
         if (len(arr) == 1):
             res_str+=f', flavor="{arr[0]}"'
         else:
             res_str+=', flavor={ "' + '", "'.join(arr) + '" }'
     
-    res_str+=f'}}, -- {item.name}'
-    res_str += ''.join([f', @desc {desc}' for desc in item.descs])
-    res_str += ''.join([f', @equip {equip}' for equip in item.equips])
-    res_str += ''.join([f', @hit {hit}' for hit in item.hits])
-    res_str += ''.join([f', @use {use}' for use in item.uses])
-    res_str += ''.join([f', @flavor {flavor}' for flavor in item.flavor])
+    res_str+=f' }}, -- {item.name}'
+    res_str += ''.join([f', @desc {desc}' for desc in item.descs]) if item.descs else ''
+    res_str += ''.join([f', @equip {equip}' for equip in item.equips]) if item.equips else ''
+    res_str += ''.join([f', @hit {hit}' for hit in item.hits]) if item.hits else ''
+    res_str += ''.join([f', @use {use}' for use in item.uses]) if item.uses else ''
+    res_str += ''.join([f', @flavor {flavor}' for flavor in item.flavor]) if item.flavor else ''
     return res_str
+
+def get_item_from_db(cursor, id):
+    sql = f'SELECT * FROM items_classic WHERE id={id}'
+    res = cursor.execute(sql)
+    item = res.fetchone()
+    return Object(id = item[0],
+                  name = item[1],
+                  equips = item[2].split("\n") if item[2] else None, 
+                  hits = item[3].split("\n") if item[3] else None, 
+                  uses = item[4].split("\n") if item[4] else None, 
+                  flavor = item[5].split("\n") if item[5] else None, 
+                  descs = item[6].split("\n") if item[6] else None)
+
+
+def decoded_item_to_item(item):
+    if type(item) == list:
+        return Object(name = item[0],
+                  equips = None, 
+                  hits = None, 
+                  uses = None, 
+                  flavor = None, 
+                  descs = None)
+    return Object(name = item[0],
+                  equips = [item.get('equip')] if type(item.get('equip')) == str else item.get('equip'), 
+                  hits = [item.get('hit')] if type(item.get('hit')) == str else item.get('hit'),
+                  uses = [item.get('use')] if type(item.get('use')) == str else item.get('use'), 
+                  flavor = [item.get('flavor')] if type(item.get('flavor')) == str else item.get('flavor'),
+                  descs = [item.get('desc')] if type(item.get('desc')) == str else item.get('desc'))
+
+def items_to_lua_line(original, translated):
+    item = Object(id = original.id,
+                  name = original.name,
+                  equips = original.equips, 
+                  hits = original.hits,
+                  uses = original.uses, 
+                  flavor = original.flavor,
+                  descs = original.descs,
+                  name_ua = translated.name,
+                  equips_ua = translated.equips, 
+                  hits_ua = translated.hits,
+                  uses_ua = translated.uses, 
+                  flavor_ua = translated.flavor,
+                  descs_ua = translated.descs)
+    return item_to_lua_line(item)
+
+def combine_existing_translation():
+    decoded_items_lua = None
+
+    with open('entries/item.lua', 'r') as input_file:
+        lua_file = input_file.read()
+        decoded_items_lua = lua.decode(lua_file)
+
+    conn = sqlite3.connect('wow_db.db')
+    cursor = conn.cursor()
+    result_strs = list()
+    for id in sorted(decoded_items_lua):
+        print(id)
+        orig_item = get_item_from_db(cursor, id)
+        translated_item = decoded_item_to_item(decoded_items_lua[id])
+        lua_line = items_to_lua_line(orig_item, translated_item)
+        result_strs.append(lua_line+'\n')
+    cursor.close()
+    with open(f'items_temp.lua', 'w') as output_file:
+        output_file.writelines(result_strs)
 
 
 
 if __name__ == '__main__':
     # parse_items_from_xmls_to_db()
-    # parse_items_lua()
+    ## parse_items_lua()
+    combine_existing_translation()
 
 
 
-    tree = ET.parse(f'items_xml/22691.xml')
-    root = tree.getroot()
+# lua_keys = decoded_items_lua.keys().sorted()
+    # for key in lua_keys:
+    #     tree = ET.parse(f'items_xml/{key}.xml')
+    #     root = tree.getroot()
+    #     item = parse_item_lists(key, tree)
 
-    item = parse_item_lists(22691, tree)
-    print(item_to_lua_line(item))
+    #     print(item_to_lua_line(item))
 
 
+# conn = sqlite3.connect('wow_db.db')
+
+# tree = ET.parse(f'items_xml/117.xml')
+# root = tree.getroot()
+# file_id = 117
+
+# item = parse_item_str(file_id, tree)
+
+# item_xml = (item.id,item.name,item.descs,item.equips,item.hits,item.uses,item.flavor,item.readable)
+# sql = ''' INSERT INTO items_classic(id,name,desc,equip,hit,use,flavor,readable)
+#     VALUES(?,?,?,?,?,?,?,?) '''
+# cur = conn.cursor()
+# cur.execute(sql, item_xml)
+# conn.commit()
 
 
 
