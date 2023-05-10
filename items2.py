@@ -295,31 +295,31 @@ def items_to_tsv_line(original_item, translated_item):
 
     desc_en = ''
     desc_en += '\n'.join(map(lambda x: 'Desc: ' + x, original_item.descs)) if original_item.descs else ''
-    desc_en += '\n' if (original_item.descs and original_item.equips) else ''
+    desc_en += '\n' if (desc_en != '' and original_item.equips) else ''
     desc_en += '\n'.join(map(lambda x: 'Equip: ' + x, original_item.equips)) if original_item.equips else ''
-    desc_en += '\n' if (original_item.equips and original_item.hits) else ''
+    desc_en += '\n' if (desc_en != '' and original_item.hits) else ''
     desc_en += '\n'.join(map(lambda x: 'Hit: ' + x, original_item.hits)) if original_item.hits else ''
-    desc_en += '\n' if (original_item.hits and original_item.uses) else ''
+    desc_en += '\n' if (desc_en != '' and original_item.uses) else ''
     desc_en += '\n'.join(map(lambda x: 'Use: ' + x, original_item.uses)) if original_item.uses else ''
-    desc_en += '\n' if (original_item.uses and original_item.flavor) else ''
+    desc_en += '\n' if (desc_en != '' and original_item.flavor) else ''
     desc_en += '\n'.join(map(lambda x: 'Flavor: ' + x, original_item.flavor)) if original_item.flavor else ''
     desc_en = desc_en.replace('"', '""')
     result_str += f'"{desc_en}"\t'
     desc_ua = ''
     desc_ua += '\n'.join(map(lambda x: 'Desc: ' + x, translated_item.descs)) if translated_item.descs else ''
-    desc_ua += '\n' if (translated_item.descs and translated_item.equips) else ''
+    desc_ua += '\n' if (desc_ua != '' and translated_item.equips) else ''
     desc_ua += '\n'.join(map(lambda x: 'Equip: ' + x, translated_item.equips)) if translated_item.equips else ''
-    desc_ua += '\n' if (translated_item.equips and translated_item.hits) else ''
+    desc_ua += '\n' if (desc_ua != '' and translated_item.hits) else ''
     desc_ua += '\n'.join(map(lambda x: 'Hit: ' + x, translated_item.hits)) if translated_item.hits else ''
-    desc_ua += '\n' if (translated_item.hits and translated_item.uses) else ''
+    desc_ua += '\n' if (desc_ua != '' and translated_item.uses) else ''
     desc_ua += '\n'.join(map(lambda x: 'Use: ' + x, translated_item.uses)) if translated_item.uses else ''
-    desc_ua += '\n' if (translated_item.uses and translated_item.flavor) else ''
+    desc_ua += '\n' if (desc_ua != '' and translated_item.flavor) else ''
     desc_ua += '\n'.join(map(lambda x: 'Flavor: ' + x, translated_item.flavor)) if translated_item.flavor else ''
     desc_ua = desc_ua.replace('"', '""')
     result_str += f'"{desc_ua}"\t'
 
     if (original_item.readable == 'True'):
-        result_str += '\tREADABLE'
+        result_str += 'READABLE'
     return result_str
 
 
@@ -346,12 +346,70 @@ def items_lua_to_tsv() -> None:
     with open(f'items_temp.tsv', 'w') as output_file:
         output_file.writelines(result_lines)
 
+def combine_pending_item_with_db_to_tsv_line(pending_item, original_item):
+    desc_db = ''
+    desc_db += '\n'.join(map(lambda x: 'Desc: ' + x, original_item.descs)) if original_item.descs else ''
+    desc_db += '\n' if (desc_db != '' and original_item.equips) else ''
+    desc_db += '\n'.join(map(lambda x: 'Equip: ' + x, original_item.equips)) if original_item.equips else ''
+    desc_db += '\n' if (desc_db != '' and original_item.hits) else ''
+    desc_db += '\n'.join(map(lambda x: 'Hit: ' + x, original_item.hits)) if original_item.hits else ''
+    desc_db += '\n' if (desc_db != '' and original_item.uses) else ''
+    desc_db += '\n'.join(map(lambda x: 'Use: ' + x, original_item.uses)) if original_item.uses else ''
+    desc_db += '\n' if (desc_db != '' and original_item.flavor) else ''
+    desc_db += '\n'.join(map(lambda x: 'Flavor: ' + x, original_item.flavor)) if original_item.flavor else ''
+
+    result_str = ''
+    result_str += '"' + pending_item.id.replace('"', '""') + '"\t'
+    result_str += '"' + pending_item.name.replace('"', '""') + '"\t'
+    result_str += '"' + pending_item.name_ua.replace('"', '""') + '"\t'
+    result_str += '"' + pending_item.desc.replace('"', '""') + '"\t'
+    result_str += '"' + pending_item.desc_ua.replace('"', '""') + '"\t'
+    result_str += '"' + pending_item.note.replace('"', '""') + '"\t'
+    result_str += '"' + original_item.name.replace('"', '""') + '"\t'
+    result_str += '"' + desc_db.replace('"', '""') + '"\t'
+    if (original_item.readable):
+        result_str += 'READABLE'
+
+    return result_str
+
+
+def combine_pending_items_with_db():
+    import csv
+    pending_items = list()
+
+    with open('pending_items.csv', 'r') as input_file:
+        reader = csv.reader(input_file)
+        for row in reader:
+            if (row[0] == 'ID'):
+                continue
+            item = Object(id = row[0],
+                  name = row[1],
+                  name_ua = row[2],
+                  desc = row[3], 
+                  desc_ua = row[4],
+                  note = row[5])
+            pending_items.append(item)
+
+    conn = sqlite3.connect('wow_db.db')
+    cursor = conn.cursor()
+    result_lines = list()
+    result_lines += 'ID\tName(EN)\tName(UA)\tDescription(EN)\tDescription(UA)\tNote\tName(DB)\tDescription(DB)\tReadable(DB)\n'
+    for pending_item in pending_items:
+        print(pending_item.id)
+        original_item = get_item_from_db(cursor, pending_item.id)
+        tsv_line = combine_pending_item_with_db_to_tsv_line(pending_item, original_item)
+        result_lines.append(str(tsv_line)+'\n')
+
+    with open(f'combined_pending_items.tsv', 'w') as output_file:
+        output_file.writelines(result_lines)
+
 
 if __name__ == '__main__':
     # parse_items_from_xmls_to_db()
 #     parse_items_lua()
-    combine_existing_translation()
+    # combine_existing_translation()
 #     items_lua_to_tsv()
+    combine_pending_items_with_db()
 
 
 # tree = ET.parse(f'items_xml/10644.xml')
