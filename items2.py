@@ -8,6 +8,7 @@ from lxml import html
 Object = lambda **kwargs: type("Object", (), kwargs)
 
 def parse_html_tooltip(id, html_tooltip_tree):
+    import re
     descs = list()
     equip = list()
     chance_on_hit = list()
@@ -15,7 +16,9 @@ def parse_html_tooltip(id, html_tooltip_tree):
     flavor = list()
     readable = False
     recipe = False
-    res = html.fromstring(html_tooltip_tree.text.replace('<br>', '').replace('<br />', ''))
+    replaced_tooltip = html_tooltip_tree.text.replace('<br>', '').replace('<br />', '')
+    replaced_tooltip = re.sub(r'<!--ppl.+?-->', '', replaced_tooltip)
+    res = html.fromstring(replaced_tooltip)
     spans1 = res.findall('table[1]/tr/td/span')
     for span in spans1:
         span_text = span.text
@@ -29,8 +32,6 @@ def parse_html_tooltip(id, html_tooltip_tree):
             if href is not None and '/item=' in href:
                 recipe = True
                 break 
-        # if recipe:
-        #     break
         span_text = span.text
         # print(span_text)
         if (span_text is not None):
@@ -63,11 +64,10 @@ def parse_html_tooltip(id, html_tooltip_tree):
                 if (len(a_tag)!=1):
                     print(f'Check #{id}')
                 for tag in a_tag:
-                    tag_text = tag.text 
-                    # print(tag.text)
-                    if tag_text is not None:
-                        # if ('Teaches' in tag_text):
-                        #     recipe = True
+                    if tag.text is not None:
+                        tag_text = tag.text
+                        if tag.tail is not None:
+                            tag_text += tag.tail
                         use.append(tag_text)
                 if a_tag is None or not len(a_tag):
                     print('ERROR')
@@ -390,12 +390,12 @@ def combine_pending_items_with_db():
                   note = row[5])
             pending_items.append(item)
 
+    print(f'Pending items count: {len(pending_items)}')
     conn = sqlite3.connect('wow_db.db')
     cursor = conn.cursor()
     result_lines = list()
     result_lines += 'ID\tName(EN)\tName(UA)\tDescription(EN)\tDescription(UA)\tNote\tName(DB)\tDescription(DB)\tReadable(DB)\n'
     for pending_item in pending_items:
-        print(pending_item.id)
         original_item = get_item_from_db(cursor, pending_item.id)
         tsv_line = combine_pending_item_with_db_to_tsv_line(pending_item, original_item)
         result_lines.append(str(tsv_line)+'\n')
@@ -404,13 +404,63 @@ def combine_pending_items_with_db():
         output_file.writelines(result_lines)
 
 
+def check_pending_items():
+    import csv
+    decoded_items_lua = None
+    with open('entries/item.lua', 'r') as input_file:
+        lua_file = input_file.read()
+        decoded_items_lua = lua.decode(lua_file)
+    existing_items_ids = set(decoded_items_lua.keys())
+    pending_items_ids = set()
+
+    clashing_translations = list()
+    with open('pending_items.csv', 'r') as input_file:
+        reader = csv.reader(input_file)
+        for row in reader:
+            if (row[0] == 'ID'):
+                continue
+            pending_id = int(row[0])
+            if pending_id in pending_items_ids:
+                print(f"Duplicate: {pending_id}")
+            if pending_id in existing_items_ids:
+                print(f"Exists: {pending_id}. {row[2]} <-> {decoded_items_lua.get(pending_id)[0]}")
+                existing_item = decoded_item_to_item(pending_id, decoded_items_lua.get(pending_id))
+                clashing_item = Object(id = int(row[0]),
+                  name_en = row[1],
+                  pending_name = row[2],
+                  existing_name = existing_item.name,
+                  pending_desc = row[4], 
+                #   existing_desc = f'{existing_item.equips if existing_item.equips else ""}\n{existing_item.hits if existing_item.hits else ""}\n{existing_item.uses if existing_item.uses else ""}\n{existing_item.flavor if existing_item.flavor else ""}\n{existing_item.descs if existing_item.descs else ""}')
+                  existing_desc = '')
+                clashing_translations.append(clashing_item)
+            pending_items_ids.add(pending_id)
+
+
+    with open(f'clashing_items.tsv', 'w') as output_file:
+        output_file.write('ID\tEN Name\tPending name\tExisting name\tPending desc\tExisting desc\n')
+        escaped_name_en = item.name_en.replace('"', '\\"')
+        escaped_pending_name = item.pending_name.replace('"', '\\"')
+        escaped_existing_name = item.existing_name.replace('"', '\\"')
+        escaped_pending_desc = item.pending_desc.replace('"', '\\"')
+        for item in clashing_translations:
+            output_file.write(f'{item.id}\t{escaped_name_en}\t{escaped_pending_name}\t{escaped_existing_name}\t"{escaped_pending_desc}"\t"{item.existing_desc}"\n')
+
 if __name__ == '__main__':
     # parse_items_from_xmls_to_db()
 #     parse_items_lua()
     # combine_existing_translation()
 #     items_lua_to_tsv()
-    combine_pending_items_with_db()
+    # combine_pending_items_with_db()
+    check_pending_items()
 
+
+# tree = ET.parse(f'items_xml/1127.xml')
+# root = tree.getroot()
+
+# item = parse_item_str(1127, tree)
+
+# item_xml = (item.id,item.name,item.descs,item.equips,item.hits,item.uses,item.flavor,item.readable,item.recipe)    
+# print(item_xml)
 
 # tree = ET.parse(f'items_xml/10644.xml')
 # root = tree.getroot()
