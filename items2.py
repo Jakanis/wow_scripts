@@ -179,34 +179,35 @@ def item_to_lua_line(item):
     escaped_name = item.name_ua.replace('"', '\\"')
     res_str+=f'[{item.id}] = {{ "{escaped_name}"'
     if (item.descs_ua):
-        arr = item.descs_ua
+        arr = list(map(lambda x: x.replace('"', '\\"'), item.descs_ua))
         if (len(arr) == 1):
             res_str+=f', desc="{arr[0]}"'
         else:
             res_str+=', desc={ "' + '", "'.join(arr) + '" }'
 
     if (item.equips_ua):
-        arr = item.equips_ua
+        arr = list(map(lambda x: x.replace('"', '\\"'), item.equips_ua))
         if (len(arr) == 1):
             res_str+=f', equip="{arr[0]}"'
         else:
             res_str+=', equip={ "' + '", "'.join(arr) + '" }'
+
     if (item.hits_ua):
-        arr = item.hits_ua
+        arr = list(map(lambda x: x.replace('"', '\\"'), item.hits_ua))
         if (len(arr) == 1):
             res_str+=f', hit="{arr[0]}"'
         else:
             res_str+=', hit={ "' + '", "'.join(arr) + '" }'
             
     if (item.uses_ua):
-        arr = item.uses_ua
+        arr = list(map(lambda x: x.replace('"', '\\"'), item.uses_ua))
         if (len(arr) == 1):
             res_str+=f', use="{arr[0]}"'
         else:
             res_str+=', use={ "' + '", "'.join(arr) + '" }'
             
     if (item.flavor_ua):
-        arr = item.flavor_ua
+        arr = list(map(lambda x: x.replace('"', '\\"'), item.flavor_ua))
         if (len(arr) == 1):
             res_str+=f', flavor="{arr[0]}"'
         else:
@@ -445,13 +446,78 @@ def check_pending_items():
         for item in clashing_translations:
             output_file.write(f'{item.id}\t{escaped_name_en}\t{escaped_pending_name}\t{escaped_existing_name}\t"{escaped_pending_desc}"\t"{item.existing_desc}"\n')
 
+def pending_item_row_to_item(row):
+    descs_ua = list()
+    equips_ua = list()
+    hits_ua = list()
+    uses_ua = list()
+    flavor_ua = list()
+    for desc in row[4].split("\n"):
+        if (desc.startswith('Desc:')):
+            descs_ua.append(desc.replace('Desc: ', ''))
+        if (desc.startswith('Equip:')):
+            equips_ua.append(desc.replace('Equip: ', ''))
+        if (desc.startswith('Hit:')):
+            hits_ua.append(desc.replace('Hit: ', ''))
+        if (desc.startswith('Desc:')):
+            uses_ua.append(desc.replace('Desc: ', ''))
+        if (desc.startswith('Flavor:')):
+            flavor_ua.append(desc.replace('Flavor: ', ''))
+
+    item = Object(id = int(row[0]),
+            name = row[2],
+            descs = descs_ua if descs_ua else None,
+            equips = equips_ua if equips_ua else None, 
+            hits = hits_ua if hits_ua else None,
+            uses = uses_ua if uses_ua else None,
+            flavor = flavor_ua if flavor_ua else None)
+    return item
+
+
+
+def combine_pending_and_existing_translation():
+    import csv
+    decoded_items_lua = None
+
+    with open('entries/item.lua', 'r') as input_file:
+        lua_file = input_file.read()
+        decoded_items_lua = lua.decode(lua_file)
+        decoded_items_lua = {k: decoded_item_to_item(k, v) for k, v in decoded_items_lua.items()}
+
+    pending_items = dict()
+
+    with open('pending_items.csv', 'r') as input_file:
+        reader = csv.reader(input_file)
+        for row in reader:
+            if (row[0] == 'ID'):
+                continue
+            id = int(row[0])
+            pending_item = pending_item_row_to_item(row)
+            pending_items[pending_item.id] = pending_item
+
+    conn = sqlite3.connect('wow_db.db')
+    cursor = conn.cursor()
+    result_lines = list()
+    
+    all_items = decoded_items_lua | pending_items
+    for id in sorted(all_items):
+        print(id)
+        orig_item = get_item_from_db(cursor, id)
+        lua_line = items_to_lua_line(orig_item, all_items[id])
+        result_lines.append(lua_line+'\n')
+    cursor.close()
+    with open(f'items_merged.lua', 'w') as output_file:
+        output_file.writelines(result_lines)
+
+
 if __name__ == '__main__':
     # parse_items_from_xmls_to_db()
-#     parse_items_lua()
+    # parse_items_lua()
     # combine_existing_translation()
-#     items_lua_to_tsv()
+    # items_lua_to_tsv()
     # combine_pending_items_with_db()
-    check_pending_items()
+    # check_pending_items()
+    combine_pending_and_existing_translation()
 
 
 # tree = ET.parse(f'items_xml/1127.xml')
