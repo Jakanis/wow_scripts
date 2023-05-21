@@ -459,8 +459,8 @@ def pending_item_row_to_item(row):
             equips_ua.append(desc.replace('Equip: ', ''))
         if (desc.startswith('Hit:')):
             hits_ua.append(desc.replace('Hit: ', ''))
-        if (desc.startswith('Desc:')):
-            uses_ua.append(desc.replace('Desc: ', ''))
+        if (desc.startswith('Use:')):
+            uses_ua.append(desc.replace('Use: ', ''))
         if (desc.startswith('Flavor:')):
             flavor_ua.append(desc.replace('Flavor: ', ''))
 
@@ -472,8 +472,6 @@ def pending_item_row_to_item(row):
             uses = uses_ua if uses_ua else None,
             flavor = flavor_ua if flavor_ua else None)
     return item
-
-
 
 def combine_pending_and_existing_translation():
     import csv
@@ -509,6 +507,87 @@ def combine_pending_and_existing_translation():
     with open(f'items_merged.lua', 'w') as output_file:
         output_file.writelines(result_lines)
 
+def merge_pending_and_existing_items_to_tsv():
+    import csv
+    decoded_items_lua = None
+
+    with open('entries/item.lua', 'r') as input_file:
+        lua_file = input_file.read()
+        decoded_items_lua = lua.decode(lua_file)
+        decoded_items_lua = {k: decoded_item_to_item(k, v) for k, v in decoded_items_lua.items()}
+
+    pending_items = dict()
+
+    with open('pending_items.csv', 'r') as input_file:
+        reader = csv.reader(input_file)
+        for row in reader:
+            if (row[0] == 'ID'):
+                continue
+            id = int(row[0])
+            pending_item = pending_item_row_to_item(row)
+            pending_items[pending_item.id] = pending_item
+
+    conn = sqlite3.connect('wow_db.db')
+    cursor = conn.cursor()
+    result_lines = list()
+    
+    all_items_ids = sorted(decoded_items_lua.keys() | pending_items.keys())
+    for id in all_items_ids:
+        print(id)
+        orig_item = get_item_from_db(cursor, id)
+        existing_item = decoded_items_lua.get(id)
+        pending_item = pending_items.get(id)
+
+        escaped_name_en = orig_item.name.replace('"', '""')
+        escaped_pending_name = pending_item.name.replace('"', '""') if pending_item else ''
+        escaped_existing_name = existing_item.name.replace('"', '""') if existing_item else ''
+
+        pending_desc = ''
+        if pending_item:
+            pending_desc += '\n'.join(map(lambda x: 'Desc: ' + x, pending_item.descs)) if pending_item.descs else ''
+            pending_desc += '\n' if (pending_desc != '' and pending_item.equips) else ''
+            pending_desc += '\n'.join(map(lambda x: 'Equip: ' + x, pending_item.equips)) if pending_item.equips else ''
+            pending_desc += '\n' if (pending_desc != '' and pending_item.hits) else ''
+            pending_desc += '\n'.join(map(lambda x: 'Hit: ' + x, pending_item.hits)) if pending_item.hits else ''
+            pending_desc += '\n' if (pending_desc != '' and pending_item.uses) else ''
+            pending_desc += '\n'.join(map(lambda x: 'Use: ' + x, pending_item.uses)) if pending_item.uses else ''
+            pending_desc += '\n' if (pending_desc != '' and pending_item.flavor) else ''
+            pending_desc += '\n'.join(map(lambda x: 'Flavor: ' + x, pending_item.flavor)) if pending_item.flavor else ''
+        escaped_pending_desc = pending_desc.replace('"', '""')
+
+        existing_desc = ''
+        if existing_item:
+            existing_desc += '\n'.join(map(lambda x: 'Desc: ' + x, existing_item.descs)) if existing_item.descs else ''
+            existing_desc += '\n' if (existing_desc != '' and existing_item.equips) else ''
+            existing_desc += '\n'.join(map(lambda x: 'Equip: ' + x, existing_item.equips)) if existing_item.equips else ''
+            existing_desc += '\n' if (existing_desc != '' and existing_item.hits) else ''
+            existing_desc += '\n'.join(map(lambda x: 'Hit: ' + x, existing_item.hits)) if existing_item.hits else ''
+            existing_desc += '\n' if (existing_desc != '' and existing_item.uses) else ''
+            existing_desc += '\n'.join(map(lambda x: 'Use: ' + x, existing_item.uses)) if existing_item.uses else ''
+            existing_desc += '\n' if (existing_desc != '' and existing_item.flavor) else ''
+            existing_desc += '\n'.join(map(lambda x: 'Flavor: ' + x, existing_item.flavor)) if existing_item.flavor else ''
+        escaped_existing_desc = existing_desc.replace('"', '""')
+
+        desc_db = ''
+        desc_db += '\n'.join(map(lambda x: 'Desc: ' + x, orig_item.descs)) if orig_item.descs else ''
+        desc_db += '\n' if (desc_db != '' and orig_item.equips) else ''
+        desc_db += '\n'.join(map(lambda x: 'Equip: ' + x, orig_item.equips)) if orig_item.equips else ''
+        desc_db += '\n' if (desc_db != '' and orig_item.hits) else ''
+        desc_db += '\n'.join(map(lambda x: 'Hit: ' + x, orig_item.hits)) if orig_item.hits else ''
+        desc_db += '\n' if (desc_db != '' and orig_item.uses) else ''
+        desc_db += '\n'.join(map(lambda x: 'Use: ' + x, orig_item.uses)) if orig_item.uses else ''
+        desc_db += '\n' if (desc_db != '' and orig_item.flavor) else ''
+        desc_db += '\n'.join(map(lambda x: 'Flavor: ' + x, orig_item.flavor)) if orig_item.flavor else ''
+        escaped_desc_en = desc_db.replace('"', '""')
+
+        tsv_line = f'{id}\t"{escaped_name_en}"\t"{escaped_pending_name}"\t"{escaped_existing_name}"\t"{escaped_pending_desc}"\t"{escaped_existing_desc}"\t"{escaped_desc_en}"'
+        result_lines.append(tsv_line+'\n')
+    cursor.close()
+    
+    with open(f'all_items.tsv', 'w') as output_file:
+        output_file.write('ID\tEN Name\tPending name\tExisting name\tPending desc\tExisting desc\tEN Desc\n')
+        output_file.writelines(result_lines)
+
 
 if __name__ == '__main__':
     # parse_items_from_xmls_to_db()
@@ -518,7 +597,7 @@ if __name__ == '__main__':
     # combine_pending_items_with_db()
     # check_pending_items()
     combine_pending_and_existing_translation()
-
+    # merge_pending_and_existing_items_to_tsv()
 
 # tree = ET.parse(f'items_xml/1127.xml')
 # root = tree.getroot()
