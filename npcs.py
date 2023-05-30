@@ -6,15 +6,17 @@ from slpp import slpp as lua
 WOWHEAD_URL = 'https://wowhead.com'
 
 class NPC:
-    def __init__(self, id, name, desc):
+    def __init__(self, id, name, desc, note):
         self.id = id
         self.name = name
         self.desc = desc
+        self.note = note
 
     def __str__(self):
         name_txt = str(self.name).replace('"', '""')
         desc_txt = str(self.desc).replace('"', '""')
-        return f'{self.id}\t"{name_txt}"\t"{desc_txt}"'
+        note_txt = str(self.note).replace('"', '""')
+        return f'{self.id}\t"{name_txt}"\t"{desc_txt}"\t"{note_txt}"'
     
 class NPC_TR:
     def __init__(self, id, name_en, desc_en, name_ua, desc_ua):
@@ -49,19 +51,22 @@ def save_npc_htmls_from_wowhead():
         p.map(save_npc_page, all_ids)
 
 def parse_npc_page(id, page) -> NPC:
+    note = ''
+    if "The location of this NPC is unknown." in page:
+        note = "Location unknown"
     tree = html.fromstring(page)
     npc_name = tree.xpath('//h1')[0].text
     if (npc_name == "Classic NPCs" or npc_name is None): # 15384, 15672, 17689, 17690, 17696, 17698 are corrupt and not used
         print(f'{id} is null')
-        return NPC(id, '', '')
+        return NPC(id, '', '', '')
     splitted_name = npc_name.split(' <')
     if (len(splitted_name) == 1):
-        return NPC(id, npc_name, '')
+        return NPC(id, npc_name, '', note)
     elif (len(splitted_name) == 2):
-        return NPC(id, splitted_name[0], '<'+splitted_name[1])
+        return NPC(id, splitted_name[0], '<'+splitted_name[1], note)
     else:
         print(f'error for {id}')
-        return NPC(id, 'error', 'error')
+        return NPC(id, 'error', 'error', 'error')
 
 def parse_npc(id) -> NPC:
     with open(f'npc_htmls/{id}.html', 'r') as input_file:
@@ -72,12 +77,12 @@ def parse_npc(id) -> NPC:
 def parse_all_npcs_from_wowhead_htmls():
     all_ids = get_all_wowhead_npc_ids()
     all_npcs = dict()
-    with open(f'npcs_res.tsv', 'w') as output_file:
-        output_file.write('ID\tEN Name\tEN Desc\n')
-        for id in all_ids:
-            npc = parse_npc(id)
-            if (npc.name):
-                all_npcs[id]=parse_npc(id)
+    # with open(f'npcs_res.tsv', 'w') as output_file:
+    #     output_file.write('ID\tEN Name\tEN Desc\n')
+    for id in all_ids:
+        npc = parse_npc(id)
+        if (npc.name):
+            all_npcs[id]=npc
             #     output_file.write(str(npc) + '\n')
     return all_npcs
 
@@ -101,11 +106,59 @@ def parse_npcs_lua():
         all_npcs[id] = npc
     return all_npcs
 
+def parse_pending_npcs_csv():
+    import csv
+    all_npcs = dict()
+    with open('pending_npcs.csv', 'r') as input_file:
+        reader = csv.reader(input_file)
+        for row in reader:
+            if (row[0] == 'Id'):
+                continue
+            id = int(row[0])
+            npc = NPC_TR(id, row[1], row[2], row[3], row[4])
+            all_npcs[id] = npc
+    return all_npcs
+
+def combine_all_npcs(npcs_from_wowhead, npcs_from_lua, pending_npcs):
+    all_ids = get_all_wowhead_npc_ids()
+
+    with open('npcs_merged.tsv', 'w') as output_file:
+        output_file.write('ID\tName(Wowhead)\tDesc(Wowhead)\tNote(Wowhead)\tName(EN, LUA)\tDesc(EN, LUA)\tName(UA, LUA)\tDesc(UA, LUA)\tName(EN, CSV)\tDesc(EN, CSV)\tName(UA, CSV)\tDesc(UA, CSV)\n')
+        for id in all_ids:
+            wowhead_npc = npcs_from_wowhead.get(id) or NPC(-1, '', '', '')
+            npc_lua = npcs_from_lua.get(id) or NPC_TR(-1, '', '', '', '')
+            pending_npc = pending_npcs.get(id) or NPC_TR(-1, '', '', '', '')
+            res_str = '{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\n'.format(
+                id,
+                wowhead_npc.name,
+                wowhead_npc.desc,
+                wowhead_npc.note,
+                npc_lua.name_en,
+                npc_lua.desc_en,
+                npc_lua.name_ua,
+                npc_lua.desc_ua,
+                pending_npc.name_en,
+                pending_npc.desc_en,
+                pending_npc.name_ua,
+                pending_npc.desc_ua
+            )
+            output_file.write(res_str)
+
+
 if __name__ == '__main__':
+    import pickle 
     # save_npc_htmls_from_wowhead()
     # npcs_from_wowhead = parse_all_npcs_from_wowhead_htmls()
     
+    # with open('npcs_from_wowhead.pkl', 'wb') as f:
+    #     pickle.dump(npcs_from_wowhead, f)
+            
+    with open('npcs_from_wowhead.pkl', 'rb') as f:
+        npcs_from_wowhead = pickle.load(f)
+
     npcs_from_lua = parse_npcs_lua()
+    pending_npcs = parse_pending_npcs_csv()
+    combine_all_npcs(npcs_from_wowhead, npcs_from_lua, pending_npcs)
 
 
 
