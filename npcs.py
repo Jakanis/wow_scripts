@@ -6,11 +6,13 @@ from slpp import slpp as lua
 WOWHEAD_URL = 'https://wowhead.com'
 
 class NPC:
-    def __init__(self, id, name, desc, note):
+    def __init__(self, id, name, desc, note, race = None, sex=None):
         self.id = id
         self.name = name
         self.desc = desc
         self.note = note
+        self.race = race
+        self.sex = sex
 
     def __str__(self):
         name_txt = str(self.name).replace('"', '""')
@@ -19,12 +21,14 @@ class NPC:
         return f'{self.id}\t"{name_txt}"\t"{desc_txt}"\t"{note_txt}"'
     
 class NPC_TR:
-    def __init__(self, id, name_en, desc_en, name_ua, desc_ua):
+    def __init__(self, id, name_en, desc_en, name_ua, desc_ua, race = None, sex=None):
         self.id = id
         self.name_en = name_en
         self.desc_en = desc_en
         self.name_ua = name_ua
         self.desc_ua = desc_ua
+        self.race = race
+        self.sex = sex
 
     def __str__(self):
         name_en_txt = str(self.name_en).replace('"', '""')
@@ -89,7 +93,7 @@ def parse_all_npcs_from_wowhead_htmls():
 def parse_npcs_lua():
     import re
     all_npcs = dict()
-    with open('entries/npc.lua', 'r') as input_file:
+    with open('entries/npc.lua', 'r', encoding="utf-8") as input_file:
         lua_file = input_file.read()
     for line in lua_file.split('\n'):
         res = re.findall('\[(\d+)\] = { \"(.+)\".+-- (.+)', line)[0]
@@ -106,23 +110,23 @@ def parse_npcs_lua():
         all_npcs[id] = npc
     return all_npcs
 
-def parse_pending_npcs_csv():
+def parse_pending_npcs_csv() -> dict[NPC_TR]:
     import csv
     all_npcs = dict()
-    with open('pending_npcs.csv', 'r') as input_file:
+    with open('pending_npcs.csv', 'r', encoding="utf-8") as input_file:
         reader = csv.reader(input_file)
         for row in reader:
             if (row[0] == 'Id'):
                 continue
             id = int(row[0])
-            npc = NPC_TR(id, row[1], row[2], row[3], row[4])
+            npc = NPC_TR(id, row[1], row[2], row[3], row[4], row[5], row[6])
             all_npcs[id] = npc
     return all_npcs
 
 def combine_all_npcs(npcs_from_wowhead, npcs_from_lua, pending_npcs):
     all_ids = get_all_wowhead_npc_ids()
 
-    with open('npcs_merged.tsv', 'w') as output_file:
+    with open('npcs_merged.tsv', 'w', encoding="utf-8") as output_file:
         output_file.write('ID\tName(Wowhead)\tDesc(Wowhead)\tNote(Wowhead)\tName(EN, LUA)\tDesc(EN, LUA)\tName(UA, LUA)\tDesc(UA, LUA)\tName(EN, CSV)\tDesc(EN, CSV)\tName(UA, CSV)\tDesc(UA, CSV)\n')
         for id in all_ids:
             wowhead_npc = npcs_from_wowhead.get(id) or NPC(-1, '', '', '')
@@ -144,21 +148,41 @@ def combine_all_npcs(npcs_from_wowhead, npcs_from_lua, pending_npcs):
             )
             output_file.write(res_str)
 
-
-if __name__ == '__main__':
+def combine_existing_and_pending_npcs_to_tsv():
     import pickle 
-    # save_npc_htmls_from_wowhead()
+    # save_npc_htmls_from_wowhead() # In case there's no ./npc_htmls folder or dumped npcs_from_wowhead.pkl file
     # npcs_from_wowhead = parse_all_npcs_from_wowhead_htmls()
-    
     # with open('npcs_from_wowhead.pkl', 'wb') as f:
     #     pickle.dump(npcs_from_wowhead, f)
             
     with open('npcs_from_wowhead.pkl', 'rb') as f:
         npcs_from_wowhead = pickle.load(f)
-
     npcs_from_lua = parse_npcs_lua()
     pending_npcs = parse_pending_npcs_csv()
     combine_all_npcs(npcs_from_wowhead, npcs_from_lua, pending_npcs)
+
+def pending_npcs_to_crowdin_dictionary_csv():
+    pending_npcs = parse_pending_npcs_csv()
+    dictionary_lines = list()
+    dictionary_lines.append('"Term [uk]","Term [en]","Description [en]"\n')
+    for id, pending_npc in pending_npcs.items():
+        csv_desc = 'нпц'
+        csv_desc += f', {pending_npc.sex}' if pending_npc.sex else ''
+        csv_desc += f', {pending_npc.race}' if pending_npc.race else ''
+        csv_desc += f', #{id}'
+        desc = pending_npc.desc_ua or pending_npc.desc_en or ''
+        csv_desc += f', {desc}' if desc else ''
+        dict_line = '"{}","{}","{}"\n'.format(pending_npc.name_ua.replace('"', '""'),
+                                            pending_npc.name_en.replace('"', '""'),
+                                            csv_desc.replace('"', '""'))
+        dictionary_lines.append(dict_line)
+    with open('new_npcs_dictionary.csv', 'w', encoding="utf-8") as out_file:
+        out_file.writelines(dictionary_lines)
+
+
+if __name__ == '__main__':
+    # combine_existing_and_pending_npcs_to_tsv()
+    pending_npcs_to_crowdin_dictionary_csv()
 
 
 
