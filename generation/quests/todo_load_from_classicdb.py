@@ -269,3 +269,10 @@
 #         return
 #     with open(f'./cache/classicdb_quests_html/{id}.html', 'w', encoding="utf-8") as output_file:
 #         output_file.write(r.text)
+#
+# def save_htmls_from_classicdb(ids: list[int]):
+#     print(f'Saving HTMLs for {len(ids)} quests from ClassicDB.')
+#
+#     os.makedirs('cache/classicdb_quests_html', exist_ok=True)
+#     with multiprocessing.Pool(THREADS) as p:
+#         p.map(__save_classicdb_html_page, ids)

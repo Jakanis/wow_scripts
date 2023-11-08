@@ -7,8 +7,60 @@ from bs4 import BeautifulSoup
 import sqlite3
 
 THREADS = 32
-WOWHEAD_URL = 'https://classic.wowhead.com'
-WOWHEAD_SEARCH_URL = 'https://www.wowhead.com/classic'
+# WOWHEAD_URL = 'https://www.wowhead.com/classic'
+# WOWHEAD_URL_TBC = 'https://www.wowhead.com/tbc'
+# WOWHEAD_URL_WRATH = 'https://www.wowhead.com/wotlk'
+
+CLASSIC = 'classic'
+TBC = 'tbc'
+WRATH = 'wrath'
+WOWHEAD_URL = 'wowhead_url'
+METADATA_CACHE = 'metadata_cache'
+HTML_CACHE = 'html_cache'
+QUESTS_CACHE = 'quests_cache'
+IGNORES = 'ignores'
+INDEX = 'index'
+
+expansion_data = {
+    CLASSIC: {
+        INDEX: 0,
+        WOWHEAD_URL: 'https://www.wowhead.com/classic',
+        METADATA_CACHE: 'wowhead_classic_metadata_cache',
+        HTML_CACHE: 'wowhead_classic_quests_html',
+        QUESTS_CACHE: 'wowhead_classic_quest_cache',
+        IGNORES: [
+            1, 785, 912, 999, 1005, 1006, 1099, 1174, 1272, 1500, 5383, 6843, 7522, 7561, 7797, 7906, 7961, 7962, 8226, 8259, 8289, 8296, 8478, 8489, 8618, 8896, 9065,  # Not used in all expansions
+            # 8617, 8618, 8530, 8531 # '<faction_name> needs singed corestones' quests actually not used.
+            236,  # Wintergrasp (lich o_O)
+            8325, 8326, 8327, 8328, 8329, 8334, 8335, 8338, 8344, 8347, 8350, 8463, 8468, 8472, 8473, 8474, 8475, 8476, 8477, 8479, 8480, 8482, 8483, 8486, 8487, 8488, 8490, 8491, 8547, 8563, 8564, 8884, 8885, 8886, 8887, 8888, 8889, 8890, 8891, 8892, 8894, 8895, 9249 # TBC
+        ]
+    },
+    TBC: {
+        INDEX: 1,
+        WOWHEAD_URL: 'https://www.wowhead.com/tbc',
+        METADATA_CACHE: 'wowhead_tbc_metadata_cache',
+        HTML_CACHE: 'wowhead_tbc_quests_html',
+        QUESTS_CACHE: 'wowhead_tbc_quest_cache',
+        IGNORES: [
+            1, 785, 912, 999, 1005, 1006, 1099, 1174, 1272, 1500, 5383, 6843, 7522, 7561, 7797, 7906, 7961, 7962, 8226, 8259, 8289, 8296, 8478, 8489, 8618, 8896, 9065,  # Not used in all expansions
+            # 236,  # Still Wintergrasp. Doesn't exist for TBC
+            10383, 10386, 10387, 10999, 11334, 11345, 11976, 24508, 24509  # Appeared in TBC, not used
+        ]
+    },
+    WRATH: {
+        INDEX: 2,
+        WOWHEAD_URL: 'https://www.wowhead.com/wotlk',
+        METADATA_CACHE: 'wowhead_wrath_metadata_cache',
+        HTML_CACHE: 'wowhead_wrath_quests_html',
+        QUESTS_CACHE: 'wowhead_wrath_quest_cache',
+        IGNORES: [
+            1, 785, 912, 999, 1005, 1006, 1099, 1174, 1272, 1500, 5383, 6843, 7522, 7561, 7797, 7906, 7961, 7962, 8226, 8259, 8289, 8296, 8478, 8489, 8618, 8896, 9065,  # Not used in all expansions
+            10383, 10386, 10387, 10999, 11334, 11345, 11976, 24508, 24509,  # Appeared in TBC, not used
+            25055, 25092,  # TODO: Looks like pre-Cata. Check later
+            60860, 70685,  # Rewards for... ergh... TCG? Doesn't exist for other expansions though
+        ]
+    }
+}
 
 class Quest:
     def __init__(self, id, name, objective=None, description=None, progress=None, completion=None):
@@ -78,8 +130,95 @@ class Quest:
         return '\n'.join(diffs) if len(diffs) else None
 
 
+class QuestEntity:
+    def __init__(self, id, name, objective=None, description=None, progress=None, completion=None, cat=None, side=None, type=None, lvl=None, rlvl=None, expansion=None):
+        self.id = id
+        self.name = name
+        self.objective = objective
+        self.description = description
+        self.progress = progress
+        self.completion = completion
+        self.cat = cat
+        self.side = side
+        self.type = type
+        self.lvl = lvl
+        self.rlvl = rlvl
+        self.expansion = expansion
+
+    def __str__(self):
+        return f'{self.id}, "{self.name}"'
+
+    def __eq__(self, other):
+        if not isinstance(other, QuestEntity):
+            return False
+
+        return (self.id == other.id and self.name == other.name and self.objective == other.objective and self.description == other.description
+                and self.progress == other.progress and self.completion == other.completion and self.cat == other.cat and self.side == other.side
+                and self.type == other.type and self.lvl == other.lvl and self.rlvl == other.rlvl and self.expansion == other.expansion)
+
+    def diff(self, other):
+        diffs = []
+        if self.id != other.id:
+             diffs.append(f'id: {self.id} <> {other.id}')
+        if self.name != other.name:
+             diffs.append(f'NAME: {self.name} <> {other.name}')
+        if self.objective != other.objective:
+             diffs.append(f'OBJECTIVE:\n{self.objective}\n<>\n{other.objective}')
+        if self.description != other.description:
+             diffs.append(f'DESCRIPTION:\n{self.description}\n<>\n{other.description}')
+        if self.progress != other.progress:
+             diffs.append(f'PROGRESS:\n{self.progress}\n<>\n{other.progress}')
+        if self.completion != other.completion:
+             diffs.append(f'COMPLETION:\n{self.completion}\n<>\n{other.completion}')
+        if self.cat != other.cat:
+             diffs.append(f'cat: {self.cat} <> {other.cat}')
+        if self.side != other.side:
+             diffs.append(f'side: {self.side} <> {other.side}')
+        if self.type != other.type:
+             diffs.append(f'type: {self.type} <> {other.type}')
+        if self.lvl != other.lvl:
+             diffs.append(f'lvl: {self.lvl} <> {other.lvl}')
+        if self.rlvl != other.rlvl:
+             diffs.append(f'rlvl: {self.rlvl} <> {other.rlvl}')
+        return '\n'.join(diffs) if len(diffs) else None
+
+    def diff_dels(self, other):
+        diffs = []
+        if self.id != other.id:
+             diffs.append(f'id: {self.id} <> {other.id}')
+        if self.name != other.name:
+             diffs.append(f'NAME: {self.name} <> {other.name}')
+        if self.objective is None and self.objective != other.objective:
+             diffs.append(f'OBJECTIVE:\n{self.objective}\n<>\n{other.objective}')
+        if self.description is None and self.description != other.description:
+             diffs.append(f'DESCRIPTION:\n{self.description}\n<>\n{other.description}')
+        if self.progress is None and self.progress != other.progress:
+             diffs.append(f'PROGRESS:\n{self.progress}\n<>\n{other.progress}')
+        if self.completion is None and self.completion != other.completion:
+             diffs.append(f'COMPLETION:\n{self.completion}\n<>\n{other.completion}')
+        return '\n'.join(diffs) if len(diffs) else None
+
+    def diff_updates(self, other):
+        diffs = []
+        if self.id != other.id:
+             diffs.append(f'id: {self.id} <> {other.id}')
+        if self.name != other.name:
+             diffs.append(f'NAME: {self.name} <> {other.name}')
+        if self.objective is not None and other.objective is not None and self.objective != other.objective:
+             diffs.append(f'OBJECTIVE:\n{self.objective}\n<>\n{other.objective}')
+        if self.description is not None and other.description is not None and self.description != other.description:
+             diffs.append(f'DESCRIPTION:\n{self.description}\n<>\n{other.description}')
+        if self.progress is not None and other.progress is not None and self.progress != other.progress:
+             diffs.append(f'PROGRESS:\n{self.progress}\n<>\n{other.progress}')
+        if self.completion is not None and other.completion is not None and self.completion != other.completion:
+             diffs.append(f'COMPLETION:\n{self.completion}\n<>\n{other.completion}')
+        return '\n'.join(diffs) if len(diffs) else None
+
+
+
+# Metadata from Wowhead
 class QuestMD:
-    def __init__(self, id, name, category=None, subcategory=None, side=None, type=None, lvl=None, rlvl=None):
+    def __init__(self, id, name, category=None, subcategory=None, side=None, type=None, lvl=None, rlvl=None, expansion=None):
         self.id = id
         self.name = name
         self.category = category
@@ -88,6 +227,7 @@ class QuestMD:
         self.type = type
         self.lvl = lvl
         self.rlvl = rlvl
+        self.expansion = expansion
 
     def __str__(self):
         return f'{self.id},"{self.name}"'
@@ -117,8 +257,9 @@ class QuestMD:
             return 'normal'
 
 
+# Metadata from DB
 class QuestMD_DB:
-    def __init__(self, id, name, cat=None, side=None, type=None, lvl=None, rlvl=None):
+    def __init__(self, id, name, cat=None, side=None, type=None, lvl=None, rlvl=None, expansion=None):
         self.id = id
         self.name = name
         self.cat = cat
@@ -126,6 +267,7 @@ class QuestMD_DB:
         self.type = type
         self.lvl = lvl
         self.rlvl = rlvl
+        self.expansion = expansion
 
 
     def __eq__(self, other):
@@ -154,20 +296,12 @@ class QuestMD_DB:
         return '\n'.join(diffs)
 
 
-def __save_wowhead_html_page(id) -> (int, requests.Response):
-    url = WOWHEAD_URL + f'/quest={id}?xml'
-    r = requests.get(url)
-    if (f"Quest #{id} doesn't exist." in r.text):
-        return
-    with open(f'./cache/wowhead_quests_html/{id}.html', 'w', encoding="utf-8") as output_file:
-        output_file.write(r.text)
-
-
-def __get_wowhead_quests_search(start, end=None) -> list[QuestMD]:
+def __get_wowhead_quests_search(expansion, start, end=None) -> list[QuestMD]:
+    base_url = expansion_data[expansion][WOWHEAD_URL]
     if end:
-        url = WOWHEAD_SEARCH_URL + f"/quests?filter=30:30;5:2;{end}:{start}"
+        url = base_url + f"/quests?filter=30:30;5:2;{end}:{start}"
     else:
-        url = WOWHEAD_SEARCH_URL + f"/quests?filter=30;2;{start}"
+        url = base_url + f"/quests?filter=30;2;{start}"
     r = requests.get(url)
     soup = BeautifulSoup(r.text, 'html.parser')
     script_tag = soup.find('script', type='text/javascript', src=None)
@@ -177,12 +311,12 @@ def __get_wowhead_quests_search(start, end=None) -> list[QuestMD]:
         start = script_content.find('data:[', start) + 5
         end = script_content.rfind('});')
         json_data = script_content[start:end]
-        return list(map(lambda md: QuestMD(md.get('id'), md.get('name'), md.get('category2'), md.get('category'), md.get('side'), md.get('type'), md.get('level'), md.get('reqlevel')), json.loads(json_data)))
+        return list(map(lambda md: QuestMD(md.get('id'), md.get('name'), md.get('category2'), md.get('category'), md.get('side'), md.get('type'), md.get('level'), md.get('reqlevel'), expansion), json.loads(json_data)))
     else:
         return []
 
-def __retrieve_quests_categories_from_wowhead():
-    url = WOWHEAD_SEARCH_URL + f"/quests?filter=30;3;1"
+def get_wowhead_categories(expansion) -> dict[int, dict[int, str]]:
+    url = expansion_data[expansion][WOWHEAD_URL] + f"/quests?filter=30;3;1"
     r = requests.get(url)
     soup = BeautifulSoup(r.text, 'html.parser')
     script_tags = soup.find_all('script', type=None, src=None)
@@ -210,71 +344,66 @@ def __retrieve_quests_categories_from_wowhead():
     return categories
 
 
-def __retrieve_quests_metadata_from_wowhead() -> dict[int, QuestMD]:
+def __retrieve_quests_metadata_from_wowhead(expansion) -> dict[int, QuestMD]:
     all_quests_metadata = []
     i = 0
     while True:
         start = i * 1000
         if (i % 10 == 0):
-            quests = __get_wowhead_quests_search(start)
+            quests = __get_wowhead_quests_search(expansion, start)
             if len(quests) < 1000:
                 all_quests_metadata.extend(quests)
                 break
-        quests = __get_wowhead_quests_search(start, start + 1000)
+        quests = __get_wowhead_quests_search(expansion, start, start + 1000)
         all_quests_metadata.extend(quests)
         i += 1
     return {md.id: md for md in all_quests_metadata}
 
 
-def get_wowhead_categories() -> dict[int, QuestMD]:
+def get_wowhead_quests_metadata(expansion) -> dict[int, QuestMD]:
     import pickle
-    if os.path.exists("cache/tmp/wowhead_categories_cache.pkl"):
-        print('Loading saved Wowhead categories')
-        with open('cache/tmp/wowhead_categories_cache.pkl', 'rb') as f:
-            wowhead_categories = pickle.load(f)
-    else:
-        print('Retrieving Wowhead categories')
-        wowhead_categories = __retrieve_quests_categories_from_wowhead()
-        os.makedirs('cache/tmp', exist_ok=True)
-        with open('cache/tmp/wowhead_categories_cache.pkl', 'wb') as f:
-            pickle.dump(wowhead_categories, f)
-    return wowhead_categories
-
-def get_wowhead_quests_metadata() -> dict[int, QuestMD]:
-    import pickle
-    if os.path.exists("cache/tmp/wowhead_metadata_cache.pkl"):
-        print('Loading saved Wowhead metadata')
-        with open('cache/tmp/wowhead_metadata_cache.pkl', 'rb') as f:
+    cache_file_name = expansion_data[expansion][METADATA_CACHE]
+    if os.path.exists(f'cache/tmp/{cache_file_name}.pkl'):
+        print(f'Loading cached Wowhead({expansion}) metadata')
+        with open(f'cache/tmp/{cache_file_name}.pkl', 'rb') as f:
             wowhead_metadata = pickle.load(f)
     else:
-        print('Retrieving Wowhead metadata')
-        wowhead_metadata = __retrieve_quests_metadata_from_wowhead()
+        print(f'Retrieving Wowhead({expansion}) metadata')
+        wowhead_metadata = __retrieve_quests_metadata_from_wowhead(expansion)
         os.makedirs('cache/tmp', exist_ok=True)
-        with open('cache/tmp/wowhead_metadata_cache.pkl', 'wb') as f:
+        with open(f'cache/tmp/{cache_file_name}.pkl', 'wb') as f:
             pickle.dump(wowhead_metadata, f)
     return wowhead_metadata
 
-def save_htmls_from_wowhead(ids: list[int]):
-    print(f'Saving HTMLs for {len(ids)} quests from Wowhead.')
 
-    os.makedirs('cache/wowhead_quests_html', exist_ok=True)
+def save_page(expansion, id):
+    url = expansion_data[expansion][WOWHEAD_URL] + f'/quest={id}?xml'
+    html_file_path = f'cache/{expansion_data[expansion][HTML_CACHE]}/{id}.html'
+    r = requests.get(url)
+    if not r.ok:
+        # You download over 90000 quests in one hour - you'll fail
+        # You do it async - you fail
+        # Have a tea break (or change IP, lol)
+        raise Exception(f'Wowhead({expansion}) returned {r.status_code} for quest #{id}')
+    if (f"Quest #{id} doesn't exist." in r.text):
+        return
+    with open(html_file_path, 'w', encoding="utf-8") as output_file:
+        output_file.write(r.text)
+
+
+def save_htmls_from_wowhead(expansion, ids: list[int]):
+    from functools import partial
+    save_func = partial(save_page, expansion)
+    cache_dir = f'cache/{expansion_data[expansion][HTML_CACHE]}'
+
+    if os.path.exists(cache_dir) and len(os.listdir(cache_dir)) == len(ids):
+        print(f'HTML cache for Wowhead({expansion}) exists and seems legit. Skipping.')
+        return
+
+    print(f'Saving HTMLs for {len(ids)} quests from Wowhead({expansion}).')
+    os.makedirs(cache_dir, exist_ok=True)
     with multiprocessing.Pool(THREADS) as p:
-        p.map(__save_wowhead_html_page, ids)
-
-def save_htmls_from_classicdb(ids: list[int]):
-    print(f'Saving HTMLs for {len(ids)} quests from ClassicDB.')
-
-    os.makedirs('cache/classicdb_quests_html', exist_ok=True)
-    with multiprocessing.Pool(THREADS) as p:
-        p.map(__save_classicdb_html_page, ids)
-
-def wowhead_html_cache_exists():
-    wowhead_htmls_cache_dir = 'cache/wowhead_quests_html'
-    return os.path.exists(wowhead_htmls_cache_dir) and len(os.listdir(wowhead_htmls_cache_dir)) > 0
-
-def classicdb_html_cache_exists():
-    classicdb_htmls_cache_dir = 'cache/classicdb_quests_html'
-    return os.path.exists(classicdb_htmls_cache_dir) and len(os.listdir(classicdb_htmls_cache_dir)) > 0
+        p.map(save_func, ids)
 
 
 def __cleanup_text(text):
@@ -292,7 +421,6 @@ def __get_forward_text(tag):
 
     return out
 
-
 def __get_wowhead_objective_text(soup: BeautifulSoup):
     out = None
 
@@ -303,7 +431,6 @@ def __get_wowhead_objective_text(soup: BeautifulSoup):
 
     return out if out.strip() != '' else None
 
-
 def __get_wowhead_description_text(soup):
     out = None
 
@@ -312,7 +439,6 @@ def __get_wowhead_description_text(soup):
         out = __cleanup_text(__get_forward_text(tag))
 
     return out
-
 
 def __get_wowhead_progress_text(soup):
     out = None
@@ -330,7 +456,6 @@ def __get_wowhead_progress_text(soup):
 
     return out
 
-
 def __get_wowhead_completion_text(soup):
     out = None
 
@@ -347,9 +472,9 @@ def __get_wowhead_completion_text(soup):
 
     return out
 
-
-def __parse_wowhead_quest_page(id) -> Quest:
-    with open(f'cache/wowhead_quests_html/{id}.html', 'r', encoding="utf-8") as file:
+def parse_wowhead_quest_page(expansion, id) -> Quest:
+    html_path = f'cache/{expansion_data[expansion][HTML_CACHE]}/{id}.html'
+    with open(html_path, 'r', encoding="utf-8") as file:
         html = file.read()
     soup = BeautifulSoup(html, 'html5lib')
 
@@ -365,23 +490,94 @@ def __parse_wowhead_quest_page(id) -> Quest:
     return Quest(id, quest_name, objective, description, progress, completion)
 
 
-def parse_wowhead_pages(ids: list[int]) -> dict[int, Quest]:
-    import pickle
-    if os.path.exists("cache/tmp/wowhead_quest_cache.pkl"):
-        print('Loading saved Wowhead quests')
-        with open('cache/tmp/wowhead_quest_cache.pkl', 'rb') as f:
-            wowhead_quests = pickle.load(f)
-    else:
-        print('Parsing Wowhead quest pages')
-        # wowhead_quests = {id: __parse_wowhead_quest_page(id) for id in ids}
-        with multiprocessing.Pool(THREADS) as p:
-            quests = p.map(__parse_wowhead_quest_page, ids)
-        wowhead_quests = {quest.id: quest for quest in quests}
-        os.makedirs('cache/tmp', exist_ok=True)
-        with open('cache/tmp/wowhead_quest_cache.pkl', 'wb') as f:
-            pickle.dump(wowhead_quests, f)
-    return wowhead_quests
+def get_category(metadata: QuestMD) -> str:
+    from utils import known_categories, fixed_quest_categories
 
+    # Fix quest categories
+    if metadata.id in fixed_quest_categories:
+        metadata.category, metadata.subcategory = fixed_quest_categories[metadata.id]
+
+    if metadata.category in known_categories and metadata.subcategory in known_categories[metadata.category]:
+        category = f"{known_categories[metadata.category]['Name']}/{known_categories[metadata.category][metadata.subcategory]}"
+    else:
+        # print(f'Quest #{metadata.id}:{metadata.name} UNCATEGORIZED for {metadata.category}.{metadata.subcategory}!')  # debug
+        category = 'Miscellaneous/Uncategorized'
+
+    return category
+
+def merge_quests_and_metadata(quests: dict[int, Quest], metadata: dict[int, QuestMD]) -> dict[tuple[int, str], QuestEntity]:
+    if (metadata.keys() != quests.keys()):
+        raise Exception("Different number of quests and metadata. Something gone wrong during parsing.")
+
+    wowhead_quest_entities = dict()
+    for id in sorted(metadata.keys()):
+        quest = quests[id]
+        md = metadata[id]
+
+        if (id in expansion_data[md.expansion][IGNORES] or
+                '<UNUSED>' in quest.name.upper() or
+                'UNUSED' in quest.name or
+                'UNUSED' == quest.name.upper() or
+                'Faction Test' in quest.name or
+                'Classic Random ' in quest.name or # actually exists (like some next ones) but that's how reward for LFG works. vv
+                ' Random Heroic ' in quest.name or
+                'Daily Heroic Random ' in quest.name or
+                'Daily Normal Random ' in quest.name or
+                'World Event Dungeon - ' in quest.name or
+                ('Daily' in quest.name and 'Protocol' in quest.name and 'Random' in quest.name) or # ^^ yes, up to there it's LFG. Be careful with Mechagon in BfA (lol, we won't ever reach that), but may be useful in Cata
+                '<NYI>' in quest.name.upper() or
+                'NYI' in quest.name or
+                '<TXT>' in quest.name.upper() or
+                '[TXT]' in quest.name.upper() or
+                '[PH]' in quest.name.upper() or
+                '<CHANGE TO GOSSIP>' in quest.name.upper() or
+                '<TEST>' in quest.name.upper() or
+                '[DEPRECATED]' in quest.name.upper() or
+                ('TEST' in quest.name.upper() and 'QUEST' in quest.name.upper()) or
+                'iCoke' in quest.name or
+                'TEST QUEST' in quest.name.upper() or
+                'REUSE' == quest.name.upper() or
+                'Wrath (80) E' == quest.name or
+                '[NEVER USED]' == quest.name.upper() or
+                '' == quest.name):
+            continue
+
+        # if id in expansion_data[md.expansion][IGNORES]:
+        #     print(f'Quest #{id} in IGNORE')
+
+        # if not quest.objective and not quest.description and not quest.progress and not quest.completion:
+        #     print(f'Quest #{id} is EMPTY')
+
+        category = get_category(md)
+        wowhead_quest_entities[(id, md.expansion)] = QuestEntity(id, quest.name, quest.objective, quest.description, quest.progress,
+                                                 quest.completion, category, md.get_side(), md.get_type(),
+                                                 md.lvl, md.rlvl, md.expansion)
+    return wowhead_quest_entities
+
+def parse_wowhead_pages(expansion, metadata: dict[int, QuestMD]) -> dict[tuple[int, str], QuestEntity]:
+    import pickle
+    from functools import partial
+    cache_path = f'cache/tmp/{expansion_data[expansion][QUESTS_CACHE]}.pkl'
+    parse_func = partial(parse_wowhead_quest_page, expansion)
+
+    if os.path.exists(cache_path):
+        print(f'Loading cached Wowhead({expansion}) quests')
+        with open(cache_path, 'rb') as f:
+            wowhead_quest_entities = pickle.load(f)
+    else:
+        print(f'Parsing Wowhead({expansion}) quest pages')
+        # wowhead_quests = {id: parse_wowhead_quest_page(expansion, id) for id in ids}
+        with multiprocessing.Pool(THREADS) as p:
+            quests = p.map(parse_func, metadata.keys())
+
+        wowhead_quests = {quest.id: quest for quest in quests}
+        wowhead_quest_entities = merge_quests_and_metadata(wowhead_quests, metadata)
+
+        os.makedirs('cache/tmp', exist_ok=True)
+        with open(cache_path, 'wb') as f:
+            pickle.dump(wowhead_quest_entities, f)
+
+    return wowhead_quest_entities
 
 def save_quests_to_cache_db(quests: dict[int, Quest], metadata: dict[int, QuestMD_DB]):
     print('Saving quest data to cache DB')
@@ -416,24 +612,16 @@ def save_quests_to_cache_db(quests: dict[int, Quest], metadata: dict[int, QuestM
                          (id, quest.name, quest.objective, quest.description, quest.progress, quest.completion,
                           quest_md.cat, quest_md.side, quest_md.type, quest_md.lvl, quest_md.rlvl, 'classic'))
 
-
-
 def __get_quest_from_db(id, conn) -> [Quest, QuestMD_DB]:
     return [(Quest(r[0], r[1], r[2], r[3], r[4], r[5]), QuestMD_DB(r[0], r[1], r[6], r[7], r[8], r[9], r[10]))
             for r in conn.execute('SELECT id, title, objective, description, progress, completion, cat, side, type, lvl, rlvl, expansion FROM quests WHERE id = ?', (id,))][0]
 
-
 def get_all_quests_from_db(db_path):
     db_conn = sqlite3.connect(db_path)
 
-    return {r[0]: (Quest(r[0], r[1], r[2], r[3], r[4], r[5]), QuestMD_DB(r[0], r[1], r[6], r[7], r[8], r[9], r[10])) for r in
+    return {r[0]: (Quest(r[0], r[1], r[2], r[3], r[4], r[5]), QuestMD_DB(r[0], r[1], r[6], r[7], r[8], r[9], r[10], r[11])) for r in
             db_conn.execute('SELECT id, title, objective, description, progress, completion, cat, side, type, lvl, rlvl, expansion FROM quests')}
 
-
-def __update_quest_type_and_lvls(quest_md: QuestMD_DB, conn) -> [Quest, QuestMD_DB]:
-    conn.execute(f'''UPDATE quests SET lvl = ?, rlvl = ?, type = ? WHERE id = ?''',
-                             (quest_md.lvl, quest_md.rlvl, quest_md.type, quest_md.id))
-    conn.commit()
 
 def fix_quests(quests):
     quests[5].progress = None
@@ -541,7 +729,6 @@ def merge_side(new_side, saved_side, id):
 
 
 def merge_all_quests(wowhead_quests: dict[int, Quest], classicua_quests: dict[int, Quest], wowhead_metadata: dict[int, QuestMD], classicua_metadata: dict[int, QuestMD_DB]) -> (dict[int, Quest], dict[int, QuestMD_DB]):
-    from utils import not_used_vanilla_quests, known_categories, fixed_quest_categories
     quests = {}
     metadata = {}
 
@@ -556,32 +743,7 @@ def merge_all_quests(wowhead_quests: dict[int, Quest], classicua_quests: dict[in
             metadata[id] = classicua_md
             continue
 
-        if (id in not_used_vanilla_quests or
-            '<UNUSED>' in wowhead_quest.name.upper() or
-            '<NYI>' in wowhead_quest.name.upper() or
-            '<TXT>' in wowhead_quest.name.upper() or
-            '<CHANGE TO GOSSIP>' in wowhead_quest.name.upper() or
-            '<TEST>' in wowhead_quest.name.upper() or
-            '[DEPRECATED]' in wowhead_quest.name.upper() or
-            'iCoke' in wowhead_quest.name or
-            'REUSE' in wowhead_quest.name.upper()):
-            if classicua_quest:
-                print(f'Preserving not used vanilla quest #{id} in DB')
-                quests[id] = classicua_quest
-                metadata[id] = classicua_md
-            continue
-
         wowhead_md_raw = wowhead_metadata.get(id)
-
-        # Fix quest categories
-        if id in fixed_quest_categories:
-            wowhead_md_raw.category, wowhead_md_raw.subcategory = fixed_quest_categories[id]
-
-        if wowhead_md_raw.category in known_categories and wowhead_md_raw.subcategory in known_categories[wowhead_md_raw.category]:
-            category = f"{known_categories[wowhead_md_raw.category]['Name']}/{known_categories[wowhead_md_raw.category][wowhead_md_raw.subcategory]}"
-        else:
-            print(f'Quest #{id} UNCATEGORIZED!')
-            category = 'Uncategorized'
         wowhead_md = QuestMD_DB(wowhead_md_raw.id, wowhead_md_raw.name, category,
                                 wowhead_md_raw.get_side(), wowhead_md_raw.get_type(), wowhead_md_raw.lvl,
                                 wowhead_md_raw.rlvl)
@@ -610,13 +772,29 @@ def merge_all_quests(wowhead_quests: dict[int, Quest], classicua_quests: dict[in
     return quests, metadata
 
 
-def populate_cache_db_with_quest_data():
-    # wowhead_categories = get_wowhead_categories() # Using categories from dict instead
-    wowhead_metadata = get_wowhead_quests_metadata()
+def merge_quest(old_quest, new_quest):
+    pass
 
-    if not wowhead_html_cache_exists():
-        save_htmls_from_wowhead(list(wowhead_metadata.keys()))
-    wowhead_quests = parse_wowhead_pages(list(wowhead_metadata.keys()))
+def merge_expansions(old_expansion: dict[tuple[int, str], QuestEntity], new_expansion: dict[tuple[int, str], QuestEntity]) -> dict[tuple[int, str], QuestEntity]:
+    pass
+
+
+def populate_cache_db_with_quest_data():
+    wowhead_metadata = get_wowhead_quests_metadata(CLASSIC)
+    wowhead_metadata_tbc = get_wowhead_quests_metadata(TBC)
+    wowhead_metadata_wrath = get_wowhead_quests_metadata(WRATH)
+
+    save_htmls_from_wowhead(CLASSIC, list(wowhead_metadata.keys()))
+    save_htmls_from_wowhead(TBC, list(wowhead_metadata_tbc.keys()))
+    save_htmls_from_wowhead(WRATH, list(wowhead_metadata_wrath.keys()))
+
+    wowhead_quests = parse_wowhead_pages(CLASSIC, wowhead_metadata)
+    wowhead_quests_tbc = parse_wowhead_pages(TBC, wowhead_metadata_tbc)
+    wowhead_quests_wrath = parse_wowhead_pages(WRATH, wowhead_metadata_wrath)
+
+    classic_and_tbc_quests = merge_expansions(wowhead_quests, wowhead_quests_tbc)
+    all_quests = merge_expansions(classic_and_tbc_quests, wowhead_quests_wrath)
+    return
 
     classicua_data = get_all_quests_from_db('classicua.db')
 
@@ -699,9 +877,45 @@ def compare_directories(dir1, dir2):
         compare_directories(os.path.join(dir1, subdir), os.path.join(dir2, subdir))
 
 
+def check_categories():
+    from utils import known_categories
+    wowhead_categories = get_wowhead_categories(CLASSIC)
+    wowhead_categories_tbc = get_wowhead_categories(TBC)
+    wowhead_categories_wrath = get_wowhead_categories(WRATH)
+
+    dict1 = known_categories
+    dict2 = wowhead_categories_wrath
+
+    added_keys = {k: dict2[k] for k in dict2 if k not in dict1}
+    removed_keys = {k: dict1[k] for k in dict1 if k not in dict2}
+
+    changed_values = {}
+    added_inner_keys = {}
+    removed_inner_keys = {}
+
+    for key in set(dict1.keys()) & set(dict2.keys()):
+        inner_dict1 = dict1[key]
+        inner_dict2 = dict2[key]
+
+        added_inner_keys[key] = {k: inner_dict2[k] for k in inner_dict2 if k not in inner_dict1}
+        removed_inner_keys[key] = {k: inner_dict1[k] for k in inner_dict1 if k not in inner_dict2}
+
+        changed_values[key] = {k: (inner_dict1[k], inner_dict2[k]) for k in inner_dict1 if
+                               k in inner_dict2 and inner_dict1[k] != inner_dict2[k]}
+
+    print("Added Keys in Outer Dictionary:", added_keys)
+    print("Removed Keys in Outer Dictionary:", removed_keys)
+    print("Added Keys in Inner Dictionaries:", added_inner_keys)
+    print("Removed Keys in Inner Dictionaries:", removed_inner_keys)
+    print("Changed Values in Inner Dictionaries:", changed_values)
+
+
+
 if __name__ == '__main__':
-    populate_cache_db_with_quest_data()  # Generate cache/quests.db with vanilla quests
-    compare_databases('cache/quests.db', 'classicua.db') # compare cache/quests.db with ./classicua.db (the one we overwrite)
+    # check_categories() # Check categories and update known_categories in utils if needed
+
+    populate_cache_db_with_quest_data()  # Generate cache/quests.db
+    # compare_databases('cache/quests.db', 'classicua.db') # compare cache/quests.db with ./classicua.db (the one we overwrite)
 
     # generate Crowdin folder for classic with gen_source_for_crowdin.py, put in source_for_crowdin
     # copy existing Crowdin folder, put in source_from_crowdin
