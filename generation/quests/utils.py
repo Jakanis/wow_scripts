@@ -21,11 +21,13 @@ fixed_quest_categories = {
     7838: (0, 33),  # Arena Grandmaster -> Eastern Kingdoms/Stranglethorn Vale
     8228: (5, -101),  # Could I get a Fishing Flier? -> Professions/Fishing
     8229: (5, -101),  # Could I get a Fishing Flier? -> Professions/Fishing
+    8384: (6, 3358),  # Claiming Arathi Basin -> Battlegrounds/Arathi Basin
     8385: (6, -25),  # Concerted Efforts -> Battlegrounds/Battlegrounds
     8404: (6, 3277),  # Fight for Warsong Gulch -> Battlegrounds/Warsong Gulch
     8405: (6, 3277),  # Fight for Warsong Gulch -> Battlegrounds/Warsong Gulch
     8406: (6, 3277),  # Fight for Warsong Gulch -> Battlegrounds/Warsong Gulch
     8408: (6, 3277),  # Fight for Warsong Gulch -> Battlegrounds/Warsong Gulch
+    8438: (6, 3358),  # Conquering Arathi Basin -> Battlegrounds/Arathi Basin
     8565: (6, 3358),  # Past Victories in Arathi -> Battlegrounds/Arathi Basin
     8566: (6, 3358),  # Past Victories in Arathi -> Battlegrounds/Arathi Basin
     8567: (6, 3277),  # Past Victories in Warsong Gulch -> Battlegrounds/Warsong Gulch
@@ -67,10 +69,11 @@ fixed_quest_categories = {
     9556: (2, 2017),  # To The Victor... -> Dungeons/Stratholme
 
     # TBC:
+    1133: (1, 15),  # Journey to Astranaar -> Kalimdor/Dustwallow Marsh (was changed in TBC, set here to remove conflicts)
     11558: (9, -22),  # Dangerous Love -> World Events/Love is in the Air
-    11691: (9, -369),  # Summon Ahune -> World Events/Midsummer (actually correct in Wrath, in case it won't be overwritten)
+    # 11691: (9, -369),  # Summon Ahune -> World Events/Midsummer (actually correct in Wrath, in case it won't be overwritten)
     11696: (9, -369),  # Ahune is Here! -> World Events/Midsummer
-    11972: (9, -369),  # Shards of Ahune -> World Events/Midsummer (actually correct in Wrath, in case it won't be overwritten)
+    # 11972: (9, -369),  # Shards of Ahune -> World Events/Midsummer (actually correct in Wrath, in case it won't be overwritten)
 
 }
 
