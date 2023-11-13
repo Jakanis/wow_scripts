@@ -22,7 +22,11 @@ fixed_quest_categories = {
     8228: (5, -101),  # Could I get a Fishing Flier? -> Professions/Fishing
     8229: (5, -101),  # Could I get a Fishing Flier? -> Professions/Fishing
     8384: (6, 3358),  # Claiming Arathi Basin -> Battlegrounds/Arathi Basin
+    8367: (6, -25),  # For Great Honor -> Battlegrounds/Battlegrounds
+    8375: (6, 2597),  # Remember Alterac Valley! -> Battlegrounds/Alterac Valley
+    8383: (6, 2597),  # Remember Alterac Valley! -> Battlegrounds/Alterac Valley
     8385: (6, -25),  # Concerted Efforts -> Battlegrounds/Battlegrounds
+    8387: (6, 2597),  # Invaders of Alterac Valley -> Battlegrounds/Alterac Valley
     8404: (6, 3277),  # Fight for Warsong Gulch -> Battlegrounds/Warsong Gulch
     8405: (6, 3277),  # Fight for Warsong Gulch -> Battlegrounds/Warsong Gulch
     8406: (6, 3277),  # Fight for Warsong Gulch -> Battlegrounds/Warsong Gulch

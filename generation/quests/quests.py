@@ -59,8 +59,8 @@ expansion_data = {
         IGNORES: [
             1, 785, 912, 999, 1005, 1006, 1099, 1174, 1272, 1500, 5383, 6843, 7522, 7561, 7797, 7906, 7961, 7962, 8226, 8259, 8289, 8296, 8478, 8489, 8618, 8896, 9065,  # Not used in all expansions
             9511, 9880, 9881, 10375, 10376, 10377, 10378, 10379, 10383, 10386, 10387, 10638, 10779, 10844, 10999, 11027, 11334, 11345, 11551, 11976, 24508, 24509, 65221, 65222, 65223, 65224,  # Appeared in TBC, not used
-            11461, 11578, 11579, 11939, 11987, 11992, 12162, 12163, 12426, 12586, 13299, 13317, 25306, 12233, 12493, 12586, 12825, 12834, 12835, 12837, 12881, 12890, 12911, 13977, # Appeared in Wrath, not used
-            60860, 70685,  # Rewards for... ergh... TCG? Doesn't exist for other expansions though
+            11179, 13997, 11402, 11461, 11578, 11579, 11939, 11987, 11992, 12162, 12163, 12426, 12586, 13299, 13317, 25306, 12233, 12493, 12586, 12825, 12834, 12835, 12837, 12881, 12890, 12911, 13977, # Appeared in Wrath, not used
+            60860, 70685,  # Rewards for... ergh... TCG? Doesn't exist for other expansions and Wowhead has no text
             25055, 25092,  # TODO: Looks like pre-Cata. Check later
             11196,  # Used in Cata
         ]
@@ -168,10 +168,10 @@ class QuestEntity:
             return False
 
     def get_side(self):
-        if self.cat == 'none':
+        if self.side == 'none':
             return 'both'
         else:
-            return self.cat
+            return self.side
 
     @staticmethod
     def __diff_fields(field1, field2):
@@ -676,7 +676,8 @@ def save_quests_to_cache_db(quests: dict[int, dict[str, QuestEntity]]):
                         side TEXT NOT NULL,
                         type TEXT NOT NULL,
                         lvl INTEGER NOT NULL,
-                        rlvl INTEGER NOT NULL
+                        rlvl INTEGER NOT NULL,
+	                    UNIQUE("id","expansion")
                 )''')
 
     conn.commit()
@@ -1063,11 +1064,14 @@ def fix_classic_quests(classic_quests: dict[int, dict[str, QuestEntity]]):
     classic_quests[156][CLASSIC].description = classic_quests[156][CLASSIC].description.replace('\nrot blossoms grow', '\nRot blossoms grow')
     classic_quests[812][CLASSIC].completion += ' <sigh>'
     classic_quests[842][CLASSIC].completion = "Alright, <name>. You want to earn your keep with the Horde? Well there's plenty to do here, so listen close and do what you're told.\n\n<I see that look in your eyes, do not think I will tolerate any insolence. Thrall himself has declared the Hordes females to be on equal footing with you men. Disrespect me in the slightest, and you will know true pain./I'm happy to have met you. Thrall will be glad to know that more females like you and I are taking the initiative to push forward in the Barrens.>"
+    classic_quests[4981][CLASSIC].completion = classic_quests[4981][CLASSIC].completion.replace("\n\n\n\n", "\n\n<Bijou laughs.>\n\n")
     classic_quests[5282][CLASSIC].progress = 'Compassion is what separates us from the animals, <name>. Remember that...'
     classic_quests[5713][CLASSIC].progress = 'Have you seen of Sentinel Aynasha on the road? She left on an important mission but she has not yet returned.'
     classic_quests[6482][CLASSIC].progress = 'Have you seen my brother Ruul? He walked into the forest days ago and has not returned...'
     classic_quests[7936][CLASSIC].completion = classic_quests[7936][CLASSIC].completion.replace('A prize fit for a king!', 'A prize fit for a <king/queen>!')
+    classic_quests[8044][CLASSIC].progress = classic_quests[8044][CLASSIC].progress.replace("\n\n\n\n", "\n\n<Jin'rokh bows.>\n\n")
     classic_quests[8046][CLASSIC].completion += "\n\n<Jin'rokh shudders.>"
+    classic_quests[8052][CLASSIC].progress = classic_quests[8052][CLASSIC].progress.replace("\n\n\n\n", "\n\n<Al'tabim sighs.>\n\n")
     classic_quests[8146][CLASSIC].progress = "Ah, <name>, it is good to smell you again.\n\n<Falthir grins.>\n\nYou'll have to excuse my sense of humor. It can be most foul at times.\n\nI sense that you have caused great anguish to our enemies. The forces of Hakkar cry out your name in anger. This is most excellent.\n\nYou have earned another weave on your talisman. Hand it to me."
     classic_quests[8316][CLASSIC].completion = "War comes, <name>, and with it comes untold horrors. You have done all that could be asked of you and for that you should be rewarded.\n\nShould this... this prophecy ever come to pass...\n\n<Geologist Larksbane turns pale.>\n\nThe future of us all could be at an end.\n\nThese armaments will prove invaluable to your campaign in this desert."
     classic_quests[8376][CLASSIC].completion = "War comes, <name>, and with it comes untold horrors. You have done all that could be asked of you and for that you should be rewarded.\n\nShould this... this prophecy ever come to pass...\n\n<Geologist Larksbane turns pale.>\n\nThe future of us all could be at an end.\n\nThese armaments will prove invaluable to your campaign in this desert."
@@ -1107,6 +1111,7 @@ def fix_classic_quests(classic_quests: dict[int, dict[str, QuestEntity]]):
     classic_quests[1468][CLASSIC].completion = classic_quests[1468][CLASSIC].completion.replace('be like a big brother to me', 'be like a big <brother/sister> to me').replace(', yes sir.', ', yes <sir/lady>.')
     classic_quests[4081][CLASSIC].progress = "What is it, <race>? Can't you see I have a platoon to command?"
     classic_quests[5044][CLASSIC].completion += ' <snort>'
+    classic_quests[5265][CLASSIC].description = classic_quests[5265][CLASSIC].description.replace('\nthe Argent Hold ', '\nThe Argent Hold ')
     classic_quests[9136][CLASSIC].completion = 'I am much obliged, <name>.\n\n<Rayne bows.>\n\nPlease remember that I am always accepting fronds.'
 
 
@@ -1194,9 +1199,13 @@ def fix_tbc_quests(tbc_quests: dict[int, dict[str, QuestEntity]]):
     tbc_quests[895][TBC].description = tbc_quests[895][TBC].description.replace('and is WANTED on', 'and is wanted on')
     tbc_quests[1468][TBC].completion = tbc_quests[1468][TBC].completion.replace('be like a big brother to me', 'be like a big <brother/sister> to me').replace(', yes sir.', ', yes <sir/lady>.')
     tbc_quests[2767][TBC].progress = "Yes, I'm Oglethorpe Obnoticus, master inventor at your service! Now, is there something I could assist you with?"
+    tbc_quests[4981][TBC].completion = tbc_quests[4981][TBC].completion.replace("\n\n\n\n", "\n\n<Bijou laughs.>\n\n")
     tbc_quests[5044][TBC].completion += ' <snort>'
+    tbc_quests[5265][TBC].description = tbc_quests[5265][TBC].description.replace('\nthe Argent Hold ', '\nThe Argent Hold ')
     tbc_quests[7936][TBC].completion = tbc_quests[7936][TBC].completion.replace('A prize fit for a king!', 'A prize fit for a <king/queen>!')
+    tbc_quests[8044][TBC].progress = tbc_quests[8044][TBC].progress.replace("\n\n\n\n", "\n\n<Jin'rokh bows.>\n\n")
     tbc_quests[8046][TBC].completion += "\n\n<Jin'rokh shudders.>"
+    tbc_quests[8052][TBC].progress = tbc_quests[8052][TBC].progress.replace("\n\n\n\n", "\n\n<Al'tabim sighs.>\n\n")
     tbc_quests[8146][TBC].progress = "Ah, <name>, it is good to smell you again.\n\n<Falthir grins.>\n\nYou'll have to excuse my sense of humor. It can be most foul at times.\n\nI sense that you have caused great anguish to our enemies. The forces of Hakkar cry out your name in anger. This is most excellent.\n\nYou have earned another weave on your talisman. Hand it to me."
     tbc_quests[8316][TBC].completion = "War comes, <name>, and with it comes untold horrors. You have done all that could be asked of you and for that you should be rewarded.\n\nShould this... this prophecy ever come to pass...\n\n<Geologist Larksbane turns pale.>\n\nThe future of us all could be at an end.\n\nThese armaments will prove invaluable to your campaign in this desert."
     tbc_quests[8376][TBC].completion = "War comes, <name>, and with it comes untold horrors. You have done all that could be asked of you and for that you should be rewarded.\n\nShould this... this prophecy ever come to pass...\n\n<Geologist Larksbane turns pale.>\n\nThe future of us all could be at an end.\n\nThese armaments will prove invaluable to your campaign in this desert."
@@ -1215,6 +1224,7 @@ def fix_tbc_quests(tbc_quests: dict[int, dict[str, QuestEntity]]):
 def fix_wrath_quests(wrath_quests: dict[int, dict[str, QuestEntity]]):
     wrath_quests[915][WRATH].completion = wrath_quests[915][WRATH].completion.replace("Tigule and Foror know to", "Tigule knows how to")
     wrath_quests[1068][WRATH].description = wrath_quests[1068][WRATH].description.replace(" shaman ", " shamans ")
+    wrath_quests[4822][WRATH].completion = wrath_quests[4822][WRATH].completion.replace("Tigule and Foror know to", "Tigule knows how to")
     wrath_quests[7792][WRATH].progress = 'We are currently gathering wool. A donation of sixty pieces of wool cloth will net you full recognition by our people for your generous actions.\n\nIf you currently have sixty pieces, you may donate them now.'
     wrath_quests[7792][WRATH].completion = 'Our thanks for your donation, <name>.'
     wrath_quests[7798][WRATH].progress = 'We are currently gathering silk. A donation of sixty pieces of silk cloth will net you full recognition by our people for your generous actions\n\nIf you currently have sixty pieces, you may donate them now.'
@@ -1233,9 +1243,13 @@ def fix_wrath_quests(wrath_quests: dict[int, dict[str, QuestEntity]]):
     wrath_quests[895][WRATH].description = wrath_quests[895][WRATH].description.replace('and is WANTED on', 'and is wanted on')
     wrath_quests[1468][WRATH].completion = wrath_quests[1468][WRATH].completion.replace('be like a big brother to me', 'be like a big <brother/sister> to me').replace(', yes sir.', ', yes <sir/lady>.')
     wrath_quests[2767][WRATH].progress = "Yes, I'm Oglethorpe Obnoticus, master inventor at your service! Now, is there something I could assist you with?"
+    wrath_quests[4981][WRATH].completion = wrath_quests[4981][WRATH].completion.replace("\n\n\n\n", "\n\n<Bijou laughs.>\n\n")
     wrath_quests[5044][WRATH].completion += ' <snort>'
+    wrath_quests[5265][WRATH].description = wrath_quests[5265][WRATH].description.replace('\nthe Argent Hold ', '\nThe Argent Hold ')
     wrath_quests[7936][WRATH].completion = wrath_quests[7936][WRATH].completion.replace('A prize fit for a king!', 'A prize fit for a <king/queen>!')
+    wrath_quests[8044][WRATH].progress = wrath_quests[8044][WRATH].progress.replace("\n\n\n\n", "\n\n<Jin'rokh bows.>\n\n")
     wrath_quests[8046][WRATH].completion += "\n\n<Jin'rokh shudders.>"
+    wrath_quests[8052][WRATH].progress = wrath_quests[8052][WRATH].progress.replace("\n\n\n\n", "\n\n<Al'tabim sighs.>\n\n")
     wrath_quests[8146][WRATH].progress = "Ah, <name>, it is good to smell you again.\n\n<Falthir grins.>\n\nYou'll have to excuse my sense of humor. It can be most foul at times.\n\nI sense that you have caused great anguish to our enemies. The forces of Hakkar cry out your name in anger. This is most excellent.\n\nYou have earned another weave on your talisman. Hand it to me."
     wrath_quests[8316][WRATH].completion = "War comes, <name>, and with it comes untold horrors. You have done all that could be asked of you and for that you should be rewarded.\n\nShould this... this prophecy ever come to pass...\n\n<Geologist Larksbane turns pale.>\n\nThe future of us all could be at an end.\n\nThese armaments will prove invaluable to your campaign in this desert."
     wrath_quests[8376][WRATH].completion = "War comes, <name>, and with it comes untold horrors. You have done all that could be asked of you and for that you should be rewarded.\n\nShould this... this prophecy ever come to pass...\n\n<Geologist Larksbane turns pale.>\n\nThe future of us all could be at an end.\n\nThese armaments will prove invaluable to your campaign in this desert."
@@ -1436,10 +1450,8 @@ if __name__ == '__main__':
     # check_categories() # Check categories and update known_categories in utils if needed
 
     populate_cache_db_with_quest_data()  # Generate cache/quests.db
-    # compare_databases('cache/quests.db', 'classicua.db') # compare cache/quests.db with ./classicua.db (the one we overwrite)
 
-    # generate Crowdin folder for classic with gen_source_for_crowdin.py, put in source_for_crowdin
-    # copy existing Crowdin folder, put in source_from_crowdin
+    # compare_databases('cache/quests.db', 'classicua.db') # compare cache/quests.db with ./classicua.db (the one we overwrite)
 
     generate_sources()
 
