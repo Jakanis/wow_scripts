@@ -1457,3 +1457,5 @@ if __name__ == '__main__':
 
     compare_directories('source_from_crowdin', 'source_for_crowdin')
 
+    # TODO: Validations for duplicating strings (may be wrong data from ClassicDB)
+    # TODO: Review side changes after update (with backed up ClassicUA DB)
