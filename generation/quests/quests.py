@@ -560,11 +560,11 @@ def parse_wowhead_quest_page(expansion, id) -> Quest:
 
 
 def get_category(metadata: QuestMD) -> str:
-    from utils import known_categories, fixed_quest_categories
+    from utils import known_categories, quest_categories_correction
 
     # Fix quest categories
-    if metadata.id in fixed_quest_categories:
-        metadata.category, metadata.subcategory = fixed_quest_categories[metadata.id]
+    if metadata.id in quest_categories_correction:
+        metadata.category, metadata.subcategory = quest_categories_correction[metadata.id]
 
     if metadata.category in known_categories and metadata.subcategory in known_categories[metadata.category]:
         category = f"{known_categories[metadata.category]['Name']}/{known_categories[metadata.category][metadata.subcategory]}"
@@ -666,7 +666,7 @@ def save_quests_to_cache_db(quests: dict[int, dict[str, QuestEntity]]):
     conn.execute('DROP TABLE IF EXISTS quests')
     conn.execute('''CREATE TABLE quests (
                         id INTEGER NOT NULL,
-                        expansion TEXT NON NULL,
+                        expansion TEXT NOT NULL,
                         title TEXT,
                         objective TEXT,
                         description TEXT,
@@ -781,101 +781,103 @@ def merge_side(new_side, saved_side, id):
 
 
 def merge_with_db(wowhead_quests: dict[int, dict[str, QuestEntity]], classicua_quests: dict[int, dict[str, QuestEntity]]) -> dict[int, dict[str, QuestEntity]]:
-    for id in sorted(wowhead_quests.keys() | classicua_quests.keys()):
-        cache_quest = wowhead_quests.get(id).get(CLASSIC) if wowhead_quests.get(id) else None
-        saved_quest = classicua_quests.get(id).get(CLASSIC) if classicua_quests.get(id) else None
+    for quest_id in sorted(wowhead_quests.keys() & classicua_quests.keys()):
+        for expansion in (wowhead_quests[quest_id].keys() & classicua_quests[quest_id].keys()):
+            cache_quest = wowhead_quests[quest_id].get(expansion) if wowhead_quests.get(quest_id) and wowhead_quests[quest_id].get(expansion) else None
+            saved_quest = classicua_quests.get(quest_id).get(expansion) if classicua_quests.get(quest_id) and classicua_quests[quest_id].get(expansion) else None
 
-        if not cache_quest and not saved_quest:
-            continue
+            if not cache_quest and not saved_quest:
+                print(f'No quest for id #{quest_id}')
+                continue
 
-        changes_in_next_expansions = False
-        if len(wowhead_quests.get(id)) > 1:
-            changes_in_next_expansions = True
+            changes_in_next_expansions = False
+            if len(wowhead_quests.get(quest_id)) > 1:
+                changes_in_next_expansions = True
 
-        if cache_quest is None:  # Move #2358 to Wrath
-            print('-' * 100)
-            if changes_in_next_expansions:
-                print(f'Quest #{id} has changes in next expansions')
-            print(f"WarningDB0: Quest #{id} '{getattr(saved_quest, 'name')}' doesn't exist in Wowhead Classic")
-            continue
+            if cache_quest is None:  # Move #2358 to Wrath
+                print('-' * 100)
+                if changes_in_next_expansions:
+                    print(f'Quest #{quest_id} has changes in next expansions')
+                print(f"WarningDB0: Quest #{quest_id} '{getattr(saved_quest, 'name')}' doesn't exist in Wowhead Classic")
+                continue
 
-        if saved_quest is None:  # Good (27)
-            print('-' * 100)
-            if changes_in_next_expansions:
-                print(f'Quest #{id} has changes in next expansions')
-            print(f"WarningDB1: Quest #{id} '{getattr(cache_quest, 'name')}' doesn't exist in ClassicUA")
-            continue
+            if saved_quest is None:  # Good (27)
+                print('-' * 100)
+                if changes_in_next_expansions:
+                    print(f'Quest #{quest_id} has changes in next expansions')
+                print(f"WarningDB1: Quest #{quest_id} '{getattr(cache_quest, 'name')}' doesn't exist in ClassicUA")
+                continue
 
-        if cache_quest.name != saved_quest.name:  # Good (7)
-            print('-' * 100)
-            if changes_in_next_expansions:
-                print(f'Quest #{id} has changes in next expansions')
-            print(f'WarningDB2: Quest #{id} name was changed: "{cache_quest.name}" -> "{saved_quest.name}"')
-            print('\n'.join(cache_quest.diff(saved_quest)))
-            continue
+            if cache_quest.name != saved_quest.name:  # Good (7)
+                print('-' * 100)
+                if changes_in_next_expansions:
+                    print(f'Quest #{quest_id} has changes in next expansions')
+                print(f'WarningDB2: Quest #{quest_id} name was changed: "{cache_quest.name}" -> "{saved_quest.name}"')
+                print('\n'.join(cache_quest.diff(saved_quest)))
+                continue
 
-        changes = cache_quest.diff_updates(saved_quest)
-        additions = cache_quest.diff_deletes(saved_quest)
-        deletions = saved_quest.diff_deletes(cache_quest)
+            changes = cache_quest.diff_updates(saved_quest)
+            additions = cache_quest.diff_deletes(saved_quest)
+            deletions = saved_quest.diff_deletes(cache_quest)
 
-        if len(changes) > 0 and len(additions) > 0 and len(deletions) > 0:  # Good, none
-            print('-' * 100)
-            if changes_in_next_expansions:
-                print(f'Quest #{id} has changes in next expansions')
-            print(f'WarningDB3: Quest #{cache_quest.id} "{cache_quest.name}" text is a mess:')
-            print('\n'.join(cache_quest.diff(saved_quest)))
-            continue
+            if len(changes) > 0 and len(additions) > 0 and len(deletions) > 0:  # Good, none
+                print('-' * 100)
+                if changes_in_next_expansions:
+                    print(f'Quest #{quest_id} has changes in next expansions')
+                print(f'WarningDB3: Quest #{cache_quest.id} "{cache_quest.name}" text is a mess:')
+                print('\n'.join(cache_quest.diff(saved_quest)))
+                continue
 
-        if len(changes) > 0 and len(additions) > 0:  # Good (16)
-            print('-' * 100)
-            if changes_in_next_expansions:
-                print(f'Quest #{id} has changes in next expansions')
-            print(f'WarningDB4: Quest #{cache_quest.id} "{cache_quest.name}" text has changes and additions:')
-            print('\n'.join(cache_quest.diff(saved_quest)))
-            continue
+            if len(changes) > 0 and len(additions) > 0:  # Good (16)
+                print('-' * 100)
+                if changes_in_next_expansions:
+                    print(f'Quest #{quest_id} has changes in next expansions')
+                print(f'WarningDB4: Quest #{cache_quest.id} "{cache_quest.name}" text has changes and additions:')
+                print('\n'.join(cache_quest.diff(saved_quest)))
+                continue
 
-        if len(changes) > 0 and len(deletions) > 0:  # Good (9). No changes needed
-            print('-' * 100)
-            if changes_in_next_expansions:
-                print(f'Quest #{id} has changes in next expansions')
-            print(f'WarningDB5: Quest #{cache_quest.id} "{cache_quest.name}" text has changes and deletions:')
-            print('\n'.join(cache_quest.diff(saved_quest)))
-            continue
+            if len(changes) > 0 and len(deletions) > 0:  # Good (9). No changes needed
+                print('-' * 100)
+                if changes_in_next_expansions:
+                    print(f'Quest #{quest_id} has changes in next expansions')
+                print(f'WarningDB5: Quest #{cache_quest.id} "{cache_quest.name}" text has changes and deletions:')
+                print('\n'.join(cache_quest.diff(saved_quest)))
+                continue
 
-        if len(additions) > 0 and len(deletions) > 0:  # Good (20). No changes needed
-            print('-' * 100)
-            if changes_in_next_expansions:
-                print(f'Quest #{id} has changes in next expansions')
-            print(f'WarningDB6: Quest #{cache_quest.id} "{cache_quest.name}" text has additions and deletions:')
-            print('\n'.join(cache_quest.diff(saved_quest)))
-            continue
+            if len(additions) > 0 and len(deletions) > 0:  # Good (20). No changes needed
+                print('-' * 100)
+                if changes_in_next_expansions:
+                    print(f'Quest #{quest_id} has changes in next expansions')
+                print(f'WarningDB6: Quest #{cache_quest.id} "{cache_quest.name}" text has additions and deletions:')
+                print('\n'.join(cache_quest.diff(saved_quest)))
+                continue
 
-        if len(changes) > 0:  # Good (290). Pure changes, mostly should be fine.
-            print('-' * 100)
-            if changes_in_next_expansions:
-                print(f'Quest #{id} has changes in next expansions')
-            print(f'WarningDB7: Quest #{cache_quest.id} "{cache_quest.name}" text was changed:')
-            print('\n'.join(cache_quest.diff(saved_quest)))
-            continue
+            if len(changes) > 0:  # Good (290). Pure changes, mostly should be fine.
+                print('-' * 100)
+                if changes_in_next_expansions:
+                    print(f'Quest #{quest_id} has changes in next expansions')
+                print(f'WarningDB7: Quest #{cache_quest.id} "{cache_quest.name}" text was changed:')
+                print('\n'.join(cache_quest.diff(saved_quest)))
+                continue
 
-        #  TODO: Check if string also exists in other quest. May be added by mistake from other quest, happens with ClassicDB
-        if len(additions) > 0:  # Check (252). Usually needs manual fixes
-            print('-' * 100)
-            if changes_in_next_expansions:
-                print(f'Quest #{id} has changes in next expansions')
-            print(f'WarningDB8: Quest #{cache_quest.id} "{cache_quest.name}" text has additions:')
-            print('\n'.join(cache_quest.diff(saved_quest)))
-            print(f'Merging...')
-            cache_quest.accept_text_additions(saved_quest)
-            continue
+            #  TODO: Check if string also exists in other quest. May be added by mistake from other quest, happens with ClassicDB
+            if len(additions) > 0:  # Check (233). If we haven't parsed that from Wowhead - we take it from DB
+                print('-' * 100)
+                if changes_in_next_expansions:
+                    print(f'Quest #{quest_id} has changes in next expansions')
+                print(f'WarningDB8: Quest #{cache_quest.id} "{cache_quest.name}" text has additions:')
+                print('\n'.join(cache_quest.diff(saved_quest)))
+                print(f'Merging...')
+                cache_quest.accept_text_additions(saved_quest)
+                continue
 
-        if len(deletions) > 0:  # Good (42). What can go wrong if we just add text?
-            print('-' * 100)
-            if changes_in_next_expansions:
-                print(f'Quest #{id} has changes in next expansions')
-            print(f'WarningDB9: Quest #{cache_quest.id} "{cache_quest.name}" text has deletions:')
-            print('\n'.join(cache_quest.diff(saved_quest)))
-            continue
+            if len(deletions) > 0:  # Good (42). What can go wrong if we just add text?
+                print('-' * 100)
+                if changes_in_next_expansions:
+                    print(f'Quest #{quest_id} has changes in next expansions')
+                print(f'WarningDB9: Quest #{cache_quest.id} "{cache_quest.name}" text has deletions:')
+                print('\n'.join(cache_quest.diff(saved_quest)))
+                continue
 
 
 def merge_quest(id: int, old_quests: dict[str, QuestEntity], new_quests: dict[str, QuestEntity]) -> dict[str, QuestEntity]:
@@ -927,26 +929,26 @@ def merge_quest(id: int, old_quests: dict[str, QuestEntity], new_quests: dict[st
             print('\n'.join(old_quest.diff(new_quest)))
             return {**old_quests, **new_quests}
 
-        if len(changes) > 0:
+        if len(changes) > 0:  # Check (546)
             print('-' * 100)
             print(f'Warning5: Quest #{old_quest.id} "{old_quest.name}" text was changed:')
             print('\n'.join(changes))
             return {**old_quests, **new_quests}
 
-        if len(additions) > 0:
+        if len(additions) > 0:  # Usually no problems (55)
             print('-' * 100)
             print(f'Warning6: Quest #{old_quest.id} "{old_quest.name}" text has additions:')
             print('\n'.join(additions))
             old_quest.accept_text_additions(new_quest)
             return old_quests
 
-        if len(deletions) > 0:
+        if len(deletions) > 0:  # Maybe Wowhead haven't parsed some strings (usually PROGRESS) for next expansions
             print('-' * 100)
             print(f'Warning7: Quest #{old_quest.id} "{old_quest.name}" text has deletions:')
             print('\n'.join(deletions))
             return old_quests
 
-        old_quest.cat = new_quest.cat  # Now it's safe... I guess
+        old_quest.cat = new_quest.cat  # Just to have quests in the same folder for all expansions
 
         diff = old_quest.diff(new_quest)
         if old_quest != new_quest or len(diff) > 0:
@@ -1090,22 +1092,6 @@ def fix_classic_quests(classic_quests: dict[int, dict[str, QuestEntity]]):
     classic_quests[9323][CLASSIC].progress = 'Are the flames of Eastern Kingdoms burning brightly?'
 
     #Fixes from ClassicDB/Wowpedia (WarningDB8):
-    # Delete manually:
-    # classic_quests[5][CLASSIC].progress = None
-    # classic_quests[109][CLASSIC].progress = None
-    # classic_quests[111][CLASSIC].progress = None
-    # classic_quests[163][CLASSIC].progress = None
-    # classic_quests[960][CLASSIC].progress = None
-    # classic_quests[1361][CLASSIC].progress = None
-    # classic_quests[1679][CLASSIC].progress = None
-    # classic_quests[1706][CLASSIC].progress = None
-    # classic_quests[1794][CLASSIC].progress = None
-    # classic_quests[4904][CLASSIC].progress = None
-    # classic_quests[7736][CLASSIC].objective = None
-    # classic_quests[7736][CLASSIC].description = None
-    # classic_quests[7838][CLASSIC].objective = None
-    # classic_quests[7838][CLASSIC].description = None
-    # classic_quests[9386][CLASSIC].completion = None
     classic_quests[172][CLASSIC].completion = classic_quests[172][CLASSIC].completion.replace('be like a big brother to me', 'be like a big <brother/sister> to me')
     classic_quests[895][CLASSIC].description = classic_quests[895][CLASSIC].description.replace('and is WANTED on', 'and is wanted on')
     classic_quests[1468][CLASSIC].completion = classic_quests[1468][CLASSIC].completion.replace('be like a big brother to me', 'be like a big <brother/sister> to me').replace(', yes sir.', ', yes <sir/lady>.')
@@ -1183,7 +1169,7 @@ def fix_tbc_quests(tbc_quests: dict[int, dict[str, QuestEntity]]):
     tbc_quests[11216][TBC].description = tbc_quests[11216][TBC].description.replace("Archmagae", "Archmage")
     tbc_quests[11220][TBC].description = tbc_quests[11220][TBC].description.replace("Tirisfal Glade.", "Tirisfal Glades.").replace("head of the Horseman's", "head of the Horseman")
     tbc_quests[11389][TBC].description = tbc_quests[11389][TBC].description.replace(" destroy the sentinels", " destroy the sentinels.")
-    tbc_quests[11975][TBC].description = tbc_quests[11975][TBC].description.replace("Elite <race> Chieftain", "Elite Tauren Chieftain")
+    tbc_quests[11975][TBC].progress = tbc_quests[11975][TBC].progress.replace("Elite <race> Chieftain", "Elite Tauren Chieftain")
 
     # Fixes from Wrath (for quests updated in TBC)
     tbc_quests[204][TBC].description = tbc_quests[204][TBC].description.replace("Medicine Men", "medicine men").replace("Jungle Remedies", "jungle remedies").replace("Venom Fern Extracts", "venom fern extracts").replace("Jungle fighers", "jungle fighters")
@@ -1218,7 +1204,6 @@ def fix_tbc_quests(tbc_quests: dict[int, dict[str, QuestEntity]]):
     tbc_quests[9136][TBC].completion = 'I am much obliged, <name>.\n\n<Rayne bows.>\n\nPlease remember that I am always accepting fronds.'
     tbc_quests[9319][TBC].progress = 'Have you found your way through the dark?'
     tbc_quests[9319][TBC].completion = 'Your essence sings with the energy of the flames you found, <name>. The fire you encountered is potent, and with the right knowledge, its power can be harnessed...\n\n<The Flamekeeper mutters an incantation in a strange, arcane tongue, then pulls out a glowing bottle.>\n\nAh! Here we are. May this light your path, no matter where you tread.'
-
 
 
 def fix_wrath_quests(wrath_quests: dict[int, dict[str, QuestEntity]]):
@@ -1333,9 +1318,9 @@ def compare_databases(cache_db, main_db):
 
 def compare_directories(dir1, dir2):
     import filecmp, difflib
-    print('-'*100)
-    print('-'*100)
-    print(f'Comparing {dir1} and {dir2}')
+    # print('-'*100)
+    # print('-'*100)
+    # print(f'Comparing {dir1} and {dir2}')
     dcmp = filecmp.dircmp(dir1, dir2)
 
     # List of files that are only in the first directory
@@ -1360,6 +1345,7 @@ def compare_directories(dir1, dir2):
             content2 = f2.read().replace('\r\n', '\n')
             if content1 != content2:
                 print('-'*100)
+                print(f'Diffing in {dir1} and {dir2}')
                 print("Diffing file:", common_file)
                 differ = difflib.Differ()
                 lines1 = content1.splitlines()
@@ -1458,4 +1444,5 @@ if __name__ == '__main__':
     compare_directories('source_from_crowdin', 'source_for_crowdin')
 
     # TODO: Validations for duplicating strings (may be wrong data from ClassicDB)
+    # TODO: Validations for empty rows (\n\n\n\n) (may be skipped in Wowhead)
     # TODO: Review side changes after update (with backed up ClassicUA DB)

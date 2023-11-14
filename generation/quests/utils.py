@@ -1,4 +1,4 @@
-fixed_quest_categories = {
+quest_categories_correction = {
     1782: (4, -81),  # Furen's Armor -> Classes/Warrior
     2882: (1, 440),  # Cuergo's Gold -> Kalimdor/Tanaris
     3861: (9, -1001),  # CLUCK! -> World Events/Winter Veil (actually Uncategorized)
