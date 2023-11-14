@@ -176,49 +176,74 @@ def parse_items_lua():
 
 def item_to_lua_line(item):
     res_str = ''
-    escaped_name = item.name_ua.replace('"', '\\"')
-    res_str+=f'[{item.id}] = {{ "{escaped_name}"'
+    if (item.name_ua):
+        escaped_name = item.name_ua.replace('"', '\\"')
+        res_str+=f'[{item.id}] = {{ "{escaped_name}"'
+    else:
+        res_str+=f'[{item.id}] = {{ '
     if (item.descs_ua):
-        arr = list(map(lambda x: x.replace('"', '\\"'), item.descs_ua))
-        if (len(arr) == 1):
-            res_str+=f', desc="{arr[0]}"'
+        if type(item.descs_ua) == int:
+            res_str+=f', use={item.uses_ua}'
         else:
-            res_str+=', desc={ "' + '", "'.join(arr) + '" }'
+            arr = list(map(lambda x: x.replace('"', '\\"'), item.descs_ua))
+            if (len(arr) == 1):
+                res_str+=f', desc="{arr[0]}"'
+            else:
+                res_str+=', desc={ "' + '", "'.join(arr) + '" }'
 
     if (item.equips_ua):
-        arr = list(map(lambda x: x.replace('"', '\\"'), item.equips_ua))
-        if (len(arr) == 1):
-            res_str+=f', equip="{arr[0]}"'
+        if type(item.equips_ua) == int:
+            res_str+=f', use={item.uses_ua}'
         else:
-            res_str+=', equip={ "' + '", "'.join(arr) + '" }'
+            arr = list(map(lambda x: x.replace('"', '\\"'), item.equips_ua))
+            if (len(arr) == 1):
+                res_str+=f', equip="{arr[0]}"'
+            else:
+                res_str+=', equip={ "' + '", "'.join(arr) + '" }'
 
     if (item.hits_ua):
-        arr = list(map(lambda x: x.replace('"', '\\"'), item.hits_ua))
-        if (len(arr) == 1):
-            res_str+=f', hit="{arr[0]}"'
+        if type(item.hits_ua) == int:
+            res_str+=f', use={item.uses_ua}'
         else:
-            res_str+=', hit={ "' + '", "'.join(arr) + '" }'
+            arr = list(map(lambda x: x.replace('"', '\\"'), item.hits_ua))
+            if (len(arr) == 1):
+                res_str+=f', hit="{arr[0]}"'
+            else:
+                res_str+=', hit={ "' + '", "'.join(arr) + '" }'
             
     if (item.uses_ua):
-        arr = list(map(lambda x: x.replace('"', '\\"'), item.uses_ua))
-        if (len(arr) == 1):
-            res_str+=f', use="{arr[0]}"'
+        if type(item.uses_ua) == int:
+            res_str+=f', use={item.uses_ua}'
         else:
-            res_str+=', use={ "' + '", "'.join(arr) + '" }'
+            arr = list(map(lambda x: x.replace('"', '\\"'), item.uses_ua))
+            if (len(arr) == 1):
+                res_str+=f', use="{arr[0]}"'
+            else:
+                res_str+=', use={ "' + '", "'.join(arr) + '" }'
             
     if (item.flavor_ua):
-        arr = list(map(lambda x: x.replace('"', '\\"'), item.flavor_ua))
-        if (len(arr) == 1):
-            res_str+=f', flavor="{arr[0]}"'
+        if type(item.flavor_ua) == int:
+            res_str+=f', use={item.uses_ua}'
         else:
-            res_str+=', flavor={ "' + '", "'.join(arr) + '" }'
+            arr = list(map(lambda x: x.replace('"', '\\"'), item.flavor_ua))
+            if (len(arr) == 1):
+                res_str+=f', flavor="{arr[0]}"'
+            else:
+                res_str+=', flavor={ "' + '", "'.join(arr) + '" }'
+
+    if (item.ref):
+        if (item.name_ua):
+            res_str+=f', ref={item.ref}'
+        else:
+            res_str+=f'ref={item.ref}'
     
     res_str+=f' }}, -- {item.name}'
-    res_str += ''.join([f', @desc {desc}' for desc in item.descs]) if item.descs else ''
-    res_str += ''.join([f', @equip {equip}' for equip in item.equips]) if item.equips else ''
-    res_str += ''.join([f', @hit {hit}' for hit in item.hits]) if item.hits else ''
-    res_str += ''.join([f', @use {use}' for use in item.uses]) if item.uses else ''
-    res_str += ''.join([f', @flavor {flavor}' for flavor in item.flavor]) if item.flavor else ''
+    if not item.ref:
+        res_str += ''.join([f', @desc {desc}' for desc in item.descs]) if item.descs else ''
+        res_str += ''.join([f', @equip {equip}' for equip in item.equips]) if item.equips else ''
+        res_str += ''.join([f', @hit {hit}' for hit in item.hits]) if item.hits else ''
+        res_str += ''.join([f', @use {use}' for use in item.uses]) if item.uses else ''
+        res_str += ''.join([f', @flavor {flavor}' for flavor in item.flavor]) if item.flavor else ''
     return res_str
 
 def get_item_from_db(cursor, id):
@@ -239,18 +264,20 @@ def decoded_item_to_item(id, item):
     if type(item) == list:
         return Object(id = id,
                       name = item[0],
-                      equips = None, 
-                      hits = None, 
+                      equips = None,
+                      hits = None,
                       uses = None,
                       flavor = None,
-                      descs = None)
+                      descs = None,
+                      ref = None)
     return Object(id = id,
-                  name = item[0],
+                  name = item.get(0),
                   equips = [item.get('equip')] if type(item.get('equip')) == str else item.get('equip'), 
                   hits = [item.get('hit')] if type(item.get('hit')) == str else item.get('hit'),
                   uses = [item.get('use')] if type(item.get('use')) == str else item.get('use'), 
                   flavor = [item.get('flavor')] if type(item.get('flavor')) == str else item.get('flavor'),
-                  descs = [item.get('desc')] if type(item.get('desc')) == str else item.get('desc'))
+                  descs = [item.get('desc')] if type(item.get('desc')) == str else item.get('desc'),
+                  ref = item.get('ref') or None)
 
 def items_to_lua_line(original, translated):
     item = Object(id = original.id,
@@ -265,13 +292,14 @@ def items_to_lua_line(original, translated):
                   equips_ua = translated.equips, 
                   hits_ua = translated.hits,
                   uses_ua = translated.uses, 
-                  flavor_ua = translated.flavor)
+                  flavor_ua = translated.flavor,
+                  ref = translated.ref)
     return item_to_lua_line(item)
 
 def combine_existing_translation():
     decoded_items_lua = None
 
-    with open('entries/item.lua', 'r') as input_file:
+    with open('entries/item.lua', 'r', encoding="utf-8") as input_file:
         lua_file = input_file.read()
         decoded_items_lua = lua.decode(lua_file)
 
@@ -285,7 +313,7 @@ def combine_existing_translation():
         lua_line = items_to_lua_line(orig_item, translated_item)
         result_lines.append(lua_line+'\n')
     cursor.close()
-    with open(f'items_temp.lua', 'w') as output_file:
+    with open(f'items_temp.lua', 'w', encoding="utf-8") as output_file:
         output_file.writelines(result_lines)
 
 def items_to_tsv_line(original_item, translated_item):
@@ -378,7 +406,7 @@ def combine_pending_items_with_db():
     import csv
     pending_items = list()
 
-    with open('pending_items.csv', 'r') as input_file:
+    with open('pending_items.csv', 'r', encoding="utf-8") as input_file:
         reader = csv.reader(input_file)
         for row in reader:
             if (row[0] == 'ID'):
@@ -401,21 +429,21 @@ def combine_pending_items_with_db():
         tsv_line = combine_pending_item_with_db_to_tsv_line(pending_item, original_item)
         result_lines.append(str(tsv_line)+'\n')
 
-    with open(f'combined_pending_items.tsv', 'w') as output_file:
+    with open(f'combined_pending_items.tsv', 'w', encoding="utf-8") as output_file:
         output_file.writelines(result_lines)
 
 
 def check_pending_items():
     import csv
     decoded_items_lua = None
-    with open('entries/item.lua', 'r') as input_file:
+    with open('entries/item.lua', 'r', encoding="utf-8") as input_file:
         lua_file = input_file.read()
         decoded_items_lua = lua.decode(lua_file)
     existing_items_ids = set(decoded_items_lua.keys())
     pending_items_ids = set()
 
     clashing_translations = list()
-    with open('pending_items.csv', 'r') as input_file:
+    with open('pending_items.csv', 'r', encoding="utf-8") as input_file:
         reader = csv.reader(input_file)
         for row in reader:
             if (row[0] == 'ID'):
@@ -424,26 +452,29 @@ def check_pending_items():
             if pending_id in pending_items_ids:
                 print(f"Duplicate: {pending_id}")
             if pending_id in existing_items_ids:
-                print(f"Exists: {pending_id}. {row[2]} <-> {decoded_items_lua.get(pending_id)[0]}")
                 existing_item = decoded_item_to_item(pending_id, decoded_items_lua.get(pending_id))
                 clashing_item = Object(id = int(row[0]),
                   name_en = row[1],
                   pending_name = row[2],
                   existing_name = existing_item.name,
-                  pending_desc = row[4], 
+                  pending_desc = row[4],
                 #   existing_desc = f'{existing_item.equips if existing_item.equips else ""}\n{existing_item.hits if existing_item.hits else ""}\n{existing_item.uses if existing_item.uses else ""}\n{existing_item.flavor if existing_item.flavor else ""}\n{existing_item.descs if existing_item.descs else ""}')
                   existing_desc = '')
+                if (existing_item.name == row[2]):
+                    print(f"Exists: {pending_id}. {row[2]} == {decoded_items_lua.get(pending_id)[0]}")
+                else:
+                    print(f"Exists: {pending_id}. {row[2]} <> {decoded_items_lua.get(pending_id)[0]}")
                 clashing_translations.append(clashing_item)
             pending_items_ids.add(pending_id)
 
 
-    with open(f'clashing_items.tsv', 'w') as output_file:
+    with open(f'clashing_items.tsv', 'w', encoding="utf-8") as output_file:
         output_file.write('ID\tEN Name\tPending name\tExisting name\tPending desc\tExisting desc\n')
-        escaped_name_en = item.name_en.replace('"', '\\"')
-        escaped_pending_name = item.pending_name.replace('"', '\\"')
-        escaped_existing_name = item.existing_name.replace('"', '\\"')
-        escaped_pending_desc = item.pending_desc.replace('"', '\\"')
         for item in clashing_translations:
+            escaped_name_en = item.name_en.replace('"', '\\"')
+            escaped_pending_name = item.pending_name.replace('"', '\\"')
+            escaped_existing_name = item.existing_name.replace('"', '\\"')
+            escaped_pending_desc = item.pending_desc.replace('"', '\\"')
             output_file.write(f'{item.id}\t{escaped_name_en}\t{escaped_pending_name}\t{escaped_existing_name}\t"{escaped_pending_desc}"\t"{item.existing_desc}"\n')
 
 def pending_item_row_to_item(row):
@@ -470,21 +501,22 @@ def pending_item_row_to_item(row):
             equips = equips_ua if equips_ua else None, 
             hits = hits_ua if hits_ua else None,
             uses = uses_ua if uses_ua else None,
-            flavor = flavor_ua if flavor_ua else None)
+            flavor = flavor_ua if flavor_ua else None,
+            ref = None)
     return item
 
 def combine_pending_and_existing_translation():
     import csv
     decoded_items_lua = None
 
-    with open('entries/item.lua', 'r') as input_file:
+    with open('entries/item.lua', 'r', encoding="utf-8") as input_file:
         lua_file = input_file.read()
         decoded_items_lua = lua.decode(lua_file)
         decoded_items_lua = {k: decoded_item_to_item(k, v) for k, v in decoded_items_lua.items()}
 
     pending_items = dict()
 
-    with open('pending_items.csv', 'r') as input_file:
+    with open('pending_items.csv', 'r', encoding="utf-8") as input_file:
         reader = csv.reader(input_file)
         for row in reader:
             if (row[0] == 'ID'):
@@ -504,21 +536,21 @@ def combine_pending_and_existing_translation():
         lua_line = items_to_lua_line(orig_item, all_items[id])
         result_lines.append(lua_line+'\n')
     cursor.close()
-    with open(f'items_merged.lua', 'w') as output_file:
+    with open(f'items_merged.lua', 'w', encoding="utf-8") as output_file:
         output_file.writelines(result_lines)
 
 def merge_pending_and_existing_items_to_tsv():
     import csv
     decoded_items_lua = None
 
-    with open('entries/item.lua', 'r') as input_file:
+    with open('entries/item.lua', 'r', encoding="utf-8") as input_file:
         lua_file = input_file.read()
         decoded_items_lua = lua.decode(lua_file)
         decoded_items_lua = {k: decoded_item_to_item(k, v) for k, v in decoded_items_lua.items()}
 
     pending_items = dict()
 
-    with open('pending_items.csv', 'r') as input_file:
+    with open('pending_items.csv', 'r', encoding="utf-8") as input_file:
         reader = csv.reader(input_file)
         for row in reader:
             if (row[0] == 'ID'):
@@ -584,7 +616,7 @@ def merge_pending_and_existing_items_to_tsv():
         result_lines.append(tsv_line+'\n')
     cursor.close()
     
-    with open(f'all_items.tsv', 'w') as output_file:
+    with open(f'all_items.tsv', 'w', encoding="utf-8") as output_file:
         output_file.write('ID\tEN Name\tPending name\tExisting name\tPending desc\tExisting desc\tEN Desc\n')
         output_file.writelines(result_lines)
 
