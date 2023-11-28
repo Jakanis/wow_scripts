@@ -185,16 +185,3 @@ def pending_npcs_to_crowdin_dictionary_csv():
 if __name__ == '__main__':
     # combine_existing_and_pending_npcs_to_tsv()
     pending_npcs_to_crowdin_dictionary_csv()
-
-
-
-
-
-# from slpp import slpp as lua
-
-# with open('wowhead_npc_ids.csv', 'r') as input_file:
-#     all_ids_str = input_file.readline()
-#     res = sorted(map(lambda x: int(x), all_ids_str.split(', ')))
-#     with open('wowhead_npc_ids1.csv', 'w') as output_file:
-#         res = map(lambda x: str(x), res)
-#         output_file.write(', '.join(res))
