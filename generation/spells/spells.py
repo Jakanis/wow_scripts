@@ -247,7 +247,9 @@ def parse_wowhead_spell_page(expansion, id) -> SpellData:
         for br in description_text.find_all('br'):
             br.replace_with('\n')
         description = description_text.text
-        description = re.sub('\n+', '\n', description)
+        # if re.findall(r'\n\n+', description):
+        #     print(f'Subbed \\n in spell#{id}')
+        description = re.sub(r'\n\n+', '\n\n', description)
 
     aura_name = aura_description = None
     if buff:
@@ -382,7 +384,7 @@ def create_translation_sheet(spells: dict[int, SpellData]):
     with open(f'translate_this.tsv', mode='w', encoding='utf-8') as f:
         f.write('ID\tName(EN)\tName(UA)\tDescription(EN)\tDescription(UA)\tAura(EN)\tAura(UA)\tAura description(EN)\tAura description(UA)\tdesc_ref\taura_ref\n')
         for key, spell in sorted(spells.items()):
-            if getattr(spell.spell_md, 'chrclass') != 8:
+            if getattr(spell.spell_md, 'chrclass') != 256:
                 continue
             f.write(f'{spell.id}\t{spell.name}\t\t"{spell.description}"\t\t{spell.aura_name}\t\t"{spell.aura_description}"\t\t{spell.description_ref}\t{spell.aura_ref}\n')
 
@@ -445,18 +447,36 @@ def convert_translations_to_lua():
         for spell in all_translations:
             if spell.name != previous_name:
                 output_file.write(f'\n-- {spell.name}\n')
-            description_text = spell.description_ua.replace('"', '\\"').replace('\n', '\\n') if spell.description_ua else None
-            description_text = f'"{description_text}"' if description_text else 'nil'
+            description_text = 'nil'
+            rune_refs = []
+            if spell.description_ua:
+                if spell.description_ua.startswith('ref='):
+                    ref = int(spell.description_ua.split('=')[-1])
+                    output_file.write('[{}] = {{ ref={} }}, -- {}\n'.format(spell.id, ref, spell.name))
+                    continue
+                description_text = []
+                for line in spell.description_ua.splitlines():
+                    if 'spell#' in line:
+                        rune_refs.append(int(line.split('#')[-1]))
+                    else:
+                        description_text.append(line)
+                description_text = '\n'.join(description_text).replace('"', '\\"').replace('\n', '\\n')
+                description_text = f'"{description_text}"'
             aura_text = spell.aura_ua.replace('"', '\\"').replace('\n', '\\n') if spell.aura_ua else None
             aura_text = f'"{aura_text}"' if aura_text else 'nil'
-            output_file.write('[{}] = {{ "{}", {}, {} }}, -- {}\n'.format(spell.id, spell.name_ua, description_text, aura_text, spell.name))
+            if rune_refs:  # We take only first rune_ref. Take whole list if we can handle templates
+                if len(rune_refs) > 1:
+                    print(f'Warning! Spell {spell.id} contains several rune_refs')
+                output_file.write('[{}] = {{ "{}", {}, {}, rune={} }}, -- {}\n'.format(spell.id, spell.name_ua, description_text, aura_text, rune_refs[0], spell.name))
+            else:
+                output_file.write('[{}] = {{ "{}", {}, {} }}, -- {}\n'.format(spell.id, spell.name_ua, description_text, aura_text, spell.name))
             previous_name = spell.name
 
 
 if __name__ == '__main__':
     populate_cache_db_with_spells_data()
 
-    convert_translations_to_lua()
+    # convert_translations_to_lua()
 
     # item = parse_wowhead_spell_page(SOD, 403476)
     # item = parse_wowhead_spell_page(CLASSIC, 364001)
