@@ -502,7 +502,8 @@ def read_classicua_translations(spells_root_path: str, spell_metadata: dict[int,
 
     for file_path, lua_file in file_contents:
         expansion, file_name = file_path.split('\\')[-2:]
-        category = file_name[:file_name.find('.')].split('_')[1]
+        file_name_split = file_name[:file_name.find('.')].split('_')
+        category = file_name_split[1] if len(file_name_split) > 1 else ''
         lua_table = lua_file[lua_file.find(' = {\n') + 2:lua_file.find('\n}\n') + 2]
         decoded_spells = lua.decode(lua_table)
         for spell_id, decoded_spell in decoded_spells.items():
@@ -569,7 +570,7 @@ def __validate_template(spell_id: int, value: str, translation: str):
     templates = translation[template_start:].split('#')
     for template in templates:
         template = template.replace('.', '\\.')
-        pattern = re.sub(r'{\d+}', '(\\\\d+|\[.+?\]|\(.+?\))', template).replace('\\\\', '\\')
+        pattern = re.sub(r'{\d+}', '(\\\\d+|\\\\d+\\.\\\\d+|\[.+?\]|\(.+?\))', template).replace('\\\\', '\\')
         matches = re.findall(pattern, value)
         if len(matches) != 1:
             print(f'Warning! Template failed for spell#{spell_id}')
