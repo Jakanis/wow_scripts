@@ -92,20 +92,23 @@ class SpellMD:
 
 
 class SpellData:
-    spell_md: SpellMD
-    description_ref: int
-    aura_ref: int
-
-    def __init__(self, id, expansion, name, description=None, aura_name=None, aura_description=None):
+    def __init__(self, id, expansion, name, description=None, aura_name=None, aura_description=None, name_ua=None,
+                 description_ua=None, aura_ua=None, description_ref: int = 0, aura_ref: int = 0,
+                 spell_md: SpellMD = None, category=None, rank=None):
         self.id = id
         self.expansion = expansion
         self.name = name
         self.description = description
         self.aura_name = aura_name
         self.aura_description = aura_description
-        self.spell_md = None
-        self.description_ref = 0
-        self.aura_ref = 0
+        self.name_ua = name_ua
+        self.description_ua = description_ua
+        self.aura_ua = aura_ua
+        self.description_ref = description_ref
+        self.aura_ref = aura_ref
+        self.spell_md = spell_md
+        self.category = category
+        self.rank = rank
 
 
 class SpellTranslation:
@@ -225,14 +228,14 @@ def parse_wowhead_spell_page(expansion, id) -> SpellData:
     with open(html_path, 'r', encoding="utf-8") as file:
         html = file.read()
     soup = BeautifulSoup(html, 'html.parser')
-    data_lines = soup.find('div', {'class': 'db-action-buttons'}).next_sibling.text.splitlines()
+    data_lines = soup.find('div', {'class': 'db-action-buttons'}).next_sibling.text.replace('&nbsp;', ' ').splitlines()
 
-    tooltip = buff = None
+    tooltip = aura = None
     for line in data_lines:
         if line.startswith(f'g_spells[{id}].tooltip_enus = '):
             tooltip = line.replace(f'g_spells[{id}].tooltip_enus = "', '').replace('\\', '')[:-2]
         if line.startswith(f'g_spells[{id}].buff_enus = '):
-            buff = line.replace(f'g_spells[{id}].buff_enus = "', '').replace('\\', '')[:-2]
+            aura = line.replace(f'g_spells[{id}].buff_enus = "', '').replace('\\', '')[:-2]
 
     if not tooltip:
         print(f'Error parsing spell #{id}')
@@ -246,16 +249,22 @@ def parse_wowhead_spell_page(expansion, id) -> SpellData:
     if description_text:
         for br in description_text.find_all('br'):
             br.replace_with('\n')
+        # for a_tag in description_text.find_all('a'):  # Optional thing
+        #     a_tag.replace_with(a_tag.get('href'))
         description = description_text.text
         # if re.findall(r'\n\n+', description):
         #     print(f'Subbed \\n in spell#{id}')
         description = re.sub(r'\n\n+', '\n\n', description)
 
     aura_name = aura_description = None
-    if buff:
-        aura_soup = BeautifulSoup(buff, 'html.parser')
+    if aura:
+        aura_soup = BeautifulSoup(aura, 'html.parser')
         aura_name = aura_soup.find('b', {'class': 'q'}).text
-        aura_description = aura_soup.find_all('td')[-1].get_text(strip=True, separator='<SPLIT>').split('<SPLIT>')[0]
+        aura_description = aura_soup.find_all('td')[-1]
+        for span in aura_description.find_all('span', {'class': 'q'}):
+            span.replace_with('\n')
+        aura_description = aura_description.get_text(strip=True, separator='<SPLIT>').split('<SPLIT>')
+        aura_description = '\n'.join(aura_description)
 
     return SpellData(id, expansion, name, description, aura_name, aura_description)
 
@@ -286,44 +295,6 @@ def parse_wowhead_pages(expansion, metadata: dict[int, SpellMD]) -> dict[int, Sp
         spell.spell_md = metadata[spell_id]
 
     return wowhead_spells
-
-def load_object_lua() -> dict[str, str]:
-    from slpp import slpp as lua
-    translations = dict()
-    with open('input/object.lua', 'r', encoding='utf-8') as input_file:
-        lua_file = input_file.read()
-        decoded_objects = lua.decode(lua_file)
-        for object_name, object_translation in decoded_objects.items():
-            if object_name.lower() in translations:
-                print('Warning! Duplicated object in ClassicUA.')
-            translations[object_name.lower()] = object_translation
-    return translations
-
-
-def load_item_lua_names() -> dict[int, str]:
-    from slpp import slpp as lua
-    items = dict()
-    with open('input/item.lua', 'r', encoding='utf-8') as input_file:
-        lua_file = input_file.read()
-        decoded_items = lua.decode(lua_file)
-        for item_id, decoded_item in decoded_items.items():
-            if type(decoded_item) == list or 0 in decoded_item:
-                item_name_ua = decoded_item[0]
-            else:
-                item_name_ua = decoded_items[decoded_item['ref']][0]
-            items[item_id] = item_name_ua
-    return items
-
-
-def load_questie_item_lua_ids() -> set[int]:
-    from slpp import slpp as lua
-    item_ids = set()
-    with open('input/lookupItems.lua', 'r', encoding='utf-8') as input_file:
-        lua_file = input_file.read()
-        decoded_items = lua.decode(lua_file)
-        for item_id, decoded_item in decoded_items.items():
-            item_ids.add(item_id)
-    return item_ids
 
 
 def save_spells_to_db(spells: dict[int, SpellData]):
@@ -390,18 +361,18 @@ def create_translation_sheet(spells: dict[int, SpellData]):
 
 
 
-def populate_cache_db_with_spells_data():
+def retrieve_spell_data():
     wowhead_metadata = get_wowhead_items_metadata(CLASSIC)
     wowhead_metadata_sod = get_wowhead_items_metadata(SOD)
     wowhead_metadata_tbc = get_wowhead_items_metadata(TBC)
     wowhead_metadata_wrath = get_wowhead_items_metadata(WRATH)
 
-    # save_htmls_from_wowhead(CLASSIC, set(wowhead_metadata.keys()))
+    save_htmls_from_wowhead(CLASSIC, set(wowhead_metadata.keys()))
     save_htmls_from_wowhead(SOD, set(wowhead_metadata_sod.keys()))
     # save_xmls_from_wowhead(TBC, set(wowhead_metadata_tbc.keys()))
     # save_xmls_from_wowhead(WRATH, set(wowhead_metadata_wrath.keys()))
 
-    # wowhead_spells = parse_wowhead_pages(CLASSIC, wowhead_metadata)
+    wowhead_spells = parse_wowhead_pages(CLASSIC, wowhead_metadata)
     wowhead_spells_sod = parse_wowhead_pages(SOD, wowhead_metadata_sod)
     # wowhead_items_tbc = parse_wowhead_pages(TBC, wowhead_metadata_tbc)
     # wowhead_items_wrath = parse_wowhead_pages(WRATH, wowhead_metadata_wrath)
@@ -420,31 +391,23 @@ def populate_cache_db_with_spells_data():
     populate_similarity(wowhead_spells_sod)
 
     create_translation_sheet(wowhead_spells_sod)
+
     # print('Merging with TBC')
     # classic_and_tbc_items = merge_expansions(wowhead_items, wowhead_items_tbc)
     # print('Merging with WotLK')
     # all_items = merge_expansions(classic_and_tbc_items, wowhead_items_wrath)
 
-    save_spells_to_db(wowhead_spells_sod)
+    return wowhead_metadata_sod, wowhead_spells_sod
 
-def convert_translations_to_lua():
-    import csv
-    all_translations: list[SpellTranslation] = list()
-    with open('input/translations.tsv', 'r', encoding="utf-8") as input_file:
-        reader = csv.reader(input_file, delimiter="\t")
-        for row in reader:
-            spell_id = row[0]
-            name_en = row[1]
-            name_ua = row[2]
-            description_ua = row[4]
-            aura_ua = row[8] if len(row) >= 8 else None
-            all_translations.append(SpellTranslation(spell_id, name_en, name_ua, description_ua, aura_ua))
 
-    all_translations = sorted(all_translations, key=lambda x: x.name)
-
-    with open('spell.lua', 'w', encoding="utf-8") as output_file:
+def convert_translations_to_lua(translations: list[SpellData], group: tuple[str, str]):
+    path = f'output/entries/{group[0]}'
+    catergory = f'_{group[1]}' if group[1] else ''
+    translations = sorted(translations, key=lambda x: x.name)
+    os.makedirs(path, exist_ok=True)
+    with open(f'{path}/spell{catergory}.lua', 'w', encoding="utf-8") as output_file:
         previous_name = None
-        for spell in all_translations:
+        for spell in translations:
             if spell.name != previous_name:
                 output_file.write(f'\n-- {spell.name}\n')
             description_text = 'nil'
@@ -457,7 +420,7 @@ def convert_translations_to_lua():
                 description_text = []
                 for line in spell.description_ua.splitlines():
                     if 'spell#' in line:
-                        rune_refs.append(int(line.split('#')[-1]))
+                        rune_refs.append(line.split('#')[-1])
                     else:
                         description_text.append(line)
                 description_text = '\n'.join(description_text).replace('"', '\\"').replace('\n', '\\n')
@@ -465,54 +428,195 @@ def convert_translations_to_lua():
             aura_text = spell.aura_ua.replace('"', '\\"').replace('\n', '\\n') if spell.aura_ua else None
             aura_text = f'"{aura_text}"' if aura_text else 'nil'
             if rune_refs:  # We take only first rune_ref. Take whole list if we can handle templates
-                if len(rune_refs) > 1:
-                    print(f'Warning! Spell {spell.id} contains several rune_refs')
-                output_file.write('[{}] = {{ "{}", {}, {}, rune={} }}, -- {}\n'.format(spell.id, spell.name_ua, description_text, aura_text, rune_refs[0], spell.name))
+                rune_text = rune_refs[0] if len(rune_refs) == 1 else '{' + ', '.join(rune_refs) + '}'
+                output_file.write('[{}] = {{ "{}", {}, {}, rune={} }}, -- {}\n'.format(spell.id, spell.name_ua, description_text, aura_text, rune_text, spell.name))
             else:
                 output_file.write('[{}] = {{ "{}", {}, {} }}, -- {}\n'.format(spell.id, spell.name_ua, description_text, aura_text, spell.name))
             previous_name = spell.name
 
 
+def convert_translations_to_entries(translations: dict[int, SpellData]):
+    grouped_translations: dict[tuple[str, str], list[SpellData]] = dict()
+    for translation in translations.values():
+        if not (translation.expansion, translation.category) in grouped_translations:
+            grouped_translations[(translation.expansion, translation.category)] = list()
+        grouped_translations[(translation.expansion, translation.category)].append(translation)
+
+    for group, translations in grouped_translations.items():
+        convert_translations_to_lua(translations, group)
+
+
+def __try_cast_str_to_int(value: str, default=None):
+    try:
+        return int(value)
+    except ValueError:
+        return default
+
+
+def read_translations_tsv() -> dict[int, SpellData]:
+    import csv
+    all_translations: dict[int, SpellData] = dict()
+    with open('input/translations.tsv', 'r', encoding="utf-8") as input_file:
+        reader = csv.reader(input_file, delimiter="\t")
+        for row in reader:
+            spell_id = __try_cast_str_to_int(row[0])
+            if not spell_id:
+                print(f'Skipping: {row}')
+                continue
+            name_en = row[1]
+            name_ua = row[2]
+            description_en = row[3] if row[3] != '' else None
+            description_ua = row[4] if row[4] != '' else None
+            aura_name_en = row[5] if row[5] != '' else None
+            aura_name_ua = row[6] if row[6] != '' else None
+            aura_description_en = row[7] if row[7] != '' else None
+            aura_description_ua = row[8] if row[8] != '' else None  # if len(row) >= 8 else None
+            desc_ref = __try_cast_str_to_int(row[9], 0)
+            aura_ref = __try_cast_str_to_int(row[10], 0)
+            expansion = row[11]
+            category = row[12]
+            if aura_name_ua and aura_name_ua != name_ua:
+                print(f'Warning! Translation spell and aura names not equal for spell#{spell_id}!')
+            all_translations[spell_id] = SpellData(spell_id, expansion, name=name_en, description=description_en,
+                                                   aura_name=aura_name_en, aura_description=aura_description_en,
+                                                   name_ua=name_ua, description_ua=description_ua,
+                                                   aura_ua=aura_description_ua, description_ref=desc_ref,
+                                                   aura_ref=aura_ref, category=category)
+
+    return all_translations
+
+def read_classicua_translations(spells_root_path: str, spell_metadata: dict[int, SpellMD]):
+    from slpp import slpp as lua
+    file_contents = list()
+    for foldername, subfolders, filenames in os.walk(spells_root_path):
+        for filename in filenames:
+            # Construct the full path to the file
+            file_path = foldername + '\\' + filename
+
+            # Read the contents of the file
+            with open(file_path, 'r', encoding="utf-8") as file:
+                file_content = file.read()
+                file_contents.append((file_path, file_content))
+
+    all_spells: dict[int, SpellData] = dict()
+
+    for file_path, lua_file in file_contents:
+        expansion, file_name = file_path.split('\\')[-2:]
+        category = file_name[:file_name.find('.')].split('_')[1]
+        lua_table = lua_file[lua_file.find(' = {\n') + 2:lua_file.find('\n}\n') + 2]
+        decoded_spells = lua.decode(lua_table)
+        for spell_id, decoded_spell in decoded_spells.items():
+            if spell_id in all_spells:
+                print(f'Warning! Duplicate for spell#{spell_id}')
+            if type(decoded_spell) == dict:
+                name_ua = decoded_spell.get(0)
+                description_ua = decoded_spell.get(1)
+                aura_ua = decoded_spell.get(2)
+                runes = decoded_spell.get('rune')
+                if 'ref' in decoded_spell:
+                    name_ua = name_ua or all_spells[decoded_spell.get('ref')].name_ua
+                    description_ua = f"ref={decoded_spell.get('ref')}"
+                if runes and type(runes) == int:
+                    description_ua += f'\nspell#{runes}'
+                if runes and type(runes) == list:
+                    for rune in runes:
+                        description_ua += f'\nspell#{rune}'
+            else:
+                name_ua = decoded_spell[0]
+                description_ua = decoded_spell[1]
+                aura_ua = decoded_spell[2] if len(decoded_spell) > 2 else None
+            if description_ua:
+                description_ua = description_ua.replace('\\n','\n')
+            if aura_ua:
+                aura_ua = aura_ua.replace('\\n','\n')
+            spell = SpellData(spell_id, expansion, spell_metadata[spell_id].name, category=category, name_ua=name_ua,
+                              description_ua=description_ua, aura_ua=aura_ua)
+            all_spells[spell_id] = spell
+    return all_spells
+
+def __diff_fields(field1, field2):
+    import difflib
+    differ = difflib.Differ()
+    lines1 = field1.splitlines() if field1 else []
+    lines2 = field2.splitlines() if field2 else []
+    diff = differ.compare(lines1, lines2)
+    return '\n'.join(diff)
+
+def apply_translations_to_data(spell_data: dict[int, SpellData], translations: dict[int, SpellData]):
+    for key in spell_data.keys() & translations.keys():
+        orig_spell = spell_data[key]
+        translation = translations[key]
+        if spell_data[key].name != translations[key].name:
+            print(f'Warning! Original name for spell#{key} differs:\n{__diff_fields(spell_data[key].name, translations[key].name)}')
+        if spell_data[key].description != translations[key].description:
+            print(f'Warning! Original description for spell#{key} differs:\n{__diff_fields(spell_data[key].description, translations[key].description)}')
+        if spell_data[key].aura_description != translations[key].aura_description:
+            print(f'Warning! Original aura for spell#{key} differs:\n{__diff_fields(spell_data[key].aura_description, translations[key].aura_description)}')
+        spell_data[key].name_ua = translations[key].name_ua
+        spell_data[key].description_ua = translations[key].description_ua
+        spell_data[key].aura_ua = translations[key].aura_ua
+        spell_data[key].name_ua = translations[key].name_ua
+        spell_data[key].category = translations[key].category
+
+
+def __validate_template(spell_id: int, value: str, translation: str):
+    import re
+    translation = re.sub('\nspell#\d+', '', translation)
+    # translation = re.sub(r'(\[.+?]|\(.+?)', '42', value)
+    template_start = translation.find('#') + 1
+    if template_start == 0:
+        return
+    templates = translation[template_start:].split('#')
+    for template in templates:
+        template = template.replace('.', '\\.')
+        pattern = re.sub(r'{\d+}', '(\\\\d+|\[.+?\]|\(.+?\))', template).replace('\\\\', '\\')
+        matches = re.findall(pattern, value)
+        if len(matches) != 1:
+            print(f'Warning! Template failed for spell#{spell_id}')
+
+def __validate_templates(spell: SpellData):
+    if spell.name_ua:
+        __validate_template(spell.id, spell.name, spell.name_ua)
+    if spell.description_ua and not spell.description_ua.startswith('ref='):
+        __validate_template(spell.id, spell.description, spell.description_ua)
+    if spell.aura_ua:
+        __validate_template(spell.id, spell.aura_description, spell.aura_ua)
+
+def validate_translations(spells: dict[int, SpellData]):
+    for spell in spells.values():
+        __validate_templates(spell)
+    # check templates
+    ## warning - No templates for values
+    ## warning - Failed to retrieve value with template
+    # check references
+
+
+def compare_tsv_and_classicua(tsv_translations, classicua_translations):
+    for key in tsv_translations.keys() ^ classicua_translations.keys():
+        print(f"Warning! Spell#{key} doesn't exist in one of translations")
+    for key in tsv_translations.keys() & classicua_translations.keys():
+        tsv_translation = tsv_translations[key]
+        classicua_translation = classicua_translations[key]
+        if tsv_translation.name_ua != classicua_translation.name_ua:
+            print(f'Warning! Name translation differs for spell#{key}:\n{__diff_fields(tsv_translation.name_ua, classicua_translation.name_ua)}')
+        if tsv_translation.description_ua != classicua_translation.description_ua:
+            print(f'Warning! Description translation differs for spell#{key}:\n{__diff_fields(tsv_translation.description_ua, classicua_translation.description_ua)}')
+        if tsv_translation.aura_ua != classicua_translation.aura_ua:
+            print(f'Warning! Aura translation differs for spell#{key}:\n{__diff_fields(tsv_translation.aura_ua, classicua_translation.aura_ua)}')
+
+
 if __name__ == '__main__':
-    populate_cache_db_with_spells_data()
+    parsed_metadata, parsed_spells = retrieve_spell_data()
+    # spell = parse_wowhead_spell_page(SOD, 425463)
 
-    # convert_translations_to_lua()
+    tsv_translations = read_translations_tsv()
+    classicua_translations = read_classicua_translations('input\\entries', parsed_metadata)
 
-    # item = parse_wowhead_spell_page(SOD, 403476)
-    # item = parse_wowhead_spell_page(CLASSIC, 364001)
-    # print('l')
-    # wowhead_metadata = get_wowhead_items_metadata(CLASSIC)
-    # object_translations = load_object_lua()
-    #
-    # for object in wowhead_metadata.values():
-    #     if 'TEST' in object.name.upper().split(' ') or object.id in expansion_data[object.expansion][IGNORES]:
-    #         continue
-    #     if object.name.lower() in object_translations:
-    #         object.name_ua = object_translations[object.name.lower()]
-    #     else:
-    #         print(f"Translation for {object} doesn't exist")
+    apply_translations_to_data(parsed_spells, tsv_translations)
 
-    # questie_objects = load_questie_objects_ids()
-    #
-    # missing_questie_objects = {
-    #     175287: 'жаровня',
-    #     175298: 'жаровня'
-    # }
-    # for key in wowhead_metadata.keys() & questie_objects:
-    #     wowhead_metadata[key].names = 'questie'
-    #
-    # with open(f'lookupObjects.lua', 'w', encoding="utf-8") as output_file:
-    #     for key in sorted(questie_objects):
-    #         translation = None
-    #         if key in wowhead_metadata:
-    #             translation = wowhead_metadata[key].name_ua
-    #         else:
-    #             translation = missing_questie_objects[key]
-    #         if translation is None:
-    #             print(f'Missing translation for {key}')
-    #             continue
-    #         translation = translation.replace('"', '\\"')
-    #         output_file.write(f'[{key}] = "{translation}",\n')
+    save_spells_to_db(parsed_spells)
 
+    compare_tsv_and_classicua(tsv_translations, classicua_translations)
+    validate_translations(parsed_spells)
 
-    # save_objects_to_db(wowhead_metadata)
+    convert_translations_to_entries(tsv_translations)
