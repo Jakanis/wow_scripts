@@ -304,10 +304,10 @@ def load_object_lua() -> dict[str, str]:
     return translations
 
 
-def load_item_lua_names() -> dict[int, str]:
+def load_item_lua_names(path) -> dict[int, str]:
     from slpp import slpp as lua
     items = dict()
-    with open('input/item.lua', 'r', encoding='utf-8') as input_file:
+    with open(path, 'r', encoding='utf-8') as input_file:
         lua_file = input_file.read()
         decoded_items = lua.decode(lua_file)
         for item_id, decoded_item in decoded_items.items():
@@ -377,16 +377,20 @@ def populate_cache_db_with_items_data():
     wowhead_items_tbc = parse_wowhead_pages(TBC, wowhead_metadata_tbc)
     wowhead_items_wrath = parse_wowhead_pages(WRATH, wowhead_metadata_wrath)
 
-    translations = load_item_lua_names()
+    translations = load_item_lua_names('input/entries/item.lua')
+    translations_sod = load_item_lua_names('input/entries/item_sod.lua')
 
     for key in wowhead_items.keys() & translations.keys():
         wowhead_items[key].name_ua = translations[key]
 
-    questie_item_ids = load_questie_item_lua_ids()
-
-    for key in questie_item_ids:
-        if not wowhead_items[key].name_ua:
-            wowhead_items[key].name_ua = 'questie'
+    for key in wowhead_items_sod.keys() & translations_sod.keys():
+        wowhead_items_sod[key].name_ua = translations_sod[key]
+    #
+    # questie_item_ids = load_questie_item_lua_ids()
+    #
+    # for key in questie_item_ids:
+    #     if not wowhead_items[key].name_ua:
+    #         wowhead_items[key].name_ua = 'questie'
 
 
     # print('Merging with TBC')

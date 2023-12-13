@@ -250,14 +250,24 @@ def get_item_from_db(cursor, id):
     sql = f'SELECT * FROM items_classic WHERE id={id}'
     res = cursor.execute(sql)
     item = res.fetchone()
-    return Object(id = item[0],
-                  name = item[1],
-                  equips = item[2].split("\n") if item[2] else None, 
-                  hits = item[3].split("\n") if item[3] else None, 
-                  uses = item[4].split("\n") if item[4] else None, 
-                  flavor = item[5].split("\n") if item[5] else None, 
-                  descs = item[6].split("\n") if item[6] else None,
-                  readable = item[7])
+    if item:
+        return Object(id = item[0],
+                      name = item[1],
+                      equips = item[2].split("\n") if item[2] else None,
+                      hits = item[3].split("\n") if item[3] else None,
+                      uses = item[4].split("\n") if item[4] else None,
+                      flavor = item[5].split("\n") if item[5] else None,
+                      descs = item[6].split("\n") if item[6] else None,
+                      readable = item[7])
+    else:
+        return Object(id = id,
+                      name = None,
+                      equips = None,
+                      hits = None,
+                      uses = None,
+                      flavor = None,
+                      descs = None,
+                      readable = None)
 
 
 def decoded_item_to_item(id, item):
@@ -495,7 +505,7 @@ def pending_item_row_to_item(row):
         if (desc.startswith('Flavor:')):
             flavor_ua.append(desc.replace('Flavor: ', ''))
 
-    item = Object(id = int(row[0]),
+    item = Object(id = int(row[0].replace(':sod', '')),
             name = row[2],
             descs = descs_ua if descs_ua else None,
             equips = equips_ua if equips_ua else None, 
@@ -516,12 +526,12 @@ def combine_pending_and_existing_translation():
 
     pending_items = dict()
 
-    with open('pending_items.csv', 'r', encoding="utf-8") as input_file:
-        reader = csv.reader(input_file)
+    with open('pending_items.tsv', 'r', encoding="utf-8") as input_file:
+        reader = csv.reader(input_file, delimiter="\t")
         for row in reader:
             if (row[0] == 'ID'):
                 continue
-            id = int(row[0])
+            id = int(row[0].replace(':sod', ''))
             pending_item = pending_item_row_to_item(row)
             pending_items[pending_item.id] = pending_item
 
