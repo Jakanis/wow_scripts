@@ -14,6 +14,7 @@ THREADS = 32
 # WOWHEAD_URL_WRATH = 'https://www.wowhead.com/wotlk'
 
 CLASSIC = 'classic'
+SOD = 'sod'
 TBC = 'tbc'
 WRATH = 'wrath'
 WOWHEAD_URL = 'wowhead_url'
@@ -22,14 +23,15 @@ HTML_CACHE = 'html_cache'
 QUESTS_CACHE = 'quests_cache'
 IGNORES = 'ignores'
 INDEX = 'index'
+METADATA_FILTERS = 'metadata_filters'
 
 expansion_data = {
     CLASSIC: {
-        INDEX: 0,
         WOWHEAD_URL: 'https://www.wowhead.com/classic',
         METADATA_CACHE: 'wowhead_classic_metadata_cache',
         HTML_CACHE: 'wowhead_classic_quests_html',
         QUESTS_CACHE: 'wowhead_classic_quest_cache',
+        METADATA_FILTERS: ('8:', '5:', '11500:'),
         IGNORES: [
             1, 785, 912, 999, 1005, 1006, 1099, 1174, 1272, 1500, 5383, 6843, 7522, 7561, 7797, 7906, 7961, 7962, 8226, 8259, 8289, 8296, 8478, 8489, 8618, 8896, 9065,  # Not used in all expansions
             # 8617, 8618, 8530, 8531 # '<faction_name> needs singed corestones' quests actually not used.
@@ -37,12 +39,22 @@ expansion_data = {
             8325, 8326, 8327, 8328, 8329, 8334, 8335, 8338, 8344, 8347, 8350, 8463, 8468, 8472, 8473, 8474, 8475, 8476, 8477, 8479, 8480, 8482, 8483, 8486, 8487, 8488, 8490, 8491, 8547, 8563, 8564, 8884, 8885, 8886, 8887, 8888, 8889, 8890, 8891, 8892, 8894, 8895, 9249, # TBC
         ]
     },
+    SOD: {
+        WOWHEAD_URL: 'https://www.wowhead.com/classic',
+        METADATA_CACHE: 'wowhead_sod_classic_metadata_cache',
+        HTML_CACHE: 'wowhead_sod_classic_quests_html',
+        QUESTS_CACHE: 'wowhead_sod_classic_quest_cache',
+        METADATA_FILTERS: ('8:', '2:', '11500:'),
+        IGNORES: [
+            63769
+        ]
+    },
     TBC: {
-        INDEX: 1,
         WOWHEAD_URL: 'https://www.wowhead.com/tbc',
         METADATA_CACHE: 'wowhead_tbc_metadata_cache',
         HTML_CACHE: 'wowhead_tbc_quests_html',
         QUESTS_CACHE: 'wowhead_tbc_quest_cache',
+        METADATA_FILTERS: ('', '', ''),
         IGNORES: [
             1, 785, 912, 999, 1005, 1006, 1099, 1174, 1272, 1500, 5383, 6843, 7522, 7561, 7797, 7906, 7961, 7962, 8226, 8259, 8289, 8296, 8478, 8489, 8618, 8896, 9065,  # Not used in all expansions
             # 236,  # Still Wintergrasp. Doesn't exist for TBC
@@ -51,11 +63,11 @@ expansion_data = {
         ]
     },
     WRATH: {
-        INDEX: 2,
         WOWHEAD_URL: 'https://www.wowhead.com/wotlk',
         METADATA_CACHE: 'wowhead_wrath_metadata_cache',
         HTML_CACHE: 'wowhead_wrath_quests_html',
         QUESTS_CACHE: 'wowhead_wrath_quest_cache',
+        METADATA_FILTERS: ('', '', ''),
         IGNORES: [
             1, 785, 912, 999, 1005, 1006, 1099, 1174, 1272, 1500, 5383, 6843, 7522, 7561, 7797, 7906, 7961, 7962, 8226, 8259, 8289, 8296, 8478, 8489, 8618, 8896, 9065,  # Not used in all expansions
             9511, 9880, 9881, 10375, 10376, 10377, 10378, 10379, 10383, 10386, 10387, 10638, 10779, 10844, 10999, 11027, 11334, 11345, 11551, 11976, 24508, 24509, 65221, 65222, 65223, 65224,  # Appeared in TBC, not used
@@ -367,10 +379,11 @@ class QuestMD_DB:
 
 def __get_wowhead_quests_search(expansion, start, end=None) -> list[QuestMD]:
     base_url = expansion_data[expansion][WOWHEAD_URL]
+    metadata_filters = expansion_data[expansion][METADATA_FILTERS]
     if end:
-        url = base_url + f"/quests?filter=30:30;5:2;{end}:{start}"
+        url = base_url + f"/quests?filter={metadata_filters[0]}30:30;{metadata_filters[1]}5:2;{metadata_filters[2]}{end}:{start}"
     else:
-        url = base_url + f"/quests?filter=30;2;{start}"
+        url = base_url + f"/quests?filter={metadata_filters[0]}30;{metadata_filters[1]}2;{metadata_filters[2]}{start}"
     r = requests.get(url)
     soup = BeautifulSoup(r.text, 'html.parser')
     script_tag = soup.find('script', type='text/javascript', src=None)
@@ -460,17 +473,26 @@ def save_page(expansion, id):
         output_file.write(r.text)
 
 
-def save_htmls_from_wowhead(expansion, ids: list[int]):
+def save_htmls_from_wowhead(expansion, ids: set[int]):
     from functools import partial
     save_func = partial(save_page, expansion)
     cache_dir = f'cache/{expansion_data[expansion][HTML_CACHE]}'
 
-    if os.path.exists(cache_dir) and len(os.listdir(cache_dir)) == len(ids):
+    os.makedirs(cache_dir, exist_ok=True)
+    existing_files = os.listdir(cache_dir)
+    existing_ids = set(int(file_name.split('.')[0]) for file_name in existing_files)
+
+    if os.path.exists(cache_dir) and existing_ids == ids:
         print(f'HTML cache for Wowhead({expansion}) exists and seems legit. Skipping.')
         return
 
     print(f'Saving HTMLs for {len(ids)} quests from Wowhead({expansion}).')
-    os.makedirs(cache_dir, exist_ok=True)
+    save_ids = ids - existing_ids
+    print(f'Saving HTMLs for {len(save_ids)} of {len(ids)} spells from Wowhead({expansion}).')
+    redundant_ids = existing_ids - ids
+    if len(redundant_ids) > 0:
+        print(f"There's some redundant IDs: {redundant_ids}")
+
     with multiprocessing.Pool(THREADS) as p:
         p.map(save_func, ids)
 
@@ -1039,6 +1061,7 @@ def fix_classic_quests(classic_quests: dict[int, dict[str, QuestEntity]]):
     classic_quests[8968][CLASSIC].description = classic_quests[8968][CLASSIC].description.replace(" the Left Piece of Lord Valthalak's Amulet ", " the left piece of Lord Valthalak's amulet ")
     classic_quests[8991][CLASSIC].description = classic_quests[8991][CLASSIC].description.replace(" the Right Piece of Lord Valthalak's Amulet ", " the right piece of Lord Valthalak's amulet ")
     classic_quests[9416][CLASSIC].completion = classic_quests[9416][CLASSIC].completion.replace(" you're hear, ", " you're here, ")
+    classic_quests[65604][CLASSIC].completion = classic_quests[65604][CLASSIC].completion.replace("You strength is growing,", "Your strength is growing,").replace("that <race> for many years", "that orc for many years")
 
     #Fixes from Wrath:
     classic_quests[136][CLASSIC].name = classic_quests[136][CLASSIC].name.replace(" Sander's ", " Sanders' ")
@@ -1099,6 +1122,18 @@ def fix_classic_quests(classic_quests: dict[int, dict[str, QuestEntity]]):
     classic_quests[5044][CLASSIC].completion += ' <snort>'
     classic_quests[5265][CLASSIC].description = classic_quests[5265][CLASSIC].description.replace('\nthe Argent Hold ', '\nThe Argent Hold ')
     classic_quests[9136][CLASSIC].completion = 'I am much obliged, <name>.\n\n<Rayne bows.>\n\nPlease remember that I am always accepting fronds.'
+
+
+def fix_classic_sod_quests(classic_quests: dict[int, dict[str, QuestEntity]], sod_quests: dict[int, dict[str, QuestEntity]]):
+    # sod_quests[79592][SOD].accept_text_additions(classic_quests[7882][CLASSIC])
+    # sod_quests[79595][SOD].accept_text_additions(classic_quests[7881][CLASSIC])
+    # sod_quests[79593][SOD].accept_text_additions(classic_quests[7889][CLASSIC])
+    # sod_quests[79594][SOD].accept_text_additions(classic_quests[7894][CLASSIC])
+    # sod_quests[79590][SOD].accept_text_additions(classic_quests[7890][CLASSIC])
+    # sod_quests[79588][SOD].accept_text_additions(classic_quests[7899][CLASSIC])
+    # sod_quests[79589][SOD].accept_text_additions(classic_quests[7900][CLASSIC])
+    # sod_quests[79591][SOD].accept_text_additions(classic_quests[7895][CLASSIC])
+    pass
 
 
 def fix_tbc_quests(tbc_quests: dict[int, dict[str, QuestEntity]]):
@@ -1251,23 +1286,27 @@ def fix_wrath_quests(wrath_quests: dict[int, dict[str, QuestEntity]]):
 
 def populate_cache_db_with_quest_data():
     wowhead_metadata = get_wowhead_quests_metadata(CLASSIC)
+    wowhead_metadata_sod = get_wowhead_quests_metadata(SOD)
     wowhead_metadata_tbc = get_wowhead_quests_metadata(TBC)
     wowhead_metadata_wrath = get_wowhead_quests_metadata(WRATH)
 
-    save_htmls_from_wowhead(CLASSIC, list(wowhead_metadata.keys()))
-    save_htmls_from_wowhead(TBC, list(wowhead_metadata_tbc.keys()))
-    save_htmls_from_wowhead(WRATH, list(wowhead_metadata_wrath.keys()))
+    save_htmls_from_wowhead(CLASSIC, set(wowhead_metadata.keys()))
+    save_htmls_from_wowhead(SOD, set(wowhead_metadata_sod.keys()))
+    save_htmls_from_wowhead(TBC, set(wowhead_metadata_tbc.keys()))
+    save_htmls_from_wowhead(WRATH, set(wowhead_metadata_wrath.keys()))
 
     wowhead_quests = parse_wowhead_pages(CLASSIC, wowhead_metadata)
+    wowhead_quests_sod = parse_wowhead_pages(SOD, wowhead_metadata_sod)
     wowhead_quests_tbc = parse_wowhead_pages(TBC, wowhead_metadata_tbc)
     wowhead_quests_wrath = parse_wowhead_pages(WRATH, wowhead_metadata_wrath)
 
     fix_classic_quests(wowhead_quests)
+    fix_classic_sod_quests(wowhead_quests, wowhead_quests_sod)
     fix_tbc_quests(wowhead_quests_tbc)
     fix_wrath_quests(wowhead_quests_wrath)
 
     print('Merging with TBC')
-    classic_and_tbc_quests = merge_expansions(wowhead_quests, wowhead_quests_tbc)
+    classic_and_tbc_quests = merge_expansions({**wowhead_quests, **wowhead_quests_sod}, wowhead_quests_tbc)
     print('Merging with WotLK')
     all_quests = merge_expansions(classic_and_tbc_quests, wowhead_quests_wrath)
 
@@ -1405,8 +1444,9 @@ def generate_sources():
     for quest_id, quest_expansions in quests.items():
         for expansion, quest_entity in quest_expansions.items():
             if quest_entity.is_empty():
-                print(f'Warning: Quest {quest_entity} is empty. Skipping.')
-                continue
+                print(f'Warning: Quest {quest_entity} is empty.')
+                # print(f'Warning: Quest {quest_entity} is empty. Skipping.')
+                # continue
             if expansion == CLASSIC:
                 suffix = ''
             else:
