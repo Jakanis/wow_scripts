@@ -306,9 +306,11 @@ def save_spells_to_db(spells: dict[int, SpellData]):
                         id INT NOT NULL,
                         expansion TEXT,
                         name TEXT,
+                        name_ua TEXT,
                         description TEXT,
-                        aura_name TEXT,
-                        aura_description TEXT,
+                        description_ua TEXT,
+                        aura TEXT,
+                        aura_ua TEXT,
                         rank TEXT,
                         cat INT,
                         level INT,
@@ -326,8 +328,8 @@ def save_spells_to_db(spells: dict[int, SpellData]):
                 key in expansion_data[spell.expansion][IGNORES]):
                     continue
             md_skill = str(spell.spell_md.skill) if spell.spell_md.skill else None
-            conn.execute('INSERT INTO spells(id, expansion, name, description, aura_name, aura_description, rank, cat, level, schools, class, skill, desc_ref, aura_ref) VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
-                        (spell.id, spell.expansion, spell.name, spell.description, spell.aura_name, spell.aura_description, 
+            conn.execute('INSERT INTO spells(id, expansion, name, name_ua, description, description_ua, aura, aura_ua, rank, cat, level, schools, class, skill, desc_ref, aura_ref) VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+                        (spell.id, spell.expansion, spell.name, spell.name_ua, spell.description, spell.description_ua, spell.aura_description, spell.aura_ua,
                          spell.spell_md.rank, spell.spell_md.cat, spell.spell_md.level, spell.spell_md.schools, spell.spell_md.get_class(), md_skill,
                          spell.description_ref, spell.aura_ref))
 
@@ -474,7 +476,7 @@ def read_translations_tsv() -> dict[int, SpellData]:
             desc_ref = __try_cast_str_to_int(row[9], 0)
             aura_ref = __try_cast_str_to_int(row[10], 0)
             expansion = row[11]
-            category = row[12]
+            category = row[12] if len(row) > 12 and row[12] != '' else None
             if aura_name_ua and aura_name_ua != name_ua:
                 print(f'Warning! Translation spell and aura names not equal for spell#{spell_id}!')
             all_translations[spell_id] = SpellData(spell_id, expansion, name=name_en, description=description_en,
@@ -564,10 +566,14 @@ def __validate_template(spell_id: int, value: str, translation: str):
     import re
     translation = re.sub('\nspell#\d+', '', translation)
     # translation = re.sub(r'(\[.+?]|\(.+?)', '42', value)
-    template_start = translation.find('#') + 1
-    if template_start == 0:
+    template_start = translation.find('#')
+    if template_start == -1:
+        if len(re.findall('{\d+}', translation)) != 0:
+            print(f"Warning! Template not described for spell#{spell_id}")
         return
-    templates = translation[template_start:].split('#')
+    if len(re.findall('{\d+}', translation[:template_start])) != len(re.findall('{\d+}', translation[template_start + 1:])):
+        print(f"Warning! Count of templates doesn't match for spell#{spell_id}")
+    templates = translation[template_start + 1:].split('#')
     for template in templates:
         template = template.replace('.', '\\.')
         pattern = re.sub(r'{\d+}', '(\\\\d+|\\\\d+\\.\\\\d+|\[.+?\]|\(.+?\))', template).replace('\\\\', '\\')
@@ -583,12 +589,37 @@ def __validate_templates(spell: SpellData):
     if spell.aura_ua:
         __validate_template(spell.id, spell.aura_description, spell.aura_ua)
 
+
+def __validate_newlines(spell: SpellData):
+    import re
+    if spell.description_ua and not spell.description_ua.startswith('ref='):
+        if f'spell#' in spell.description_ua:
+            if len(re.findall("spell#", spell.description_ua)) > 1:
+                print(f"Warning! Check spell#{spell.id} manually")
+        else:
+            if re.findall("\n\n", spell.description) != re.findall("\n\n", spell.description_ua):
+                print(f"Warning! Newline count doesn't match for spell#{spell.id} description")
+    if spell.aura_ua and spell.aura_description:
+        if re.findall("\n\n", spell.aura_ua) != re.findall("\n\n", spell.aura_description):
+            print(f"Warning! Newline count doesn't match for spell#{spell.id} aura")
+
+
+def __validate_existence(spell: SpellData):
+    if spell.name_ua or spell.description_ua or spell.aura_ua:
+        if spell.name and not spell.name_ua:
+            print(f"Warning! There's no translation for spell#{spell.id} name")
+        if spell.description and not spell.description_ua:
+            print(f"Warning! There's no translation for spell#{spell.id} description")
+        if spell.aura_description and not spell.aura_ua and not spell.description_ua.startswith("ref="):
+            print(f"Warning! There's no translation for spell#{spell.id} aura")
+
 def validate_translations(spells: dict[int, SpellData]):
     for spell in spells.values():
         __validate_templates(spell)
+        __validate_newlines(spell)
+        __validate_existence(spell)
     # check templates
-    ## warning - No templates for values
-    ## warning - Failed to retrieve value with template
+    ## warning - No templates for raw values
     # check references
 
 
