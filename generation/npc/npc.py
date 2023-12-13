@@ -13,30 +13,40 @@ HTML_CACHE = 'html_cache'
 NPC_CACHE = 'npc_cache'
 IGNORES = 'ignores'
 INDEX = 'index'
+METADATA_FILTERS = 'metadata_filters'
+SOD = 'sod'
 
 expansion_data = {
     CLASSIC: {
-        INDEX: 0,
         WOWHEAD_URL: 'https://www.wowhead.com/classic',
         METADATA_CACHE: 'wowhead_classic_metadata_cache',
         HTML_CACHE: 'wowhead_classic_npc_html',
         NPC_CACHE: 'wowhead_classic_npc_cache',
+        METADATA_FILTERS: ('13:', '5:', '11500:'),
+        IGNORES: []
+    },
+    SOD: {
+        WOWHEAD_URL: 'https://www.wowhead.com/classic',
+        METADATA_CACHE: 'wowhead_sod_metadata_cache',
+        HTML_CACHE: 'wowhead_sod_npc_html',
+        NPC_CACHE: 'wowhead_sod_npc_cache',
+        METADATA_FILTERS: ('13:', '2:', '11500:'),
         IGNORES: []
     },
     TBC: {
-        INDEX: 1,
         WOWHEAD_URL: 'https://www.wowhead.com/tbc',
         METADATA_CACHE: 'wowhead_tbc_metadata_cache',
         HTML_CACHE: 'wowhead_tbc_npc_html',
         NPC_CACHE: 'wowhead_tbc_npc_cache',
+        METADATA_FILTERS: ('', '', ''),
         IGNORES: []
     },
     WRATH: {
-        INDEX: 2,
         WOWHEAD_URL: 'https://www.wowhead.com/wotlk',
         METADATA_CACHE: 'wowhead_wrath_metadata_cache',
         HTML_CACHE: 'wowhead_wrath_npc_html',
         NPC_CACHE: 'wowhead_wrath_npc_cache',
+        METADATA_FILTERS: ('', '', ''),
         IGNORES: []
     }
 }
@@ -89,10 +99,11 @@ class NPC_Short:
 
 def __get_wowhead_npc_search(expansion, start, end=None) -> list[NPC_MD]:
     base_url = expansion_data[expansion][WOWHEAD_URL]
+    metadata_filters = expansion_data[expansion][METADATA_FILTERS]
     if end:
-        url = base_url + f"/npcs?filter=37:37;2:5;{start}:{end}"
+        url = base_url + f"/npcs?filter={metadata_filters[0]}37:37;{metadata_filters[1]}2:5;{metadata_filters[2]}{start}:{end}"
     else:
-        url = base_url + f"/npcs?filter=37;2;{start}"
+        url = base_url + f"/npcs?filter={metadata_filters[0]}37;{metadata_filters[1]}2;{metadata_filters[2]}{start}"
     r = requests.get(url)
     soup = BeautifulSoup(r.text, 'html.parser')
     pre_script_div = soup.find('div', id='lv-npcs')
@@ -143,17 +154,18 @@ def get_wowhead_npc_metadata(expansion) -> dict[int, NPC_MD]:
             pickle.dump(wowhead_metadata, f)
     return wowhead_metadata
 
-def load_npc_lua() -> dict[int, NPC_Short]:
+def load_npc_lua(path: str) -> dict[int, NPC_Short]:
     from slpp import slpp as lua
     npcs = dict()
-    with open('input/npc.lua', 'r', encoding='utf-8') as input_file:
+    with open(path, 'r', encoding='utf-8') as input_file:
         lua_file = input_file.read()
         decoded_npcs = lua.decode(lua_file)
         for npc_id, decoded_npc in decoded_npcs.items():
             npc_name_ua = decoded_npc[0]
-            npc_tag_ua = None
-            if len(decoded_npc) == 2:
-                npc_tag_ua = decoded_npc[1]
+            if type(decoded_npc) == dict:
+                npc_tag_ua = decoded_npc.get(1)
+            else:
+                npc_tag_ua = decoded_npc[1] if len(decoded_npc) > 1 else None
             npcs[npc_id] = NPC_Short(npc_id, npc_name_ua, npc_tag_ua)
     return npcs
 
@@ -243,11 +255,17 @@ def get_wowhead_zones_npc_ids(zone_ids) -> dict[int, list[int]]:
 
 if __name__ == '__main__':
     wowhead_metadata = get_wowhead_npc_metadata(CLASSIC)
-    npc_translations = load_npc_lua()
+    wowhead_metadata_sod = get_wowhead_npc_metadata(SOD)
+    translations = load_npc_lua('input/entries/classic/npc.lua')
+    translations_sod = load_npc_lua('input/entries/sod/npc.lua')
 
-    for key in wowhead_metadata.keys() & npc_translations.keys():
-        wowhead_metadata[key].name_ua = npc_translations[key].name
-        wowhead_metadata[key].tag_ua = npc_translations[key].tag
+    for key in wowhead_metadata.keys() & translations.keys():
+        wowhead_metadata[key].name_ua = translations[key].name
+        wowhead_metadata[key].tag_ua = translations[key].tag
+
+    for key in wowhead_metadata_sod.keys() & translations_sod.keys():
+        wowhead_metadata_sod[key].name_ua = translations_sod[key].name
+        wowhead_metadata_sod[key].tag_ua = translations_sod[key].tag
 
     # Just for handier translation
     import zones
@@ -257,14 +275,16 @@ if __name__ == '__main__':
         # if wowhead_metadata[key].location != [] and wowhead_metadata[key].location != npc_ids_to_zone_ids[key]:
         #     print(f'Not equal for {key}: {wowhead_metadata[key].location} and {npc_ids_to_zone_ids[key]}')
         wowhead_metadata[key].location = npc_ids_to_zone_ids[key]
+    for key in wowhead_metadata_sod.keys() & npc_ids_to_zone_ids.keys():
+        wowhead_metadata_sod[key].location = npc_ids_to_zone_ids[key]
 
 
-    questie_npcs = load_questie_npcs()
+    # questie_npcs = load_questie_npcs()
+    #
+    # for key in wowhead_metadata.keys() & questie_npcs.keys():
+    #     wowhead_metadata[key].names = 'questie'
 
-    for key in wowhead_metadata.keys() & questie_npcs.keys():
-        wowhead_metadata[key].names = 'questie'
-
-    save_npcs_to_db(wowhead_metadata)
+    save_npcs_to_db({**wowhead_metadata, **wowhead_metadata_sod})
 
 
     # with open(f'lookupNpcs.lua', 'w', encoding="utf-8") as output_file:
