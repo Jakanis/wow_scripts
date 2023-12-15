@@ -112,6 +112,7 @@ def parse_npcs_lua():
 
 def parse_pending_npcs_csv() -> dict[NPC_TR]:
     import csv
+    npc_names = set()
     all_npcs = dict()
     with open('pending_npcs.csv', 'r', encoding="utf-8") as input_file:
         reader = csv.reader(input_file)
@@ -121,7 +122,10 @@ def parse_pending_npcs_csv() -> dict[NPC_TR]:
             id = row[0]
             npc = NPC_TR(id, row[1], row[2], row[3], row[4], row[5], row[6])
             if id in all_npcs:
-                print(f'NPC #{id} duplicated')
+                print(f'NPC #{id} ID duplicated')
+            if row[1] in npc_names:
+                print(f'NPC #{id} name duplicated')
+            npc_names.add(row[1])
             all_npcs[id] = npc
     return all_npcs
 
@@ -150,6 +154,21 @@ def combine_all_npcs(npcs_from_wowhead, npcs_from_lua, pending_npcs):
             )
             output_file.write(res_str)
 
+
+def read_npc_names_from_glossary() -> set[str]:
+    import csv
+    npcs = set()
+    with open('glossary.csv', 'r', encoding="utf-8") as input_file:
+        reader = csv.reader(input_file)
+        for row in reader:
+            if row[0] == 'Term [uk]':
+                continue
+            if row[4].startswith('нпц'):
+                name = row[3]
+                npcs.add(name)
+    return npcs
+
+
 def combine_existing_and_pending_npcs_to_tsv():
     import pickle 
     # save_npc_htmls_from_wowhead() # In case there's no ./npc_htmls folder or dumped npcs_from_wowhead.pkl file
@@ -164,10 +183,13 @@ def combine_existing_and_pending_npcs_to_tsv():
     combine_all_npcs(npcs_from_wowhead, npcs_from_lua, pending_npcs)
 
 def pending_npcs_to_crowdin_dictionary_csv():
+    existing_npcs = read_npc_names_from_glossary()
     pending_npcs = parse_pending_npcs_csv()
     dictionary_lines = list()
     dictionary_lines.append('"Term [uk]","Term [en]","Description [en]"\n')
     for id, pending_npc in pending_npcs.items():
+        if pending_npc.name_en in existing_npcs:
+            print(f'NPC #{id}: {pending_npc.name_en} exists in glossary!')
         csv_desc = 'нпц'
         csv_desc += f', {pending_npc.sex}' if pending_npc.sex else ''
         csv_desc += f', {pending_npc.race}' if pending_npc.race else ''
