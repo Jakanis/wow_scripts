@@ -207,6 +207,13 @@ def save_npcs_to_db(npcs: dict[int, NPC_MD]):
     conn.commit()
     with conn:
         for key, npc in npcs.items():
+            if ('TEST' in npc.name or
+                    '[PH]' in npc.name or
+                    'DND' in npc.name or
+                    'UNUSED' in npc.name or
+                    '<TXT>' in npc.name or
+                    key in expansion_data[npc.expansion][IGNORES]):
+                continue
             npc_tag = f'<{npc.tag}>' if npc.tag else None
             npc_location = ', '.join(map(lambda x: f"'{x}'", npc.location)) if npc.location else None
             conn.execute('INSERT INTO npcs(id, expansion, name, tag, name_ua, tag_ua, type, boss, classification, location, names, react) VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
