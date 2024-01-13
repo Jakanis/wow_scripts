@@ -158,6 +158,7 @@ known_categories = {
         1216: 'Timbermaw Hold',
         490: 'Un\'Goro Crater',
         618: 'Winterspring',
+        442: 'Auberdine', # Addod in SoD
     },
     2: {
         'Name': 'Dungeons',
