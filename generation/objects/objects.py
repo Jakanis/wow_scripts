@@ -5,31 +5,37 @@ import requests
 from bs4 import BeautifulSoup
 
 CLASSIC = 'classic'
+SOD = 'sod'
 TBC = 'tbc'
 WRATH = 'wrath'
 WOWHEAD_URL = 'wowhead_url'
 METADATA_CACHE = 'metadata_cache'
 IGNORES = 'ignores'
 INDEX = 'index'
+METADATA_FILTERS = 'metadata_filters'
 
 expansion_data = {
     CLASSIC: {
-        INDEX: 0,
         WOWHEAD_URL: 'https://www.wowhead.com/classic',
         METADATA_CACHE: 'wowhead_classic_metadata_cache',
+        METADATA_FILTERS: ('6:', '5:', '11500:'),
         IGNORES: [252, 323, 1682, 2890, 3219, 3221, 3657, 13044, 18973, 20959, 20999, 27801, 28025, 35253, 35254, 35592, 37100, 65407, 73361, 73362, 123308, 133737, 138496, 175755, 175789, 176225, 176366, 176368, 176548, 177224, 177884, 177927, 179474, 179475, 179476, 179477, 179669, 179670, 179671, 180252, 180385, 180401, 180618, 180668, 180786, 180851, 180855, 180856, 180857, 180858, 180860, 180861, 180862, 180863, 180864, 180865, 181852, 181853, 181886, 375774,
                   180510, 180512, 180516, # TBC
                   123468, 123469 # Wrath?
                   ]
     },
+    SOD: {
+        WOWHEAD_URL: 'https://www.wowhead.com/classic',
+        METADATA_CACHE: 'wowhead_sod_metadata_cache',
+        METADATA_FILTERS: ('6:', '2:', '11500:'),
+        IGNORES: []
+    },
     TBC: {
-        INDEX: 1,
         WOWHEAD_URL: 'https://www.wowhead.com/tbc',
         METADATA_CACHE: 'wowhead_tbc_metadata_cache',
         IGNORES: []
     },
     WRATH: {
-        INDEX: 2,
         WOWHEAD_URL: 'https://www.wowhead.com/wotlk',
         METADATA_CACHE: 'wowhead_wrath_metadata_cache',
         IGNORES: []
@@ -74,10 +80,11 @@ class ObjectMD:
 
 def __get_wowhead_object_search(expansion, start, end=None) -> list[ObjectMD]:
     base_url = expansion_data[expansion][WOWHEAD_URL]
+    metadata_filters = expansion_data[expansion][METADATA_FILTERS]
     if end:
-        url = base_url + f"/objects?filter=15:15;2:5;{start}:{end}"
+        url = base_url + f"/objects?filter={metadata_filters[0]}15:15;{metadata_filters[1]}2:5;{metadata_filters[2]}{start}:{end}"
     else:
-        url = base_url + f"/objects?filter=15;2;{start}"
+        url = base_url + f"/objects?filter={metadata_filters[0]}15;{metadata_filters[1]}2;{metadata_filters[2]}{start}"
     r = requests.get(url)
     soup = BeautifulSoup(r.text, 'html.parser')
     pre_script_div = soup.find('div', id='lv-objects')
@@ -175,8 +182,11 @@ def save_objects_to_db(objects: dict[int, ObjectMD]):
 
 
 if __name__ == '__main__':
-    wowhead_metadata = get_wowhead_objects_metadata(CLASSIC)
+    wowhead_metadata_classic = get_wowhead_objects_metadata(CLASSIC)
+    wowhead_metadata_sod = get_wowhead_objects_metadata(SOD)
     object_translations = load_object_lua()
+
+    wowhead_metadata = {**wowhead_metadata_classic, **wowhead_metadata_sod}
 
     for object in wowhead_metadata.values():
         if 'TEST' in object.name.upper().split(' ') or object.id in expansion_data[object.expansion][IGNORES]:
@@ -186,27 +196,27 @@ if __name__ == '__main__':
         else:
             print(f"Translation for {object} doesn't exist")
 
-    questie_objects = load_questie_objects_ids()
-
-    missing_questie_objects = {
-        175287: 'жаровня',
-        175298: 'жаровня'
-    }
-    for key in wowhead_metadata.keys() & questie_objects:
-        wowhead_metadata[key].names = 'questie'
-
-    with open(f'lookupObjects.lua', 'w', encoding="utf-8") as output_file:
-        for key in sorted(questie_objects):
-            translation = None
-            if key in wowhead_metadata:
-                translation = wowhead_metadata[key].name_ua
-            else:
-                translation = missing_questie_objects[key]
-            if translation is None:
-                print(f'Missing translation for {key}')
-                continue
-            translation = translation.replace('"', '\\"')
-            output_file.write(f'[{key}] = "{translation}",\n')
+    # questie_objects = load_questie_objects_ids()
+    #
+    # missing_questie_objects = {
+    #     175287: 'жаровня',
+    #     175298: 'жаровня'
+    # }
+    # for key in wowhead_metadata.keys() & questie_objects:
+    #     wowhead_metadata[key].names = 'questie'
+    #
+    # with open(f'lookupObjects.lua', 'w', encoding="utf-8") as output_file:
+    #     for key in sorted(questie_objects):
+    #         translation = None
+    #         if key in wowhead_metadata:
+    #             translation = wowhead_metadata[key].name_ua
+    #         else:
+    #             translation = missing_questie_objects[key]
+    #         if translation is None:
+    #             print(f'Missing translation for {key}')
+    #             continue
+    #         translation = translation.replace('"', '\\"')
+    #         output_file.write(f'[{key}] = "{translation}",\n')
 
 
     save_objects_to_db(wowhead_metadata)
