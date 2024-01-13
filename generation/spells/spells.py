@@ -613,11 +613,24 @@ def __validate_existence(spell: SpellData):
         if spell.aura_description and not spell.aura_ua and not spell.description_ua.startswith("ref="):
             print(f"Warning! There's no translation for spell#{spell.id} aura")
 
+
+def __validate_numbers(spell_id: int, value: str, translation: str):
+    import re
+    if set(re.findall(r'\d+', value)) != set(re.findall(r'\d+', translation)):
+        print(f"Warning! Numbers don't match for spell spell#{spell_id}")
+
+def __validate_spell_numbers(spell: SpellData):
+    if spell.description and spell.description_ua and not spell.description_ua.startswith('ref=') and not '#' in spell.description_ua:
+        __validate_numbers(spell.id, spell.description, spell.description_ua)
+    if spell.aura_ua and spell.aura_description and not '#' in spell.aura_ua:
+        __validate_numbers(spell.id, spell.aura_description, spell.aura_ua)
+
 def validate_translations(spells: dict[int, SpellData]):
     for spell in spells.values():
         __validate_templates(spell)
         __validate_newlines(spell)
         __validate_existence(spell)
+        __validate_spell_numbers(spell)
     # check templates
     ## warning - No templates for raw values
     # check references
