@@ -458,8 +458,8 @@ def __try_cast_str_to_int(value: str, default=None):
 def read_translations_tsv() -> dict[int, SpellData]:
     import csv
     all_translations: dict[int, SpellData] = dict()
-    with open('input/translations.tsv', 'r', encoding="utf-8") as input_file:
-        reader = csv.reader(input_file, delimiter="\t")
+    with open('input/translations.csv', 'r', encoding="utf-8") as input_file:
+        reader = csv.reader(input_file)
         for row in reader:
             spell_id = __try_cast_str_to_int(row[0])
             if not spell_id:
@@ -526,7 +526,7 @@ def read_classicua_translations(spells_root_path: str, spell_metadata: dict[int,
                         description_ua += f'\nspell#{rune}'
             else:
                 name_ua = decoded_spell[0]
-                description_ua = decoded_spell[1]
+                description_ua = decoded_spell[1] if len(decoded_spell) > 1 else None
                 aura_ua = decoded_spell[2] if len(decoded_spell) > 2 else None
             if description_ua:
                 description_ua = description_ua.replace('\\n','\n')
