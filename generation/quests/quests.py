@@ -486,9 +486,8 @@ def save_htmls_from_wowhead(expansion, ids: set[int]):
         print(f'HTML cache for Wowhead({expansion}) exists and seems legit. Skipping.')
         return
 
-    print(f'Saving HTMLs for {len(ids)} quests from Wowhead({expansion}).')
     save_ids = ids - existing_ids
-    print(f'Saving HTMLs for {len(save_ids)} of {len(ids)} spells from Wowhead({expansion}).')
+    print(f'Saving HTMLs for {len(save_ids)} of {len(ids)} quests from Wowhead({expansion}).')
     redundant_ids = existing_ids - ids
     if len(redundant_ids) > 0:
         print(f"There's some redundant IDs: {redundant_ids}")
@@ -1018,6 +1017,7 @@ def fix_classic_quests(classic_quests: dict[int, dict[str, QuestEntity]]):
     classic_quests[915][CLASSIC].description = classic_quests[915][CLASSIC].description.replace("Tigule and Foror's", "Tigule's")
     classic_quests[915][CLASSIC].completion = classic_quests[915][CLASSIC].completion.replace("Tigule and Foror know to", "Tigule knows how to")
     classic_quests[1062][CLASSIC].description = classic_quests[1062][CLASSIC].description.replace(" -- ", "--")
+    classic_quests[1168][CLASSIC].objective = classic_quests[1168][CLASSIC].objective.replace("Firemane Guards", "Firemane Scalebanes")
     classic_quests[1264][CLASSIC].description = classic_quests[1264][CLASSIC].description.replace("discretely", "discreetly")
     classic_quests[1489][CLASSIC].objective += '.'
     classic_quests[1505][CLASSIC].description = classic_quests[1505][CLASSIC].description.replace("Durotar to the east.", "Durotar.")
@@ -1137,6 +1137,7 @@ def fix_classic_sod_quests(classic_quests: dict[int, dict[str, QuestEntity]], so
 
 
 def fix_tbc_quests(tbc_quests: dict[int, dict[str, QuestEntity]]):
+    # Common fixes
     tbc_quests[915][TBC].completion = tbc_quests[915][TBC].completion.replace("Tigule and Foror know to", "Tigule knows how to")
     tbc_quests[1068][TBC].description = tbc_quests[1068][TBC].description.replace(" shaman ", " shamans ")
     tbc_quests[1678][TBC].description = tbc_quests[1678][TBC].description.replace("south of Frostmane Hold", "south of Frostmane Hold.")
@@ -1218,11 +1219,15 @@ def fix_tbc_quests(tbc_quests: dict[int, dict[str, QuestEntity]]):
     tbc_quests[812][TBC].completion += ' <sigh>'
     tbc_quests[842][TBC].completion = "Alright, <name>. You want to earn your keep with the Horde? Well there's plenty to do here, so listen close and do what you're told.\n\n<I see that look in your eyes, do not think I will tolerate any insolence. Thrall himself has declared the Hordes females to be on equal footing with you men. Disrespect me in the slightest, and you will know true pain./I'm happy to have met you. Thrall will be glad to know that more females like you and I are taking the initiative to push forward in the Barrens.>"
     tbc_quests[895][TBC].description = tbc_quests[895][TBC].description.replace('and is WANTED on', 'and is wanted on')
+    tbc_quests[1383][TBC].progress = "That Infiltrator in Stonard will surely.... open up... after he drinks my special serum. Haha!\n\nThe ingredients required are by no means easy to procure. Shadow Panthers are common in the Swamp but collecting enough hearts for our purpose can be daunting. And the Mire Lord can be such a fussy beast."
     tbc_quests[1468][TBC].completion = tbc_quests[1468][TBC].completion.replace('be like a big brother to me', 'be like a big <brother/sister> to me').replace(', yes sir.', ', yes <sir/lady>.')
     tbc_quests[2767][TBC].progress = "Yes, I'm Oglethorpe Obnoticus, master inventor at your service! Now, is there something I could assist you with?"
     tbc_quests[4981][TBC].completion = tbc_quests[4981][TBC].completion.replace("\n\n\n\n", "\n\n<Bijou laughs.>\n\n")
     tbc_quests[5044][TBC].completion += ' <snort>'
     tbc_quests[5265][TBC].description = tbc_quests[5265][TBC].description.replace('\nthe Argent Hold ', '\nThe Argent Hold ')
+    tbc_quests[5306][TBC].completion = "Knowledge is power!"
+    tbc_quests[5307][TBC].completion = "It should be obvious that a sword is always the best choice."
+    tbc_quests[5763][TBC].completion = "Ah, this horn belongs to a <race>, Roon Wildmane.  My father spoke often of the good times they had together hunting the beasts of Desolace.  So Roon is inviting me to join him, is he?\n\nWe're neck deep in the jungle right now, but thank you, <name>.  Perhaps my next expedition will take me to Desolace, the land of the centaurs."
     tbc_quests[7936][TBC].completion = tbc_quests[7936][TBC].completion.replace('A prize fit for a king!', 'A prize fit for a <king/queen>!')
     tbc_quests[8044][TBC].progress = tbc_quests[8044][TBC].progress.replace("\n\n\n\n", "\n\n<Jin'rokh bows.>\n\n")
     tbc_quests[8046][TBC].completion += "\n\n<Jin'rokh shudders.>"
@@ -1242,6 +1247,7 @@ def fix_tbc_quests(tbc_quests: dict[int, dict[str, QuestEntity]]):
 
 
 def fix_wrath_quests(wrath_quests: dict[int, dict[str, QuestEntity]]):
+    # Common fixes
     wrath_quests[915][WRATH].completion = wrath_quests[915][WRATH].completion.replace("Tigule and Foror know to", "Tigule knows how to")
     wrath_quests[1068][WRATH].description = wrath_quests[1068][WRATH].description.replace(" shaman ", " shamans ")
     wrath_quests[4822][WRATH].completion = wrath_quests[4822][WRATH].completion.replace("Tigule and Foror know to", "Tigule knows how to")
@@ -1261,11 +1267,15 @@ def fix_wrath_quests(wrath_quests: dict[int, dict[str, QuestEntity]]):
     wrath_quests[812][WRATH].completion += ' <sigh>'
     wrath_quests[842][WRATH].completion = "Alright, <name>. You want to earn your keep with the Horde? Well there's plenty to do here, so listen close and do what you're told.\n\n<I see that look in your eyes, do not think I will tolerate any insolence. Thrall himself has declared the Hordes females to be on equal footing with you men. Disrespect me in the slightest, and you will know true pain./I'm happy to have met you. Thrall will be glad to know that more females like you and I are taking the initiative to push forward in the Barrens.>"
     wrath_quests[895][WRATH].description = wrath_quests[895][WRATH].description.replace('and is WANTED on', 'and is wanted on')
+    wrath_quests[1383][WRATH].progress = "That Infiltrator in Stonard will surely.... open up... after he drinks my special serum. Haha!\n\nThe ingredients required are by no means easy to procure. Shadow Panthers are common in the Swamp but collecting enough hearts for our purpose can be daunting. And the Mire Lord can be such a fussy beast."
     wrath_quests[1468][WRATH].completion = wrath_quests[1468][WRATH].completion.replace('be like a big brother to me', 'be like a big <brother/sister> to me').replace(', yes sir.', ', yes <sir/lady>.')
     wrath_quests[2767][WRATH].progress = "Yes, I'm Oglethorpe Obnoticus, master inventor at your service! Now, is there something I could assist you with?"
     wrath_quests[4981][WRATH].completion = wrath_quests[4981][WRATH].completion.replace("\n\n\n\n", "\n\n<Bijou laughs.>\n\n")
     wrath_quests[5044][WRATH].completion += ' <snort>'
     wrath_quests[5265][WRATH].description = wrath_quests[5265][WRATH].description.replace('\nthe Argent Hold ', '\nThe Argent Hold ')
+    wrath_quests[5306][WRATH].completion = "Knowledge is power!"
+    wrath_quests[5307][WRATH].completion = "It should be obvious that a sword is always the best choice."
+    wrath_quests[5763][WRATH].completion = "Ah, this horn belongs to a <race>, Roon Wildmane.  My father spoke often of the good times they had together hunting the beasts of Desolace.  So Roon is inviting me to join him, is he?\n\nWe're neck deep in the jungle right now, but thank you, <name>.  Perhaps my next expedition will take me to Desolace, the land of the centaurs."
     wrath_quests[7936][WRATH].completion = wrath_quests[7936][WRATH].completion.replace('A prize fit for a king!', 'A prize fit for a <king/queen>!')
     wrath_quests[8044][WRATH].progress = wrath_quests[8044][WRATH].progress.replace("\n\n\n\n", "\n\n<Jin'rokh bows.>\n\n")
     wrath_quests[8046][WRATH].completion += "\n\n<Jin'rokh shudders.>"
