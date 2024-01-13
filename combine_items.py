@@ -493,26 +493,29 @@ def pending_item_row_to_item(row):
     hits_ua = list()
     uses_ua = list()
     flavor_ua = list()
-    for desc in row[4].split("\n"):
-        if (desc.startswith('Desc:')):
-            descs_ua.append(desc.replace('Desc: ', ''))
-        if (desc.startswith('Equip:')):
-            equips_ua.append(desc.replace('Equip: ', ''))
-        if (desc.startswith('Hit:')):
-            hits_ua.append(desc.replace('Hit: ', ''))
-        if (desc.startswith('Use:')):
-            uses_ua.append(desc.replace('Use: ', ''))
-        if (desc.startswith('Flavor:')):
-            flavor_ua.append(desc.replace('Flavor: ', ''))
+    if len(row) > 4:
+        for desc in row[4].split("\n"):
+            if (desc.startswith('Desc:')):
+                descs_ua.append(desc.replace('Desc: ', ''))
+            if (desc.startswith('Equip:')):
+                equips_ua.append(desc.replace('Equip: ', ''))
+            if (desc.startswith('Hit:')):
+                hits_ua.append(desc.replace('Hit: ', ''))
+            if (desc.startswith('Use:')):
+                uses_ua.append(desc.replace('Use: ', ''))
+            if (desc.startswith('Flavor:')):
+                flavor_ua.append(desc.replace('Flavor: ', ''))
+    elif len(row) > 3:
+        print('Warning! Desc not translated?')
 
-    item = Object(id = int(row[0].replace(':sod', '')),
-            name = row[2],
-            descs = descs_ua if descs_ua else None,
-            equips = equips_ua if equips_ua else None, 
-            hits = hits_ua if hits_ua else None,
-            uses = uses_ua if uses_ua else None,
-            flavor = flavor_ua if flavor_ua else None,
-            ref = None)
+    item = Object(id=int(row[0].replace(':sod', '')),
+                  name=row[2],
+                  descs=descs_ua if descs_ua else None,
+                  equips=equips_ua if equips_ua else None,
+                  hits=hits_ua if hits_ua else None,
+                  uses=uses_ua if uses_ua else None,
+                  flavor=flavor_ua if flavor_ua else None,
+                  ref=None)
     return item
 
 def combine_pending_and_existing_translation():
