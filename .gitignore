@@ -6,3 +6,4 @@ venv
 *.tsv
 *.csv
 *.lua
+.idea
