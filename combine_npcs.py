@@ -96,7 +96,7 @@ def parse_npcs_lua():
     with open('entries/npc.lua', 'r', encoding="utf-8") as input_file:
         lua_file = input_file.read()
     for line in lua_file.split('\n'):
-        res = re.findall('\[(\d+)\] = { \"(.+)\".+-- (.+)', line)[0]
+        res = re.findall(r'\[(\d+)] = { \"(.+)\".+-- (.+)', line)[0]
         if (len(res) != 3):
             print(f'check {line}')
         id = int(res[0])

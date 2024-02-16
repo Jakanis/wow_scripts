@@ -508,7 +508,7 @@ def pending_item_row_to_item(row):
     elif len(row) > 3:
         print('Warning! Desc not translated?')
 
-    item = Object(id=int(row[0].replace(':sod', '')),
+    item = Object(id=int(row[0].replace(':sod', '').replace(':tbc', '')),
                   name=row[2],
                   descs=descs_ua if descs_ua else None,
                   equips=equips_ua if equips_ua else None,
@@ -534,7 +534,7 @@ def combine_pending_and_existing_translation():
         for row in reader:
             if (row[0] == 'ID'):
                 continue
-            id = int(row[0].replace(':sod', ''))
+            id = int(row[0].replace(':sod', '').replace(':tbc', ''))
             pending_item = pending_item_row_to_item(row)
             pending_items[pending_item.id] = pending_item
 
