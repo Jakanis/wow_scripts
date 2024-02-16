@@ -9,9 +9,6 @@ import sqlite3
 import difflib
 
 THREADS = 32
-# WOWHEAD_URL = 'https://www.wowhead.com/classic'
-# WOWHEAD_URL_TBC = 'https://www.wowhead.com/tbc'
-# WOWHEAD_URL_WRATH = 'https://www.wowhead.com/wotlk'
 
 CLASSIC = 'classic'
 SOD = 'sod'
@@ -33,7 +30,7 @@ expansion_data = {
         QUESTS_CACHE: 'wowhead_classic_quest_cache',
         METADATA_FILTERS: ('8:', '5:', '11500:'),
         IGNORES: [
-            1, 785, 912, 999, 1005, 1006, 1099, 1174, 1272, 1500, 5383, 6843, 7522, 7561, 7797, 7906, 7961, 7962, 8226, 8259, 8289, 8296, 8478, 8489, 8618, 8896, 9065,  # Not used in all expansions
+            1, 785, 912, 999, 1005, 1006, 1099, 1174, 1272, 1500, 2000, 5383, 6843, 7522, 7561, 7797, 7906, 7961, 7962, 8226, 8259, 8289, 8296, 8478, 8489, 8618, 8896, 9065,  # Not used in all expansions
             # 8617, 8618, 8530, 8531 # '<faction_name> needs singed corestones' quests actually not used.
             236,  # Wintergrasp (lich o_O)
             8325, 8326, 8327, 8328, 8329, 8334, 8335, 8338, 8344, 8347, 8350, 8463, 8468, 8472, 8473, 8474, 8475, 8476, 8477, 8479, 8480, 8482, 8483, 8486, 8487, 8488, 8490, 8491, 8547, 8563, 8564, 8884, 8885, 8886, 8887, 8888, 8889, 8890, 8891, 8892, 8894, 8895, 9249, # TBC
@@ -46,7 +43,7 @@ expansion_data = {
         QUESTS_CACHE: 'wowhead_sod_classic_quest_cache',
         METADATA_FILTERS: ('8:', '2:', '11500:'),
         IGNORES: [
-            63769
+            2000, 63769
         ]
     },
     TBC: {
@@ -56,7 +53,7 @@ expansion_data = {
         QUESTS_CACHE: 'wowhead_tbc_quest_cache',
         METADATA_FILTERS: ('', '', ''),
         IGNORES: [
-            1, 785, 912, 999, 1005, 1006, 1099, 1174, 1272, 1500, 5383, 6843, 7522, 7561, 7797, 7906, 7961, 7962, 8226, 8259, 8289, 8296, 8478, 8489, 8618, 8896, 9065,  # Not used in all expansions
+            1, 785, 912, 999, 1005, 1006, 1099, 1174, 1272, 1500, 2000, 5383, 6843, 7522, 7561, 7797, 7906, 7961, 7962, 8226, 8259, 8289, 8296, 8478, 8489, 8618, 8896, 9065,  # Not used in all expansions
             # 236,  # Still Wintergrasp. Doesn't exist for TBC
             9511, 9880, 9881, 10375, 10376, 10377, 10378, 10379, 10383, 10386, 10387, 10638, 10779, 10844, 10999, 11027, 11334, 11345, 11551, 11976, 24508, 24509, 65221, 65222, 65223, 65224, # Appeared in TBC, not used
             11196,  # Used in Cata
@@ -69,7 +66,7 @@ expansion_data = {
         QUESTS_CACHE: 'wowhead_wrath_quest_cache',
         METADATA_FILTERS: ('', '', ''),
         IGNORES: [
-            1, 785, 912, 999, 1005, 1006, 1099, 1174, 1272, 1500, 5383, 6843, 7522, 7561, 7797, 7906, 7961, 7962, 8226, 8259, 8289, 8296, 8478, 8489, 8618, 8896, 9065,  # Not used in all expansions
+            1, 785, 912, 999, 1005, 1006, 1099, 1174, 1272, 1500, 2000, 5383, 6843, 7522, 7561, 7797, 7906, 7961, 7962, 8226, 8259, 8289, 8296, 8478, 8489, 8618, 8896, 9065,  # Not used in all expansions
             9511, 9880, 9881, 10375, 10376, 10377, 10378, 10379, 10383, 10386, 10387, 10638, 10779, 10844, 10999, 11027, 11334, 11345, 11551, 11976, 24508, 24509, 65221, 65222, 65223, 65224,  # Appeared in TBC, not used
             11179, 13997, 11402, 11461, 11578, 11579, 11939, 11987, 11992, 12162, 12163, 12426, 12586, 13299, 13317, 25306, 12233, 12493, 12586, 12825, 12834, 12835, 12837, 12881, 12890, 12911, 13977, # Appeared in Wrath, not used
             60860, 70685,  # Rewards for... ergh... TCG? Doesn't exist for other expansions and Wowhead has no text
@@ -829,7 +826,7 @@ def merge_with_db(wowhead_quests: dict[int, dict[str, QuestEntity]], classicua_q
                 print(f"WarningDB1: Quest #{quest_id} '{getattr(cache_quest, 'name')}' doesn't exist in ClassicUA")
                 continue
 
-            if cache_quest.name != saved_quest.name:  # Good (7)
+            if cache_quest.name != saved_quest.name:  # Good, none
                 print('-' * 100)
                 if changes_in_next_expansions:
                     print(f'Quest #{quest_id} has changes in next expansions')
@@ -849,7 +846,7 @@ def merge_with_db(wowhead_quests: dict[int, dict[str, QuestEntity]], classicua_q
                 print('\n'.join(cache_quest.diff(saved_quest)))
                 continue
 
-            if len(changes) > 0 and len(additions) > 0:  # Good (16)
+            if len(changes) > 0 and len(additions) > 0:  # Good, none
                 print('-' * 100)
                 if changes_in_next_expansions:
                     print(f'Quest #{quest_id} has changes in next expansions')
@@ -857,7 +854,7 @@ def merge_with_db(wowhead_quests: dict[int, dict[str, QuestEntity]], classicua_q
                 print('\n'.join(cache_quest.diff(saved_quest)))
                 continue
 
-            if len(changes) > 0 and len(deletions) > 0:  # Good (9). No changes needed
+            if len(changes) > 0 and len(deletions) > 0:  # Good, none
                 print('-' * 100)
                 if changes_in_next_expansions:
                     print(f'Quest #{quest_id} has changes in next expansions')
@@ -865,7 +862,7 @@ def merge_with_db(wowhead_quests: dict[int, dict[str, QuestEntity]], classicua_q
                 print('\n'.join(cache_quest.diff(saved_quest)))
                 continue
 
-            if len(additions) > 0 and len(deletions) > 0:  # Good (20). No changes needed
+            if len(additions) > 0 and len(deletions) > 0:  # Good, none
                 print('-' * 100)
                 if changes_in_next_expansions:
                     print(f'Quest #{quest_id} has changes in next expansions')
@@ -873,7 +870,7 @@ def merge_with_db(wowhead_quests: dict[int, dict[str, QuestEntity]], classicua_q
                 print('\n'.join(cache_quest.diff(saved_quest)))
                 continue
 
-            if len(changes) > 0:  # Good (290). Pure changes, mostly should be fine.
+            if len(changes) > 0:  # Good, none. Pure changes, mostly should be fine.
                 print('-' * 100)
                 if changes_in_next_expansions:
                     print(f'Quest #{quest_id} has changes in next expansions')
@@ -892,7 +889,7 @@ def merge_with_db(wowhead_quests: dict[int, dict[str, QuestEntity]], classicua_q
                 cache_quest.accept_text_additions(saved_quest)
                 continue
 
-            if len(deletions) > 0:  # Good (42). What can go wrong if we just add text?
+            if len(deletions) > 0:  # Good, none. What can go wrong if we just add text?
                 print('-' * 100)
                 if changes_in_next_expansions:
                     print(f'Quest #{quest_id} has changes in next expansions')
@@ -1133,13 +1130,16 @@ def fix_classic_sod_quests(classic_quests: dict[int, dict[str, QuestEntity]], so
     # sod_quests[79588][SOD].accept_text_additions(classic_quests[7899][CLASSIC])
     # sod_quests[79589][SOD].accept_text_additions(classic_quests[7900][CLASSIC])
     # sod_quests[79591][SOD].accept_text_additions(classic_quests[7895][CLASSIC])
-    pass
+
+    sod_quests[78307][SOD].objective = None
+    sod_quests[78307][SOD].description = None
 
 
 def fix_tbc_quests(tbc_quests: dict[int, dict[str, QuestEntity]]):
     # Common fixes
     tbc_quests[915][TBC].completion = tbc_quests[915][TBC].completion.replace("Tigule and Foror know to", "Tigule knows how to")
     tbc_quests[1068][TBC].description = tbc_quests[1068][TBC].description.replace(" shaman ", " shamans ")
+    tbc_quests[1168][TBC].progress = "Mok'Morokk tell all ogres to stay and keep this place safe. Me think ogres need to kill black dragon army and get old home back.\n\nYou help ogres get home back. Help ogres get revenge."
     tbc_quests[1678][TBC].description = tbc_quests[1678][TBC].description.replace("south of Frostmane Hold", "south of Frostmane Hold.")
     tbc_quests[1844][TBC].description = tbc_quests[1844][TBC].description.replace(" the northwestern reaches ", " the southwestern reaches ").replace(" Mountains there lies ", " Mountains lies ")
     tbc_quests[4822][TBC].completion = tbc_quests[4822][TBC].completion.replace("Tigule and Foror know to", "Tigule knows how to")
@@ -1219,7 +1219,6 @@ def fix_tbc_quests(tbc_quests: dict[int, dict[str, QuestEntity]]):
     tbc_quests[812][TBC].completion += ' <sigh>'
     tbc_quests[842][TBC].completion = "Alright, <name>. You want to earn your keep with the Horde? Well there's plenty to do here, so listen close and do what you're told.\n\n<I see that look in your eyes, do not think I will tolerate any insolence. Thrall himself has declared the Hordes females to be on equal footing with you men. Disrespect me in the slightest, and you will know true pain./I'm happy to have met you. Thrall will be glad to know that more females like you and I are taking the initiative to push forward in the Barrens.>"
     tbc_quests[895][TBC].description = tbc_quests[895][TBC].description.replace('and is WANTED on', 'and is wanted on')
-    tbc_quests[1383][TBC].progress = "That Infiltrator in Stonard will surely.... open up... after he drinks my special serum. Haha!\n\nThe ingredients required are by no means easy to procure. Shadow Panthers are common in the Swamp but collecting enough hearts for our purpose can be daunting. And the Mire Lord can be such a fussy beast."
     tbc_quests[1468][TBC].completion = tbc_quests[1468][TBC].completion.replace('be like a big brother to me', 'be like a big <brother/sister> to me').replace(', yes sir.', ', yes <sir/lady>.')
     tbc_quests[2767][TBC].progress = "Yes, I'm Oglethorpe Obnoticus, master inventor at your service! Now, is there something I could assist you with?"
     tbc_quests[4981][TBC].completion = tbc_quests[4981][TBC].completion.replace("\n\n\n\n", "\n\n<Bijou laughs.>\n\n")
@@ -1227,7 +1226,7 @@ def fix_tbc_quests(tbc_quests: dict[int, dict[str, QuestEntity]]):
     tbc_quests[5265][TBC].description = tbc_quests[5265][TBC].description.replace('\nthe Argent Hold ', '\nThe Argent Hold ')
     tbc_quests[5306][TBC].completion = "Knowledge is power!"
     tbc_quests[5307][TBC].completion = "It should be obvious that a sword is always the best choice."
-    tbc_quests[5763][TBC].completion = "Ah, this horn belongs to a <race>, Roon Wildmane.  My father spoke often of the good times they had together hunting the beasts of Desolace.  So Roon is inviting me to join him, is he?\n\nWe're neck deep in the jungle right now, but thank you, <name>.  Perhaps my next expedition will take me to Desolace, the land of the centaurs."
+    tbc_quests[5763][TBC].completion = "Ah, this horn belongs to a <race>, Roon Wildmane. My father spoke often of the good times they had together hunting the beasts of Desolace. So Roon is inviting me to join him, is he?\n\nWe're neck deep in the jungle right now, but thank you, <name>. Perhaps my next expedition will take me to Desolace, the land of the centaurs."
     tbc_quests[7936][TBC].completion = tbc_quests[7936][TBC].completion.replace('A prize fit for a king!', 'A prize fit for a <king/queen>!')
     tbc_quests[8044][TBC].progress = tbc_quests[8044][TBC].progress.replace("\n\n\n\n", "\n\n<Jin'rokh bows.>\n\n")
     tbc_quests[8046][TBC].completion += "\n\n<Jin'rokh shudders.>"
@@ -1267,7 +1266,6 @@ def fix_wrath_quests(wrath_quests: dict[int, dict[str, QuestEntity]]):
     wrath_quests[812][WRATH].completion += ' <sigh>'
     wrath_quests[842][WRATH].completion = "Alright, <name>. You want to earn your keep with the Horde? Well there's plenty to do here, so listen close and do what you're told.\n\n<I see that look in your eyes, do not think I will tolerate any insolence. Thrall himself has declared the Hordes females to be on equal footing with you men. Disrespect me in the slightest, and you will know true pain./I'm happy to have met you. Thrall will be glad to know that more females like you and I are taking the initiative to push forward in the Barrens.>"
     wrath_quests[895][WRATH].description = wrath_quests[895][WRATH].description.replace('and is WANTED on', 'and is wanted on')
-    wrath_quests[1383][WRATH].progress = "That Infiltrator in Stonard will surely.... open up... after he drinks my special serum. Haha!\n\nThe ingredients required are by no means easy to procure. Shadow Panthers are common in the Swamp but collecting enough hearts for our purpose can be daunting. And the Mire Lord can be such a fussy beast."
     wrath_quests[1468][WRATH].completion = wrath_quests[1468][WRATH].completion.replace('be like a big brother to me', 'be like a big <brother/sister> to me').replace(', yes sir.', ', yes <sir/lady>.')
     wrath_quests[2767][WRATH].progress = "Yes, I'm Oglethorpe Obnoticus, master inventor at your service! Now, is there something I could assist you with?"
     wrath_quests[4981][WRATH].completion = wrath_quests[4981][WRATH].completion.replace("\n\n\n\n", "\n\n<Bijou laughs.>\n\n")
@@ -1275,7 +1273,7 @@ def fix_wrath_quests(wrath_quests: dict[int, dict[str, QuestEntity]]):
     wrath_quests[5265][WRATH].description = wrath_quests[5265][WRATH].description.replace('\nthe Argent Hold ', '\nThe Argent Hold ')
     wrath_quests[5306][WRATH].completion = "Knowledge is power!"
     wrath_quests[5307][WRATH].completion = "It should be obvious that a sword is always the best choice."
-    wrath_quests[5763][WRATH].completion = "Ah, this horn belongs to a <race>, Roon Wildmane.  My father spoke often of the good times they had together hunting the beasts of Desolace.  So Roon is inviting me to join him, is he?\n\nWe're neck deep in the jungle right now, but thank you, <name>.  Perhaps my next expedition will take me to Desolace, the land of the centaurs."
+    wrath_quests[5763][WRATH].completion = "Ah, this horn belongs to a <race>, Roon Wildmane. My father spoke often of the good times they had together hunting the beasts of Desolace. So Roon is inviting me to join him, is he?\n\nWe're neck deep in the jungle right now, but thank you, <name>. Perhaps my next expedition will take me to Desolace, the land of the centaurs."
     wrath_quests[7936][WRATH].completion = wrath_quests[7936][WRATH].completion.replace('A prize fit for a king!', 'A prize fit for a <king/queen>!')
     wrath_quests[8044][WRATH].progress = wrath_quests[8044][WRATH].progress.replace("\n\n\n\n", "\n\n<Jin'rokh bows.>\n\n")
     wrath_quests[8046][WRATH].completion += "\n\n<Jin'rokh shudders.>"
