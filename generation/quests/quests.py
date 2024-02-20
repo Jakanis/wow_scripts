@@ -1133,6 +1133,8 @@ def fix_classic_sod_quests(classic_quests: dict[int, dict[str, QuestEntity]], so
 
     sod_quests[78307][SOD].objective = None
     sod_quests[78307][SOD].description = None
+    sod_quests[78699][SOD].objective = None
+    sod_quests[78699][SOD].description = None
 
 
 def fix_tbc_quests(tbc_quests: dict[int, dict[str, QuestEntity]]):
