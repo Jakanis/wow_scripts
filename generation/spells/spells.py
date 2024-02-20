@@ -357,9 +357,8 @@ def create_translation_sheet(spells: dict[int, SpellData]):
     with open(f'translate_this.tsv', mode='w', encoding='utf-8') as f:
         f.write('ID\tName(EN)\tName(UA)\tDescription(EN)\tDescription(UA)\tAura(EN)\tAura(UA)\tAura description(EN)\tAura description(UA)\tdesc_ref\taura_ref\n')
         for key, spell in sorted(spells.items()):
-            if getattr(spell.spell_md, 'chrclass') != 256:
-                continue
-            f.write(f'{spell.id}\t{spell.name}\t\t"{spell.description}"\t\t{spell.aura_name}\t\t"{spell.aura_description}"\t\t{spell.description_ref}\t{spell.aura_ref}\n')
+            if getattr(spell.spell_md, 'chrclass') == 256 and spell.name_ua is None:
+                f.write(f'{spell.id}\t{spell.name}\t\t"{spell.description}"\t\t{spell.aura_name}\t\t"{spell.aura_description}"\t\t{spell.description_ref}\t{spell.aura_ref}\n')
 
 
 
@@ -391,8 +390,6 @@ def retrieve_spell_data():
     #         wowhead_items[key].name_ua = 'questie'
 
     populate_similarity(wowhead_spells_sod)
-
-    create_translation_sheet(wowhead_spells_sod)
 
     # print('Merging with TBC')
     # classic_and_tbc_items = merge_expansions(wowhead_items, wowhead_items_tbc)
@@ -532,7 +529,12 @@ def read_classicua_translations(spells_root_path: str, spell_metadata: dict[int,
                 description_ua = description_ua.replace('\\n','\n')
             if aura_ua:
                 aura_ua = aura_ua.replace('\\n','\n')
-            spell = SpellData(spell_id, expansion, spell_metadata[spell_id].name, category=category, name_ua=name_ua,
+            if spell_id in spell_metadata:
+                original_name = spell_metadata[spell_id].name
+            else:
+                print(f"Warning! Spell#{spell_id} doesn't exist on Wowhead!")
+                original_name = 'UNKNOWN'
+            spell = SpellData(spell_id, expansion, original_name, category=category, name_ua=name_ua,
                               description_ua=description_ua, aura_ua=aura_ua)
             all_spells[spell_id] = spell
     return all_spells
@@ -564,14 +566,14 @@ def apply_translations_to_data(spell_data: dict[int, SpellData], translations: d
 
 def __validate_template(spell_id: int, value: str, translation: str):
     import re
-    translation = re.sub('\nspell#\d+', '', translation)
+    translation = re.sub(r'\nspell#\d+', '', translation)
     # translation = re.sub(r'(\[.+?]|\(.+?)', '42', value)
     template_start = translation.find('#')
     if template_start == -1:
-        if len(re.findall('{\d+}', translation)) != 0:
+        if len(re.findall(r'{\d+}', translation)) != 0:
             print(f"Warning! Template not described for spell#{spell_id}")
         return
-    if len(re.findall('{\d+}', translation[:template_start])) != len(re.findall('{\d+}', translation[template_start + 1:])):
+    if len(re.findall(r'{\d+}', translation[:template_start])) != len(re.findall(r'{\d+}', translation[template_start + 1:])):
         print(f"Warning! Count of templates doesn't match for spell#{spell_id}")
     templates = translation[template_start + 1:].split('#')
     for template in templates:
@@ -665,3 +667,5 @@ if __name__ == '__main__':
     validate_translations(parsed_spells)
 
     convert_translations_to_entries(tsv_translations)
+
+    create_translation_sheet(parsed_spells)
