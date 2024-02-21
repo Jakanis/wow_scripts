@@ -92,15 +92,14 @@ class SpellMD:
 
 
 class SpellData:
-    def __init__(self, id, expansion, name, description=None, aura_name=None, aura_description=None, name_ua=None,
+    def __init__(self, id, expansion, name, description=None, aura=None, name_ua=None,
                  description_ua=None, aura_ua=None, description_ref: int = 0, aura_ref: int = 0,
                  spell_md: SpellMD = None, category=None, rank=None):
         self.id = id
         self.expansion = expansion
         self.name = name
         self.description = description
-        self.aura_name = aura_name
-        self.aura_description = aura_description
+        self.aura = aura
         self.name_ua = name_ua
         self.description_ua = description_ua
         self.aura_ua = aura_ua
@@ -256,17 +255,16 @@ def parse_wowhead_spell_page(expansion, id) -> SpellData:
         #     print(f'Subbed \\n in spell#{id}')
         description = re.sub(r'\n\n+', '\n\n', description)
 
-    aura_name = aura_description = None
+    aura_text = None
     if aura:
         aura_soup = BeautifulSoup(aura, 'html.parser')
-        aura_name = aura_soup.find('b', {'class': 'q'}).text
-        aura_description = aura_soup.find_all('td')[-1]
-        for span in aura_description.find_all('span', {'class': 'q'}):
+        aura_text = aura_soup.find_all('td')[-1]
+        for span in aura_text.find_all('span', {'class': 'q'}):
             span.replace_with('\n')
-        aura_description = aura_description.get_text(strip=True, separator='<SPLIT>').split('<SPLIT>')
-        aura_description = '\n'.join(aura_description)
+        aura_text = aura_text.get_text(strip=True, separator='<SPLIT>').split('<SPLIT>')
+        aura_text = '\n'.join(aura_text)
 
-    return SpellData(id, expansion, name, description, aura_name, aura_description)
+    return SpellData(id, expansion, name, description, aura_text)
 
 
 def parse_wowhead_pages(expansion, metadata: dict[int, SpellMD]) -> dict[int, SpellData]:
@@ -329,7 +327,7 @@ def save_spells_to_db(spells: dict[int, SpellData]):
                     continue
             md_skill = str(spell.spell_md.skill) if spell.spell_md.skill else None
             conn.execute('INSERT INTO spells(id, expansion, name, name_ua, description, description_ua, aura, aura_ua, rank, cat, level, schools, class, skill, desc_ref, aura_ref) VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
-                        (spell.id, spell.expansion, spell.name, spell.name_ua, spell.description, spell.description_ua, spell.aura_description, spell.aura_ua,
+                        (spell.id, spell.expansion, spell.name, spell.name_ua, spell.description, spell.description_ua, spell.aura, spell.aura_ua,
                          spell.spell_md.rank, spell.spell_md.cat, spell.spell_md.level, spell.spell_md.schools, spell.spell_md.get_class(), md_skill,
                          spell.description_ref, spell.aura_ref))
 
@@ -341,7 +339,7 @@ def populate_similarity(spells: dict[int, SpellData]):
 
     for key, spell in sorted(spells.items()):
         description = spell.name + ':' + re.sub(r'\d+', '{d}', spell.description) if spell.description else None
-        aura_description = spell.name + ':' + re.sub(r'\d+', '{d}', spell.aura_description) if spell.aura_description else None
+        aura_description = spell.name + ':' + re.sub(r'\d+', '{d}', spell.aura) if spell.aura else None
         if description and description in description_to_id.keys():
             spell.description_ref = description_to_id[description]
         else:
@@ -355,10 +353,10 @@ def populate_similarity(spells: dict[int, SpellData]):
 
 def create_translation_sheet(spells: dict[int, SpellData]):
     with open(f'translate_this.tsv', mode='w', encoding='utf-8') as f:
-        f.write('ID\tName(EN)\tName(UA)\tDescription(EN)\tDescription(UA)\tAura(EN)\tAura(UA)\tAura description(EN)\tAura description(UA)\tdesc_ref\taura_ref\n')
+        f.write('ID\tName(EN)\tName(UA)\tDescription(EN)\tDescription(UA)\tAura(EN)\tAura(UA)\tdesc_ref\taura_ref\n')
         for key, spell in sorted(spells.items()):
-            if getattr(spell.spell_md, 'chrclass') == 256 and spell.name_ua is None:
-                f.write(f'{spell.id}\t{spell.name}\t\t"{spell.description}"\t\t{spell.aura_name}\t\t"{spell.aura_description}"\t\t{spell.description_ref}\t{spell.aura_ref}\n')
+            if getattr(spell.spell_md, 'chrclass') == 1 and spell.name_ua is None:
+                f.write(f'{spell.id}\t{spell.name}\t\t"{spell.description}"\t\t"{spell.aura}"\t\t{spell.description_ref}\t{spell.aura_ref}\n')
 
 
 
@@ -466,21 +464,15 @@ def read_translations_tsv() -> dict[int, SpellData]:
             name_ua = row[2]
             description_en = row[3] if row[3] != '' else None
             description_ua = row[4] if row[4] != '' else None
-            aura_name_en = row[5] if row[5] != '' else None
-            aura_name_ua = row[6] if row[6] != '' else None
-            aura_description_en = row[7] if row[7] != '' else None
-            aura_description_ua = row[8] if row[8] != '' else None  # if len(row) >= 8 else None
-            desc_ref = __try_cast_str_to_int(row[9], 0)
-            aura_ref = __try_cast_str_to_int(row[10], 0)
-            expansion = row[11]
-            category = row[12] if len(row) > 12 and row[12] != '' else None
-            if aura_name_ua and aura_name_ua != name_ua:
-                print(f'Warning! Translation spell and aura names not equal for spell#{spell_id}!')
-            all_translations[spell_id] = SpellData(spell_id, expansion, name=name_en, description=description_en,
-                                                   aura_name=aura_name_en, aura_description=aura_description_en,
-                                                   name_ua=name_ua, description_ua=description_ua,
-                                                   aura_ua=aura_description_ua, description_ref=desc_ref,
-                                                   aura_ref=aura_ref, category=category)
+            aura_en = row[5] if row[5] != '' else None
+            aura_ua = row[6] if row[6] != '' else None  # if len(row) >= 8 else None
+            desc_ref = __try_cast_str_to_int(row[7], 0)
+            aura_ref = __try_cast_str_to_int(row[8], 0)
+            expansion = row[9]
+            category = row[10] if len(row) > 10 and row[10] != '' else None
+            all_translations[spell_id] = SpellData(spell_id, expansion, name=name_en, description=description_en, aura=aura_en,
+                                                   name_ua=name_ua, description_ua=description_ua, aura_ua=aura_ua,
+                                                   description_ref=desc_ref, aura_ref=aura_ref, category=category)
 
     return all_translations
 
@@ -555,8 +547,8 @@ def apply_translations_to_data(spell_data: dict[int, SpellData], translations: d
             print(f'Warning! Original name for spell#{key} differs:\n{__diff_fields(spell_data[key].name, translations[key].name)}')
         if spell_data[key].description != translations[key].description:
             print(f'Warning! Original description for spell#{key} differs:\n{__diff_fields(spell_data[key].description, translations[key].description)}')
-        if spell_data[key].aura_description != translations[key].aura_description:
-            print(f'Warning! Original aura for spell#{key} differs:\n{__diff_fields(spell_data[key].aura_description, translations[key].aura_description)}')
+        if spell_data[key].aura != translations[key].aura:
+            print(f'Warning! Original aura for spell#{key} differs:\n{__diff_fields(spell_data[key].aura, translations[key].aura)}')
         spell_data[key].name_ua = translations[key].name_ua
         spell_data[key].description_ua = translations[key].description_ua
         spell_data[key].aura_ua = translations[key].aura_ua
@@ -578,7 +570,7 @@ def __validate_template(spell_id: int, value: str, translation: str):
     templates = translation[template_start + 1:].split('#')
     for template in templates:
         template = template.replace('.', '\\.')
-        pattern = re.sub(r'{\d+}', '(\\\\d+|\\\\d+\\.\\\\d+|\[.+?\]|\(.+?\))', template).replace('\\\\', '\\')
+        pattern = re.sub(r'{\d+}', r'(\\d+|\\d+\.\\d+|\[.+?\]|\(.+?\))', template).replace('\\\\', '\\')
         matches = re.findall(pattern, value)
         if len(matches) != 1:
             print(f'Warning! Template failed for spell#{spell_id}')
@@ -589,7 +581,7 @@ def __validate_templates(spell: SpellData):
     if spell.description_ua and not spell.description_ua.startswith('ref='):
         __validate_template(spell.id, spell.description, spell.description_ua)
     if spell.aura_ua:
-        __validate_template(spell.id, spell.aura_description, spell.aura_ua)
+        __validate_template(spell.id, spell.aura, spell.aura_ua)
 
 
 def __validate_newlines(spell: SpellData):
@@ -601,8 +593,8 @@ def __validate_newlines(spell: SpellData):
         else:
             if re.findall("\n\n", spell.description) != re.findall("\n\n", spell.description_ua):
                 print(f"Warning! Newline count doesn't match for spell#{spell.id} description")
-    if spell.aura_ua and spell.aura_description:
-        if re.findall("\n\n", spell.aura_ua) != re.findall("\n\n", spell.aura_description):
+    if spell.aura_ua and spell.aura:
+        if re.findall("\n\n", spell.aura_ua) != re.findall("\n\n", spell.aura):
             print(f"Warning! Newline count doesn't match for spell#{spell.id} aura")
 
 
@@ -612,7 +604,7 @@ def __validate_existence(spell: SpellData):
             print(f"Warning! There's no translation for spell#{spell.id} name")
         if spell.description and not spell.description_ua:
             print(f"Warning! There's no translation for spell#{spell.id} description")
-        if spell.aura_description and not spell.aura_ua and not spell.description_ua.startswith("ref="):
+        if spell.aura and not spell.aura_ua and not spell.description_ua.startswith("ref="):
             print(f"Warning! There's no translation for spell#{spell.id} aura")
 
 
@@ -624,8 +616,8 @@ def __validate_numbers(spell_id: int, value: str, translation: str):
 def __validate_spell_numbers(spell: SpellData):
     if spell.description and spell.description_ua and not spell.description_ua.startswith('ref=') and not '#' in spell.description_ua:
         __validate_numbers(spell.id, spell.description, spell.description_ua)
-    if spell.aura_ua and spell.aura_description and not '#' in spell.aura_ua:
-        __validate_numbers(spell.id, spell.aura_description, spell.aura_ua)
+    if spell.aura_ua and spell.aura and not '#' in spell.aura_ua:
+        __validate_numbers(spell.id, spell.aura, spell.aura_ua)
 
 def validate_translations(spells: dict[int, SpellData]):
     for spell in spells.values():
@@ -657,7 +649,7 @@ if __name__ == '__main__':
     # spell = parse_wowhead_spell_page(SOD, 425463)
 
     tsv_translations = read_translations_tsv()
-    classicua_translations = read_classicua_translations('input\\entries', parsed_metadata)
+    classicua_translations = read_classicua_translations(r'input\entries', parsed_metadata)
 
     apply_translations_to_data(parsed_spells, tsv_translations)
 
