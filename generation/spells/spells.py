@@ -450,7 +450,7 @@ def __try_cast_str_to_int(value: str, default=None):
         return default
 
 
-def read_translations_tsv() -> dict[int, SpellData]:
+def read_translations_sheet() -> dict[int, SpellData]:
     import csv
     all_translations: dict[int, SpellData] = dict()
     with open('input/translations.csv', 'r', encoding="utf-8") as input_file:
@@ -648,9 +648,8 @@ if __name__ == '__main__':
     parsed_metadata, parsed_spells = retrieve_spell_data()
     # spell = parse_wowhead_spell_page(SOD, 425463)
 
-    tsv_translations = read_translations_tsv()
+    tsv_translations = read_translations_sheet()
     classicua_translations = read_classicua_translations(r'input\entries', parsed_metadata)
-
     apply_translations_to_data(parsed_spells, tsv_translations)
 
     save_spells_to_db(parsed_spells)

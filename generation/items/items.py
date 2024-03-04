@@ -67,18 +67,6 @@ class ItemMD:
         self.firstseenpatch = firstseenpatch
 
 
-class ItemData:
-    def __init__(self, id, expansion, name, effects=None, flavor=None, readable=None, random_enchantment=False):
-        self.id = id
-        self.name = name
-        self.expansion = expansion
-        self.effects = effects
-        self.flavor = flavor
-        self.readable = readable
-        self.random_enchantment = random_enchantment
-        self.name_ua = None
-
-
 class ItemEffect:
     def __init__(self, effect_type, effect_id, effect_text, rune_spell_id=None):
         self.effect_type = effect_type
@@ -92,6 +80,17 @@ class ItemEffect:
         res += f': {self.effect_text}'
         res += f'#{self.rune_spell_id}' if self.rune_spell_id else ''
         return res
+
+
+class ItemData:
+    def __init__(self, id, expansion, name, effects: list[ItemEffect] = None, readable=None, random_enchantment=False, name_ua=None, effects_ua=None):
+        self.id = id
+        self.name = name
+        self.expansion = expansion
+        self.effects = effects
+        self.readable = readable
+        self.random_enchantment = random_enchantment
+        self.name_ua = None
 
 
 def __get_wowhead_item_search(expansion, start, end=None) -> list[ItemMD]:
@@ -261,7 +260,10 @@ def parse_wowhead_item_page(expansion, id) -> ItemData:
     if readable and item_class_id == 12:
         print(f'Check readability of item#{id}')
 
-    return ItemData(id, expansion, item_name, effects, flavor, readable, random_enchantment)
+    if flavor:
+        effects.append(ItemEffect('Flavor', None, flavor))
+
+    return ItemData(id, expansion, item_name, effects, readable, random_enchantment)
 
 
 def parse_wowhead_pages(expansion, metadata: dict[int, ItemMD]) -> dict[int, ItemData]:
@@ -341,7 +343,6 @@ def save_items_to_db(items: dict[int, ItemData]):
                         name TEXT,
                         name_ua TEXT,
                         effects TEXT,
-                        flavor TEXT,
                         random_enchantment BOOL,
                         readable BOOL
                 )''')
@@ -357,11 +358,11 @@ def save_items_to_db(items: dict[int, ItemData]):
                 key in expansion_data[item.expansion][IGNORES]):
                     continue
             item_effects = '\n'.join(map(lambda x: str(x), item.effects)) if item.effects else None
-            conn.execute('INSERT INTO items(id, expansion, name, name_ua, effects, flavor, random_enchantment, readable) VALUES(?, ?, ?, ?, ?, ?, ?, ?)',
-                        (item.id, item.expansion, item.name, item.name_ua, item_effects, item.flavor, item.random_enchantment, item.readable))
+            conn.execute('INSERT INTO items(id, expansion, name, name_ua, effects, random_enchantment, readable) VALUES(?, ?, ?, ?, ?, ?, ?)',
+                        (item.id, item.expansion, item.name, item.name_ua, item_effects, item.random_enchantment, item.readable))
 
 
-def populate_cache_db_with_items_data():
+def retrieve_item_data():
     wowhead_metadata = get_wowhead_items_metadata(CLASSIC)
     wowhead_metadata_sod = get_wowhead_items_metadata(SOD)
     wowhead_metadata_tbc = get_wowhead_items_metadata(TBC)
@@ -398,48 +399,59 @@ def populate_cache_db_with_items_data():
     # print('Merging with WotLK')
     # all_items = merge_expansions(classic_and_tbc_items, wowhead_items_wrath)
 
-    save_items_to_db({**wowhead_items, **wowhead_items_sod})
+    return {**wowhead_items, **wowhead_items_sod}
 
+
+# def __try_cast_str_to_int(value: str, default=None):
+#     try:
+#         return int(value)
+#     except ValueError:
+#         return default
+#
+# def read_translations_sheet() -> dict[int, ItemData]:
+#     import csv
+#     all_translations: dict[int, ItemData] = dict()
+#     with open('input/translations.csv', 'r', encoding="utf-8") as input_file:
+#         reader = csv.reader(input_file)
+#         for row in reader:
+#             spell_id = __try_cast_str_to_int(row[0])
+#             if not spell_id:
+#                 print(f'Skipping: {row}')
+#                 continue
+#             name_en = row[1]
+#             name_ua = row[2]
+#             description_en = row[3] if row[3] != '' else None
+#             description_ua = row[4] if row[4] != '' else None
+#             expansion = row[5]
+#             all_translations[spell_id] = ItemData(spell_id, expansion, name=name_en, description=description_en, aura=aura_en,
+#                                                    name_ua=name_ua, description_ua=description_ua, aura_ua=aura_ua,
+#                                                    description_ref=desc_ref, aura_ref=aura_ref, category=category)
+#             (self, id, expansion, name, effects=None, flavor=None, readable=None, random_enchantment=False)
+#
+#     return all_translations
+
+
+def create_translation_sheet(items: dict[int, ItemData]): # TODO
+    with open(f'output/translate_this.tsv', mode='w', encoding='utf-8') as f:
+        f.write('ID\tName(EN)\tName(UA)\tDescription(EN)\tDescription(UA)\tNote\texpansion\n')
+        for key, item in sorted(items.items()):
+            if item.expansion == 'sod' and item.name_ua is None:
+                effects_text = '\n'.join(map(lambda x: f'{x.effect_type}: {x.effect_text}', item.effects))
+                f.write(f'{item.id}\t{item.name}\t\t"{effects_text}"\t\t\t{item.expansion}\n')
 
 
 if __name__ == '__main__':
-    populate_cache_db_with_items_data()
+    parsed_items = retrieve_item_data()
 
-    # item = parse_wowhead_item_page(SOD, 204795)
-    # item = parse_wowhead_item_page(CLASSIC, 22691)
-    # print('l')
-    # wowhead_metadata = get_wowhead_items_metadata(CLASSIC)
-    # object_translations = load_object_lua()
+    # tsv_translations = read_translations_sheet()
+    # classicua_translations = read_classicua_translations(r'input\entries', parsed_metadata)
     #
-    # for object in wowhead_metadata.values():
-    #     if 'TEST' in object.name.upper().split(' ') or object.id in expansion_data[object.expansion][IGNORES]:
-    #         continue
-    #     if object.name.lower() in object_translations:
-    #         object.name_ua = object_translations[object.name.lower()]
-    #     else:
-    #         print(f"Translation for {object} doesn't exist")
+    # apply_translations_to_data(parsed_items, tsv_translations)
 
-    # questie_objects = load_questie_objects_ids()
-    #
-    # missing_questie_objects = {
-    #     175287: 'жаровня',
-    #     175298: 'жаровня'
-    # }
-    # for key in wowhead_metadata.keys() & questie_objects:
-    #     wowhead_metadata[key].names = 'questie'
-    #
-    # with open(f'lookupObjects.lua', 'w', encoding="utf-8") as output_file:
-    #     for key in sorted(questie_objects):
-    #         translation = None
-    #         if key in wowhead_metadata:
-    #             translation = wowhead_metadata[key].name_ua
-    #         else:
-    #             translation = missing_questie_objects[key]
-    #         if translation is None:
-    #             print(f'Missing translation for {key}')
-    #             continue
-    #         translation = translation.replace('"', '\\"')
-    #         output_file.write(f'[{key}] = "{translation}",\n')
+    save_items_to_db(parsed_items)
 
+    # compare sheet and merged translations (just to recheck differences in translations)
+    # validate translations (refs, templates, numbers)
+    # convert translation sheet to ClassicUA lua files
 
-    # save_objects_to_db(wowhead_metadata)
+    create_translation_sheet(parsed_items)
