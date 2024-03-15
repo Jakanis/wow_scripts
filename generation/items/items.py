@@ -443,7 +443,7 @@ def create_translation_sheet(items: dict[int, ItemData]): # TODO
 if __name__ == '__main__':
     parsed_items = retrieve_item_data()
 
-    # tsv_translations = read_translations_sheet()
+    # tsv_translations = read_translations_sheet()  # check diffs in original text
     # classicua_translations = read_classicua_translations(r'input\entries', parsed_metadata)
     #
     # apply_translations_to_data(parsed_items, tsv_translations)

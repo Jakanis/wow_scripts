@@ -16,7 +16,7 @@ def translations_sheet_to_objects_lua():
 
     with open(f'output/objects.lua', 'w', encoding="utf-8") as output_file:
         for key, translation in sorted(translations.items()):
-            output_file.writelines(f'["{key}"] = "{translation}"\n')
+            output_file.writelines(f'["{key}"] = "{translation}",\n')
 
 
 if __name__ == '__main__':
