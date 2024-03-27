@@ -139,7 +139,7 @@ def __retrieve_npc_metadata_from_wowhead(expansion) -> dict[int, NPC_MD]:
 
 
 
-def get_wowhead_npc_metadata(expansion) -> dict[int, NPC_MD]:
+def get_wowhead_npc_metadata(expansion) -> dict[int, dict[str, NPC_MD]]:
     import pickle
     cache_file_name = expansion_data[expansion][METADATA_CACHE]
     if os.path.exists(f'cache/tmp/{cache_file_name}.pkl'):
@@ -152,7 +152,13 @@ def get_wowhead_npc_metadata(expansion) -> dict[int, NPC_MD]:
         os.makedirs('cache/tmp', exist_ok=True)
         with open(f'cache/tmp/{cache_file_name}.pkl', 'wb') as f:
             pickle.dump(wowhead_metadata, f)
-    return wowhead_metadata
+
+    wowhead_npcs = dict()
+    for key, value in wowhead_metadata.items():
+        wowhead_npcs[key] = dict()
+        wowhead_npcs[key][expansion] = value
+
+    return wowhead_npcs
 
 def load_npc_lua(path: str) -> dict[int, NPC_Short]:
     from slpp import slpp as lua
@@ -185,7 +191,7 @@ def load_questie_npcs() -> dict[int, NPC_Short]:
 
 # def apply_translations(wowhead_metadata: dict[int, NPC_MD]):
 
-def save_npcs_to_db(npcs: dict[int, NPC_MD]):
+def save_npcs_to_db(all_npcs: dict[int, dict[str, NPC_MD]]):
     import sqlite3
     print('Saving NPCs to DB')
     conn = sqlite3.connect('cache/npcs.db')
@@ -206,18 +212,19 @@ def save_npcs_to_db(npcs: dict[int, NPC_MD]):
                 )''')
     conn.commit()
     with conn:
-        for key, npc in npcs.items():
-            if ('TEST' in npc.name or
-                    '[PH]' in npc.name or
-                    'DND' in npc.name or
-                    'UNUSED' in npc.name or
-                    '<TXT>' in npc.name or
-                    key in expansion_data[npc.expansion][IGNORES]):
-                continue
-            npc_tag = f'<{npc.tag}>' if npc.tag else None
-            npc_location = ', '.join(map(lambda x: f"'{x}'", npc.location)) if npc.location else None
-            conn.execute('INSERT INTO npcs(id, expansion, name, tag, name_ua, tag_ua, type, boss, classification, location, names, react) VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
-                        (npc.id, npc.expansion, npc.name, npc_tag, npc.__dict__.get('name_ua'), npc.__dict__.get('tag_ua'), npc.type, npc.boss, npc.classification, npc_location, str(npc.names), str(npc.react)))
+        for key, npcs in all_npcs.items():
+            for expansion, npc in npcs.items():
+                if ('TEST' in npc.name or
+                        '[PH]' in npc.name or
+                        'DND' in npc.name or
+                        'UNUSED' in npc.name or
+                        '<TXT>' in npc.name or
+                        key in expansion_data[npc.expansion][IGNORES]):
+                    continue
+                npc_tag = f'<{npc.tag}>' if npc.tag else None
+                npc_location = ', '.join(map(lambda x: f"'{x}'", npc.location)) if npc.location else None
+                conn.execute('INSERT INTO npcs(id, expansion, name, tag, name_ua, tag_ua, type, boss, classification, location, names, react) VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+                            (npc.id, expansion, npc.name, npc_tag, npc.__dict__.get('name_ua'), npc.__dict__.get('tag_ua'), npc.type, npc.boss, npc.classification, npc_location, str(npc.names), str(npc.react)))
 
 
 
@@ -233,7 +240,6 @@ def get_zone_page(zone_id):
     end = r.text.find('});', start)
     json_data = r.text[start:end]
     return (zone_id, json.loads(json_data))
-
 
 
 def get_wowhead_zones_npc_ids(zone_ids) -> dict[int, list[int]]:
@@ -259,39 +265,81 @@ def get_wowhead_zones_npc_ids(zone_ids) -> dict[int, list[int]]:
     return npc_ids_to_zone_ids
 
 
+def merge_npc(id: int, old_npcs: dict[str, NPC_MD], new_npcs: dict[str, NPC_MD]) -> dict[str, NPC_MD]:
+    if len(old_npcs) > 1 and len(new_npcs) == 1:
+        # print(f'Merging more than one instance from previous expansion for NPC #{id}')
+        last_old_npc_key = list(old_npcs.keys())[-1]
+        result = merge_npc(id, {last_old_npc_key: old_npcs[last_old_npc_key]}, new_npcs)
+        del old_npcs[last_old_npc_key]
+        return {**old_npcs, **result}
+    if len(old_npcs) == 1 and len(new_npcs) == 1:
+        old_npc = next(iter(old_npcs.values()))
+        new_npc = next(iter(new_npcs.values()))
+
+        if old_npc.name != new_npc.name or old_npc.tag != new_npc.tag:
+            return {**old_npcs, **new_npcs}
+        else:
+            return old_npcs
+    else:
+        print('-' * 100)
+        print(f'Skip: NPC #{id} instance number unexpected')
+
+
+def merge_expansions(old_expansion: dict[int, dict[str, NPC_MD]], new_expansion: dict[int, dict[str, NPC_MD]]) -> dict[int, dict[str, NPC_MD]]:
+    result = dict()
+
+    for id in old_expansion.keys() - new_expansion.keys():
+        result[id] = old_expansion[id]
+
+    for id in new_expansion.keys() - old_expansion.keys():
+        result[id] = new_expansion[id]
+
+    for id in old_expansion.keys() & new_expansion.keys():
+        result[id] = merge_npc(id, old_expansion[id], new_expansion[id])
+    return result
+
+
 
 if __name__ == '__main__':
-    wowhead_metadata = get_wowhead_npc_metadata(CLASSIC)
+    wowhead_metadata = dict()
+    wowhead_metadata_classic = get_wowhead_npc_metadata(CLASSIC)
     wowhead_metadata_sod = get_wowhead_npc_metadata(SOD)
-    translations = load_npc_lua('input/entries/classic/npc.lua')
-    translations_sod = load_npc_lua('input/entries/sod/npc.lua')
+    wowhead_metadata_tbc = get_wowhead_npc_metadata(TBC)
+    wowhead_metadata_wrath = get_wowhead_npc_metadata(WRATH)
 
-    for key in wowhead_metadata.keys() & translations.keys():
-        wowhead_metadata[key].name_ua = translations[key].name
-        wowhead_metadata[key].tag_ua = translations[key].tag
+    print('Merging with TBC')
+    classic_and_tbc_npcs = merge_expansions({**wowhead_metadata_classic, **wowhead_metadata_sod}, wowhead_metadata_tbc)
+    print('Merging with WotLK')
+    all_npcs = merge_expansions(classic_and_tbc_npcs, wowhead_metadata_wrath)
 
-    for key in wowhead_metadata_sod.keys() & translations_sod.keys():
-        wowhead_metadata_sod[key].name_ua = translations_sod[key].name
-        wowhead_metadata_sod[key].tag_ua = translations_sod[key].tag
+    translations = dict()
+    translations[CLASSIC] = load_npc_lua('input/entries/classic/npc.lua')
+    translations[SOD] = load_npc_lua('input/entries/sod/npc.lua')
+    translations[TBC] = load_npc_lua('input/entries/tbc/npc.lua')
+    translations[WRATH] = load_npc_lua('input/entries/wrath/npc.lua')
+
+    for key in all_npcs.keys():
+        for expansion in all_npcs[key].keys():
+            if key in translations[expansion]:
+                all_npcs[key][expansion].name_ua = translations[expansion][key].name
+                all_npcs[key][expansion].tag_ua = translations[expansion][key].tag
 
     # Just for handier translation
     import zones
     wowhead_zones = zones.get_wowhead_zones()
     npc_ids_to_zone_ids = get_wowhead_zones_npc_ids(wowhead_zones.keys())
-    for key in wowhead_metadata.keys() & npc_ids_to_zone_ids.keys():
-        # if wowhead_metadata[key].location != [] and wowhead_metadata[key].location != npc_ids_to_zone_ids[key]:
-        #     print(f'Not equal for {key}: {wowhead_metadata[key].location} and {npc_ids_to_zone_ids[key]}')
-        wowhead_metadata[key].location = npc_ids_to_zone_ids[key]
-    for key in wowhead_metadata_sod.keys() & npc_ids_to_zone_ids.keys():
-        wowhead_metadata_sod[key].location = npc_ids_to_zone_ids[key]
 
+    for key in all_npcs.keys():
+        for expansion in all_npcs[key].keys():
+            if key in npc_ids_to_zone_ids:
+                all_npcs[key][expansion].location = npc_ids_to_zone_ids[key]
+
+    save_npcs_to_db(all_npcs)
 
     # questie_npcs = load_questie_npcs()
     #
     # for key in wowhead_metadata.keys() & questie_npcs.keys():
     #     wowhead_metadata[key].names = 'questie'
-
-    save_npcs_to_db({**wowhead_metadata, **wowhead_metadata_sod})
 
 
     # with open(f'lookupNpcs.lua', 'w', encoding="utf-8") as output_file:
