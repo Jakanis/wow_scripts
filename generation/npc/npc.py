@@ -418,10 +418,6 @@ def check_existing_translations(all_npcs: dict[int, dict[str, NPC_MD]]):
             compare_npc(merged_translations[key][expansion], all_npcs[key][expansion])
 
 
-
-    pass
-
-
 if __name__ == '__main__':
     all_npcs = populate_cache_db_with_npc_data()  # Generate cache/npcs.db
 
