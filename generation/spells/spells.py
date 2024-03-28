@@ -177,12 +177,14 @@ def get_wowhead_items_metadata(expansion) -> dict[int, SpellMD]:
 
 
 def save_page(expansion, id):
+    from requests_html import HTMLSession
+    session = HTMLSession()
     url = expansion_data[expansion][WOWHEAD_URL] + f'/spell={id}'
     xml_file_path = f'cache/{expansion_data[expansion][HTML_CACHE]}/{id}.html'
     if os.path.exists(xml_file_path):
         print(f'Warning! Trying to download existing HTML for #{id}')
         return
-    r = requests.get(url)
+    r = session.get(url)
     if not r.ok:
         # You download over 90000 pages in one hour - you'll fail
         # You do it async - you fail
@@ -190,8 +192,11 @@ def save_page(expansion, id):
         raise Exception(f'Wowhead({expansion}) returned {r.status_code} for spell #{id}')
     if (f"Spell #{id} doesn't exist." in r.text):
         return
+    r.html.render()
+    result = r.html.html
+    session.close()
     with open(xml_file_path, 'w', encoding="utf-8") as output_file:
-        output_file.write(r.text)
+        output_file.write(result)
 
 
 def save_htmls_from_wowhead(expansion, ids: set[int]):
@@ -226,45 +231,64 @@ def parse_wowhead_spell_page(expansion, id) -> SpellData:
     html_path = f'cache/{expansion_data[expansion][HTML_CACHE]}/{id}.html'
     with open(html_path, 'r', encoding="utf-8") as file:
         html = file.read()
+
     soup = BeautifulSoup(html, 'html.parser')
-    data_lines = soup.find('div', {'class': 'db-action-buttons'}).next_sibling.text.replace('&nbsp;', ' ').splitlines()
-
-    tooltip = aura = None
-    for line in data_lines:
-        if line.startswith(f'g_spells[{id}].tooltip_enus = '):
-            tooltip = line.replace(f'g_spells[{id}].tooltip_enus = "', '').replace('\\', '')[:-2]
-        if line.startswith(f'g_spells[{id}].buff_enus = '):
-            aura = line.replace(f'g_spells[{id}].buff_enus = "', '').replace('\\', '')[:-2]
-
-    if not tooltip:
-        print(f'Error parsing spell #{id}')
-        return None
-
-    tooltip_soup = BeautifulSoup(tooltip, 'html.parser')
     name = soup.find('h1').text
-    description_tables = tooltip_soup.find_all('table')
-    description_text = description_tables[-1].find('div', {'class': 'q'}) if len(description_tables) > 1 else None
+
+    tooltip_div = soup.find('div', {'id': f'tt{id}'}).find('div', {'class': 'q'})
+
     description = None
-    if description_text:
-        for br in description_text.find_all('br'):
+    if tooltip_div:
+        for hidden_span in tooltip_div.find_all('span', {'class': 'wh-tooltip-formula', 'style': 'display:none'}):
+            # hidden_span.replace_with('')
+            hidden_span.decompose()
+        for br in tooltip_div.find_all('br'):
             br.replace_with('\n')
-        # for a_tag in description_text.find_all('a'):  # Optional thing
+        # for a_tag in tooltip_div.find_all('a'):  # Optional thing
         #     a_tag.replace_with(a_tag.get('href'))
-        description = description_text.text
-        # if re.findall(r'\n\n+', description):
-        #     print(f'Subbed \\n in spell#{id}')
-        description = re.sub(r'\n\n+', '\n\n', description)
 
-    aura_text = None
-    if aura:
-        aura_soup = BeautifulSoup(aura, 'html.parser')
-        aura_text = aura_soup.find_all('td')[-1]
-        for span in aura_text.find_all('span', {'class': 'q'}):
-            span.replace_with('\n')
-        aura_text = aura_text.get_text(strip=True, separator='<SPLIT>').split('<SPLIT>')
-        aura_text = '\n'.join(aura_text)
+        description = tooltip_div.text
+        description = re.sub(r'\n\n+', '\n\n', description).replace(u'\xa0', ' ')
+        # description = re.sub(r' +', ' ', description)
 
-    return SpellData(id, expansion, name, description, aura_text)
+    aura = None
+    aura_div = soup.find('div', {'id': f'btt{id}'})
+    if aura_div:
+        for hidden_span in aura_div.find_all('span', {'class': 'wh-tooltip-formula', 'style': 'display:none'}):
+            # hidden_span.replace_with('')
+            hidden_span.decompose()
+        aura_div = aura_div.find_all('td')[-1]
+        if aura_div.text != str(id):
+            for span in aura_div.find_all('span', {'class': 'q'}):
+                span.replace_with('\n')
+            for br in aura_div.find_all('br'):
+                br.replace_with('\n')
+            aura = "\n".join(map(lambda line: line.strip(), aura_div.text.splitlines())).strip().replace(u'\xa0', ' ')
+            # aura = re.sub(r' +', ' ', aura)
+
+    # description_tables = tooltip_soup.find_all('table')
+    # description_text = description_tables[-1].find('div', {'class': 'q'}) if len(description_tables) > 1 else None
+    # description = None
+    # if description_text:
+    #     for br in description_text.find_all('br'):
+    #         br.replace_with('\n')
+    #     # for a_tag in description_text.find_all('a'):  # Optional thing
+    #     #     a_tag.replace_with(a_tag.get('href'))
+    #     description = description_text.text
+    #     # if re.findall(r'\n\n+', description):
+    #     #     print(f'Subbed \\n in spell#{id}')
+    #     description = re.sub(r'\n\n+', '\n\n', description)
+    #
+    # aura_text = None
+    # if aura:
+    #     aura_soup = BeautifulSoup(aura, 'html.parser')
+    #     aura_text = aura_soup.find_all('td')[-1]
+    #     for span in aura_text.find_all('span', {'class': 'q'}):
+    #         span.replace_with('\n')
+    #     aura_text = aura_text.get_text(strip=True, separator='<SPLIT>').split('<SPLIT>')
+    #     aura_text = '\n'.join(aura_text)
+
+    return SpellData(id, expansion, name, description, aura)
 
 
 def parse_wowhead_pages(expansion, metadata: dict[int, SpellMD]) -> dict[int, SpellData]:
@@ -366,12 +390,12 @@ def retrieve_spell_data():
     wowhead_metadata_tbc = get_wowhead_items_metadata(TBC)
     wowhead_metadata_wrath = get_wowhead_items_metadata(WRATH)
 
-    save_htmls_from_wowhead(CLASSIC, set(wowhead_metadata.keys()))
+    # save_htmls_from_wowhead(CLASSIC, set(wowhead_metadata.keys()))
     save_htmls_from_wowhead(SOD, set(wowhead_metadata_sod.keys()))
     # save_xmls_from_wowhead(TBC, set(wowhead_metadata_tbc.keys()))
     # save_xmls_from_wowhead(WRATH, set(wowhead_metadata_wrath.keys()))
 
-    wowhead_spells = parse_wowhead_pages(CLASSIC, wowhead_metadata)
+    # wowhead_spells = parse_wowhead_pages(CLASSIC, wowhead_metadata)
     wowhead_spells_sod = parse_wowhead_pages(SOD, wowhead_metadata_sod)
     # wowhead_items_tbc = parse_wowhead_pages(TBC, wowhead_metadata_tbc)
     # wowhead_items_wrath = parse_wowhead_pages(WRATH, wowhead_metadata_wrath)
@@ -544,11 +568,11 @@ def apply_translations_to_data(spell_data: dict[int, SpellData], translations: d
         orig_spell = spell_data[key]
         translation = translations[key]
         if spell_data[key].name != translations[key].name:
-            print(f'Warning! Original name for spell#{key} differs:\n{__diff_fields(spell_data[key].name, translations[key].name)}')
+            print(f'Warning! Original name for spell#{key} differs:\n{__diff_fields(translations[key].name, spell_data[key].name)}')
         if spell_data[key].description != translations[key].description:
-            print(f'Warning! Original description for spell#{key} differs:\n{__diff_fields(spell_data[key].description, translations[key].description)}')
+            print(f'Warning! Original description for spell#{key} differs:\n{__diff_fields(translations[key].description, spell_data[key].description)}')
         if spell_data[key].aura != translations[key].aura:
-            print(f'Warning! Original aura for spell#{key} differs:\n{__diff_fields(spell_data[key].aura, translations[key].aura)}')
+            print(f'Warning! Original aura for spell#{key} differs:\n{__diff_fields(translations[key].aura, spell_data[key].aura)}')
         spell_data[key].name_ua = translations[key].name_ua
         spell_data[key].description_ua = translations[key].description_ua
         spell_data[key].aura_ua = translations[key].aura_ua
@@ -587,12 +611,12 @@ def __validate_templates(spell: SpellData):
 def __validate_newlines(spell: SpellData):
     import re
     if spell.description_ua and not spell.description_ua.startswith('ref='):
-        if f'spell#' in spell.description_ua:
-            if len(re.findall("spell#", spell.description_ua)) > 1:
-                print(f"Warning! Check spell#{spell.id} manually")
-        else:
+        if not f'spell#' in spell.description_ua:
             if re.findall("\n\n", spell.description) != re.findall("\n\n", spell.description_ua):
                 print(f"Warning! Newline count doesn't match for spell#{spell.id} description")
+        # else:
+        #     if len(re.findall("spell#", spell.description_ua)) > 1:
+        #         print(f"Warning! Check spell#{spell.id} manually")
     if spell.aura_ua and spell.aura:
         if re.findall("\n\n", spell.aura_ua) != re.findall("\n\n", spell.aura):
             print(f"Warning! Newline count doesn't match for spell#{spell.id} aura")
@@ -645,8 +669,9 @@ def compare_tsv_and_classicua(tsv_translations, classicua_translations):
 
 
 if __name__ == '__main__':
+    # parse_wowhead_spell_page(SOD, 415236)
+    # parse_wowhead_spell_page(SOD, 415233)
     parsed_metadata, parsed_spells = retrieve_spell_data()
-    # spell = parse_wowhead_spell_page(SOD, 425463)
 
     tsv_translations = read_translations_sheet()
     classicua_translations = read_classicua_translations(r'input\entries', parsed_metadata)
