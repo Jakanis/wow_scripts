@@ -89,6 +89,9 @@ class NPC_MD:
         res += f' <{self.tag}>' if self.tag else ''
         return res
 
+    def __eq__(self, __value):
+        return self.name == __value.name and self.name_ua == __value.name_ua and self.name_ua == __value.name_ua
+
 
 class NPC_Short:
     def __init__(self, id, name, tag=None):
@@ -299,9 +302,7 @@ def merge_expansions(old_expansion: dict[int, dict[str, NPC_MD]], new_expansion:
     return result
 
 
-
-if __name__ == '__main__':
-    wowhead_metadata = dict()
+def populate_cache_db_with_npc_data():
     wowhead_metadata_classic = get_wowhead_npc_metadata(CLASSIC)
     wowhead_metadata_sod = get_wowhead_npc_metadata(SOD)
     wowhead_metadata_tbc = get_wowhead_npc_metadata(TBC)
@@ -336,12 +337,17 @@ if __name__ == '__main__':
 
     save_npcs_to_db(all_npcs)
 
+    return all_npcs
+
+
+def update_questie_translation(all_npcs: dict[int, dict[str, NPC_MD]]):
+    pass
     # questie_npcs = load_questie_npcs()
     #
     # for key in wowhead_metadata.keys() & questie_npcs.keys():
     #     wowhead_metadata[key].names = 'questie'
-
-
+    #
+    #
     # with open(f'lookupNpcs.lua', 'w', encoding="utf-8") as output_file:
     #     for key in wowhead_metadata.keys() & questie_npcs.keys():
     #         if not hasattr(wowhead_metadata[key], 'name_ua'):
@@ -352,4 +358,73 @@ if __name__ == '__main__':
     #         questie_tag = wowhead_metadata[key].tag_ua[0].upper() + wowhead_metadata[key].tag_ua[1:] if wowhead_metadata[key].tag_ua else None
     #         questie_tag = '"' + questie_tag.replace('"', '\\"') + '"}' if questie_tag else 'nil}'
     #         output_file.write(f'[{key}] = {questie_name},{questie_tag},\n')
+
+
+def __try_cast_str_to_int(value: str, default=None):
+    try:
+        return int(value)
+    except ValueError:
+        return default
+
+def load_merged_translations() -> dict[int, dict[str, NPC_MD]]:
+    import csv
+    merged_translations = dict()
+    with open(f'input/merged_translations.tsv', 'r', encoding="utf-8") as input_file:
+        reader = csv.reader(input_file, delimiter="\t")
+        for row in reader:
+            npc_id = __try_cast_str_to_int(row[0])
+            if not npc_id:
+                print(f'Skipping: {row}')
+                continue
+            name_en = row[1]
+            tag_en = row[2][1:-1] if row[2] != '' else None
+            name_ua = row[3]
+            tag_ua = row[4][1:-1] if row[4] != '' else None
+            expansion = row[8]
+            npc = NPC_MD(npc_id, name_en, name_ua=name_ua, tag=tag_en, tag_ua=tag_ua, expansion=expansion)
+            if npc_id not in merged_translations:
+                merged_translations[npc_id] = {expansion: npc}
+            else:
+                if expansion in merged_translations[npc_id]:
+                    existing_npc = merged_translations[npc_id][expansion]
+                    if existing_npc != npc:
+                        print(f'Warning! NPC#{npc_id}:{expansion} duplicated and differs')
+                    if existing_npc == npc:
+                        print(f'Warning! NPC#{npc_id}:{expansion} duplicated')
+                merged_translations[npc_id][expansion] = npc
+    return merged_translations
+
+
+def compare_npc(tsv_npc: NPC_MD, lua_npc: NPC_MD):
+    if tsv_npc.name != lua_npc.name:
+        print(f'Warning! NPC#{tsv_npc.id}:{tsv_npc.expansion} name differs:\n{tsv_npc.name}<->{lua_npc.name}')
+    if tsv_npc.tag != lua_npc.tag:
+        print(f'Warning! NPC#{tsv_npc.id}:{tsv_npc.expansion} tag differs:\n{tsv_npc.tag}<->{lua_npc.tag}')
+    if tsv_npc.name_ua != lua_npc.name_ua:
+        print(f'Warning! NPC#{tsv_npc.id}:{tsv_npc.expansion} translation differs:\n{tsv_npc.name_ua}<->{lua_npc.name_ua}')
+
+
+
+def check_existing_translations(all_npcs: dict[int, dict[str, NPC_MD]]):
+    merged_translations = load_merged_translations()
+    for key in merged_translations.keys() - all_npcs.keys():
+        print(f'NPC#{key} does not exist in ClassicUA')
+
+    for key in merged_translations.keys() & all_npcs.keys():
+        for expansion in merged_translations[key].keys() - all_npcs[key].keys():
+            print(f'NPC#{key}:{expansion} does not exist in ClassicUA')
+
+        for expansion in merged_translations[key].keys() & all_npcs[key].keys():
+            compare_npc(merged_translations[key][expansion], all_npcs[key][expansion])
+
+
+
+    pass
+
+
+if __name__ == '__main__':
+    all_npcs = populate_cache_db_with_npc_data()  # Generate cache/npcs.db
+
+    check_existing_translations(all_npcs)  # Check if original data changes since previous translation and difference between ClassicUA and translation sheet
+    # update_questie_translation(all_npcs)  # Update translations for Questie
 
