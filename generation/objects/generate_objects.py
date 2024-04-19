@@ -188,7 +188,7 @@ if __name__ == '__main__':
 
     wowhead_metadata = {**wowhead_metadata_classic, **wowhead_metadata_sod}
 
-    for object in wowhead_metadata.values():
+    for id, object in sorted(wowhead_metadata.items()):
         if 'TEST' in object.name.upper().split(' ') or object.id in expansion_data[object.expansion][IGNORES]:
             continue
         if object.name.lower() in object_translations:
