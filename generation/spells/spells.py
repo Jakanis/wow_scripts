@@ -5,7 +5,7 @@ from typing import Dict, Any
 import requests
 from bs4 import BeautifulSoup, CData
 
-THREADS = 16
+THREADS = 8
 CLASSIC = 'classic'
 SOD = 'sod'
 TBC = 'tbc'
@@ -628,7 +628,7 @@ def __validate_existence(spell: SpellData):
             print(f"Warning! There's no translation for spell#{spell.id} name")
         if spell.description and not spell.description_ua:
             print(f"Warning! There's no translation for spell#{spell.id} description")
-        if spell.aura and not spell.aura_ua and not spell.description_ua.startswith("ref="):
+        if spell.aura and not spell.aura_ua and (spell.description_ua and not spell.description_ua.startswith("ref=")):
             print(f"Warning! There's no translation for spell#{spell.id} aura")
 
 
