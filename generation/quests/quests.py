@@ -1295,6 +1295,14 @@ def fix_wrath_quests(wrath_quests: dict[int, dict[str, QuestEntity]]):
     wrath_quests[9319][WRATH].completion = 'Your essence sings with the energy of the flames you found, <name>. The fire you encountered is potent, and with the right knowledge, its power can be harnessed...\n\n<The Flamekeeper mutters an incantation in a strange, arcane tongue, then pulls out a glowing bottle.>\n\nAh! Here we are. May this light your path, no matter where you tread.'
 
 
+def fix_expansion(classic_quests: dict[int, dict[str, QuestEntity]], sod_quests: dict[int, dict[str, QuestEntity]], tbc_quests: dict[int, dict[str, QuestEntity]], wrath_quests: dict[int, dict[str, QuestEntity]]):
+    # Common fixes
+    classic_quests[6221][CLASSIC] = sod_quests[6221][SOD]
+    classic_quests[6221][CLASSIC].expansion = CLASSIC
+
+    #todo: fix 66294
+
+
 def populate_cache_db_with_quest_data():
     wowhead_metadata = get_wowhead_quests_metadata(CLASSIC)
     wowhead_metadata_sod = get_wowhead_quests_metadata(SOD)
@@ -1310,6 +1318,8 @@ def populate_cache_db_with_quest_data():
     wowhead_quests_sod = parse_wowhead_pages(SOD, wowhead_metadata_sod)
     wowhead_quests_tbc = parse_wowhead_pages(TBC, wowhead_metadata_tbc)
     wowhead_quests_wrath = parse_wowhead_pages(WRATH, wowhead_metadata_wrath)
+
+    fix_expansion(wowhead_quests, wowhead_quests_sod, wowhead_quests_tbc, wowhead_quests_wrath)
 
     fix_classic_quests(wowhead_quests)
     fix_classic_sod_quests(wowhead_quests, wowhead_quests_sod)
