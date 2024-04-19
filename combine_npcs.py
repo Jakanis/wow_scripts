@@ -119,7 +119,7 @@ def parse_pending_npcs_csv() -> dict[NPC_TR]:
         for row in reader:
             if (row[0] == 'Id'):
                 continue
-            id = row[0]
+            id = row[0] + ':' + row[8] if row[8] != '' else row[0]
             npc = NPC_TR(id, row[1], row[2], row[3], row[4], row[5], row[6])
             if id in all_npcs:
                 print(f'NPC #{id} ID duplicated')
