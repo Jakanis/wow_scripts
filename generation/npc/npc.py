@@ -168,7 +168,8 @@ def load_npc_lua(path: str) -> dict[int, NPC_Short]:
     npcs = dict()
     with open(path, 'r', encoding='utf-8') as input_file:
         lua_file = input_file.read()
-        decoded_npcs = lua.decode(lua_file)
+        start = lua_file.find("npc = {") + 5
+        decoded_npcs = lua.decode(lua_file[start:])
         for npc_id, decoded_npc in decoded_npcs.items():
             npc_name_ua = decoded_npc[0]
             if type(decoded_npc) == dict:
@@ -302,6 +303,11 @@ def merge_expansions(old_expansion: dict[int, dict[str, NPC_MD]], new_expansion:
     return result
 
 
+def fix_npc_data(all_npcs: dict[int, dict[str, NPC_MD]]):
+    all_npcs[185336][CLASSIC] = all_npcs[185336][SOD]
+    del all_npcs[185336][SOD]
+
+
 def populate_cache_db_with_npc_data():
     wowhead_metadata_classic = get_wowhead_npc_metadata(CLASSIC)
     wowhead_metadata_sod = get_wowhead_npc_metadata(SOD)
@@ -312,6 +318,8 @@ def populate_cache_db_with_npc_data():
     classic_and_tbc_npcs = merge_expansions({**wowhead_metadata_classic, **wowhead_metadata_sod}, wowhead_metadata_tbc)
     print('Merging with WotLK')
     all_npcs = merge_expansions(classic_and_tbc_npcs, wowhead_metadata_wrath)
+
+    fix_npc_data(all_npcs)
 
     translations = dict()
     translations[CLASSIC] = load_npc_lua('input/entries/classic/npc.lua')
@@ -418,9 +426,22 @@ def check_existing_translations(all_npcs: dict[int, dict[str, NPC_MD]]):
             compare_npc(merged_translations[key][expansion], all_npcs[key][expansion])
 
 
+def create_translation_sheet(npcs: dict[int, dict[str, NPC_MD]]):
+    with (open(f'translate_this.tsv', mode='w', encoding='utf-8') as f):
+        f.write('ID\tName(EN)\tDescription(EN)\tName(UA)\tDescription(UA)\tраса\tстать\tNote\texpansion\n')
+        for key in sorted(npcs.keys()):
+            for expansion, npc in npcs[key].items():
+                if (npc.name_ua is None
+                        and (npc.react != [None, None] or npc.location != [])
+                        and npc.expansion in [CLASSIC, SOD]):
+                    f.write(f'{npc.id}\t"{npc.name}"\t"{npc.tag}"\t\t\t\t\t\t{npc.expansion}\n')
+
+
 if __name__ == '__main__':
     all_npcs = populate_cache_db_with_npc_data()  # Generate cache/npcs.db
 
     check_existing_translations(all_npcs)  # Check if original data changes since previous translation and difference between ClassicUA and translation sheet
     # update_questie_translation(all_npcs)  # Update translations for Questie
+
+    create_translation_sheet(all_npcs)
 
