@@ -1296,11 +1296,14 @@ def fix_wrath_quests(wrath_quests: dict[int, dict[str, QuestEntity]]):
 
 
 def fix_expansion(classic_quests: dict[int, dict[str, QuestEntity]], sod_quests: dict[int, dict[str, QuestEntity]], tbc_quests: dict[int, dict[str, QuestEntity]], wrath_quests: dict[int, dict[str, QuestEntity]]):
-    # Common fixes
+    # Discovered in SoD?
     classic_quests[6221][CLASSIC] = sod_quests[6221][SOD]
     classic_quests[6221][CLASSIC].expansion = CLASSIC
 
-    #todo: fix 66294
+    classic_quests[66294] = dict()
+    classic_quests[66294][CLASSIC] = sod_quests[66294][SOD]
+    classic_quests[66294][CLASSIC].expansion = CLASSIC
+    pass
 
 
 def populate_cache_db_with_quest_data():
