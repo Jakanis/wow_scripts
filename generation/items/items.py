@@ -75,22 +75,37 @@ class ItemEffect:
         self.rune_spell_id = rune_spell_id
 
     def __str__(self):
-        res = f"{self.effect_type.replace('Chance on hit', 'Hit')}"
+        res = f"{self.effect_type.replace('Chance on hit', 'Hit')}" if self.effect_type else ''
         res += f'#{self.effect_id}' if self.effect_id else ''
-        res += f': {self.effect_text}'
+        if self.effect_type == 'item':
+            return res
+        res += f': {self.effect_text}' if self.effect_text else ':'
+        res += f'#{self.rune_spell_id}' if self.rune_spell_id else ''
+        return res
+
+    def short_str(self):
+        res = f"{self.effect_type.replace('Chance on hit', 'Hit')}" if self.effect_type else ''
+        if self.effect_type == 'item':
+            return res + f'#{self.effect_id}'
+        if self.effect_type == 'Rune':
+            return res + f'#{self.effect_id}'
+        res += f'#{self.effect_id}' if self.effect_text is None and self.effect_id else ''
+        res += f': {self.effect_text}' if self.effect_text else ''
         res += f'#{self.rune_spell_id}' if self.rune_spell_id else ''
         return res
 
 
 class ItemData:
-    def __init__(self, id, expansion, name, effects: list[ItemEffect] = None, readable=None, random_enchantment=False, name_ua=None, effects_ua=None):
+    def __init__(self, id, expansion, name: str = None, effects: list[ItemEffect] = [], readable=None, random_enchantment=False, name_ua=None, effects_ua: list[ItemEffect]=None, ref=None):
         self.id = id
         self.name = name
         self.expansion = expansion
         self.effects = effects
         self.readable = readable
         self.random_enchantment = random_enchantment
-        self.name_ua = None
+        self.name_ua = name_ua
+        self.effects_ua = effects_ua
+        self.ref = ref
 
 
 def __get_wowhead_item_search(expansion, start, end=None) -> list[ItemMD]:
@@ -208,8 +223,18 @@ def parse_wowhead_item_page(expansion, id) -> ItemData:
     tooltip = soup.find('htmlTooltip')
     tooltip_soup = BeautifulSoup(tooltip.text, 'xml')
 
+    flavor = None
+    flavor_tags = tooltip_soup.find_all('span', {"class": "q"})
+    for flavor_tag in flavor_tags:
+        if flavor_tag.find('br') or flavor_tag.find('a'):
+            # There is another span with same class. It contains item level, damage, durability, etc
+            continue
+        if flavor:
+            print(f'Warning! Setting flavor text more than one time for item #{id}')
+        flavor = flavor_tag.text
+
     effects = list()
-    effect_tags = tooltip_soup.find_all('span', {"class": "q2"})  # Just green text
+    effect_tags = tooltip_soup.find_all('span')
     random_enchantment = False
     readable = False
     for effect_tag in effect_tags:
@@ -221,40 +246,43 @@ def parse_wowhead_item_page(expansion, id) -> ItemData:
             continue
         if effect_tag.text == 'Right Click to Open':
             continue
+        for br in effect_tag.find_all('br'):
+            br.replace_with('\n')
         full_effect_text = effect_tag.text
-        effect_type = full_effect_text[:full_effect_text.find(':')]
+        effect_type = full_effect_text[:full_effect_text.find(': ')] if full_effect_text.startswith(('Use: ', 'Chance on hit: ', 'Equip: ')) else None
         a_tag = effect_tag.find('a')
         if a_tag:
             internal_a_tag = a_tag.find('a')
             if internal_a_tag:
-                # For runes
-                if expansion != SOD:
-                    print(f'Warning! Rune-like effect outside SOD for item #{id}!')
                 effect_spell_id = re.findall(r'spell=(\d+)', a_tag.get('href'))[0]
                 effect_text = internal_a_tag.text
                 rune_spell_id = re.findall(r'spell=(\d+)', internal_a_tag.get('href'))[0]
-                effects.append(ItemEffect(effect_type, effect_spell_id, effect_text, rune_spell_id))
-                pass
+                # For runes
+                double_refered_items = [(20130, CLASSIC), (191280, CLASSIC)]  # Some items have double reference in effects. Don't want to spend time on that, so there's a hack
+                if expansion == SOD:
+                    effects.append(ItemEffect('Rune', effect_spell_id, None, rune_spell_id))
+                elif (id, expansion) in double_refered_items:
+                    effects.append(ItemEffect(effect_type, rune_spell_id, a_tag.text))
+                else:
+                    print(f'Warning! Unexpected double reference effect for item #{id}:{expansion}!')
             else:
                 effect_text = a_tag.text
                 effect_link = a_tag.get('href')
-                if '/item=' in effect_link:  # recipes for green items
-                    continue
-                effect_spell_id = re.findall(r'/spell=(\d+)', effect_link)[0]
-                effects.append(ItemEffect(effect_type, effect_spell_id, effect_text))
-        else:
+                if '/item-set=' in effect_link:  # to prevent fetching next item links
+                    break
+                if '/item=' in effect_link:  # recipes
+                    item_ids = re.findall(r'/item=(\d+)', effect_link)
+                    if item_ids:
+                        effects.append(ItemEffect('item', item_ids[0], effect_text))
+                        flavor = None
+                    break
+                effect_spell_ids = re.findall(r'/spell=(\d+)', effect_link)
+                if effect_spell_ids and effect_type:
+                    effects.append(ItemEffect(effect_type, effect_spell_ids[0], effect_text))
+        elif effect_type:
             effects.append(ItemEffect(effect_type, None, full_effect_text[full_effect_text.find(':')+2:]))
-
-
-    flavor = None
-    flavor_tags = tooltip_soup.find_all('span', {"class": "q"})
-    for flavor_tag in flavor_tags:
-        if flavor_tag.find('br') or flavor_tag.find('a'):
-            # There is another span with same class. It contains item level, damage, durability, etc
-            continue
-        if flavor:
-            print(f'Warning! Setting flavor text more than one time for item #{id}')
-        flavor = flavor_tag.text
+        # if effect_type is None:
+        #     print(f'Warning! Empty effect type for item#{id}:{expansion}')
 
     item_class_id = soup.find('class').get('id')
     if readable and item_class_id == 12:
@@ -332,7 +360,7 @@ def load_questie_item_lua_ids() -> set[int]:
     return item_ids
 
 
-def save_items_to_db(items: dict[int, ItemData]):
+def save_items_to_db(items: dict[int, dict[str, ItemData]]):
     import sqlite3
     print('Saving objects to DB')
     conn = sqlite3.connect('cache/items.db')
@@ -343,49 +371,83 @@ def save_items_to_db(items: dict[int, ItemData]):
                         name TEXT,
                         name_ua TEXT,
                         effects TEXT,
+                        effects_ua TEXT,
                         random_enchantment BOOL,
                         readable BOOL
                 )''')
     conn.commit()
     with (conn):
-        for key, item in items.items():
-            if ('OLD' in item.name or
-                'DEP' in item.name or
-                '[PH]' in item.name or
-                '(old)' in item.name or
-                '(old2)' in item.name or
-                'QATest' in item.name or
-                key in expansion_data[item.expansion][IGNORES]):
-                    continue
-            item_effects = '\n'.join(map(lambda x: str(x), item.effects)) if item.effects else None
-            conn.execute('INSERT INTO items(id, expansion, name, name_ua, effects, random_enchantment, readable) VALUES(?, ?, ?, ?, ?, ?, ?)',
-                        (item.id, item.expansion, item.name, item.name_ua, item_effects, item.random_enchantment, item.readable))
+        for key in items.keys():
+            for expansion, item in items[key].items():
+                if ('OLD' in item.name or
+                    'DEP' in item.name or
+                    '[PH]' in item.name or
+                    '(old)' in item.name or
+                    '(old2)' in item.name or
+                    'QATest' in item.name or
+                    key in expansion_data[item.expansion][IGNORES]):
+                        continue
+                item_effects = '\n'.join(map(lambda x: str(x), item.effects)) if item.effects else None
+                item_effects_ua = '\n'.join(map(lambda x: str(x), item.effects_ua)) if item.effects_ua else None
+                if item_effects_ua is None and item.ref:
+                    item_effects_ua = f"ref={item.ref}"
+                conn.execute('INSERT INTO items(id, expansion, name, name_ua, effects, effects_ua, random_enchantment, readable) VALUES(?, ?, ?, ?, ?, ?, ?, ?)',
+                            (item.id, item.expansion, item.name, item.name_ua, item_effects, item_effects_ua, item.random_enchantment, item.readable))
+
+
+def merge_item(id: int, old_items: dict[str, ItemData], new_item: ItemData) -> dict[str, ItemData]:
+    import re
+    if len(old_items) > 1:
+        last_old_spell_key = list(old_items.keys())[-1]
+        result = merge_item(id, {last_old_spell_key: old_items[last_old_spell_key]}, new_item)
+        del old_items[last_old_spell_key]
+        return {**old_items, **result}
+    if len(old_items) == 1:
+        old_item = next(iter(old_items.values()))
+
+        if old_item.name != new_item.name or '\n'.join([str(effect) for effect in old_item.effects]) != '\n'.join([str(effect) for effect in new_item.effects]):
+            return {**old_items, **{new_item.expansion: new_item}}
+        else:
+            return old_items
+    else:
+        print(f'Skip: Item #{id} instance number unexpected')
+
+
+def merge_expansions(old_expansion: dict[int, dict[str, ItemData]], new_expansion: dict[int, ItemData]) -> dict[int, dict[str, ItemData]]:
+    result = dict()
+
+    for id in old_expansion.keys() - new_expansion.keys():
+        result[id] = old_expansion[id]
+
+    for id in new_expansion.keys() - old_expansion.keys():
+        result[id] = dict()
+        result[id][new_expansion[id].expansion] = new_expansion[id]
+
+    for id in old_expansion.keys() & new_expansion.keys():
+        result[id] = merge_item(id, old_expansion[id], new_expansion[id])
+    return result
 
 
 def retrieve_item_data():
-    wowhead_metadata = get_wowhead_items_metadata(CLASSIC)
-    wowhead_metadata_sod = get_wowhead_items_metadata(SOD)
-    wowhead_metadata_tbc = get_wowhead_items_metadata(TBC)
-    wowhead_metadata_wrath = get_wowhead_items_metadata(WRATH)
+    wowhead_md = dict()
+    wowhead_items = dict()
+    all_items = dict()
 
-    save_xmls_from_wowhead(CLASSIC, set(wowhead_metadata.keys()))
-    save_xmls_from_wowhead(SOD, set(wowhead_metadata_sod.keys()))
-    save_xmls_from_wowhead(TBC, set(wowhead_metadata_tbc.keys()))
-    save_xmls_from_wowhead(WRATH, set(wowhead_metadata_wrath.keys()))
+    for expansion, expansion_properties in expansion_data.items():
+        wowhead_md[expansion] = get_wowhead_items_metadata(expansion)
+        save_xmls_from_wowhead(expansion, set(wowhead_md[expansion].keys()))
+        wowhead_items[expansion] = parse_wowhead_pages(expansion, wowhead_md[expansion])
+        print(f'Merging with {expansion}')
+        all_items = merge_expansions(all_items, wowhead_items[expansion])
 
-    wowhead_items = parse_wowhead_pages(CLASSIC, wowhead_metadata)
-    wowhead_items_sod = parse_wowhead_pages(SOD, wowhead_metadata_sod)
-    wowhead_items_tbc = parse_wowhead_pages(TBC, wowhead_metadata_tbc)
-    wowhead_items_wrath = parse_wowhead_pages(WRATH, wowhead_metadata_wrath)
-
-    translations = load_item_lua_names('input/entries/item.lua')
-    translations_sod = load_item_lua_names('input/entries/item_sod.lua')
-
-    for key in wowhead_items.keys() & translations.keys():
-        wowhead_items[key].name_ua = translations[key]
-
-    for key in wowhead_items_sod.keys() & translations_sod.keys():
-        wowhead_items_sod[key].name_ua = translations_sod[key]
+    # translations = load_item_lua_names('input/entries/item.lua')
+    # translations_sod = load_item_lua_names('input/entries/item_sod.lua')
+    #
+    # for key in wowhead_items.keys() & translations.keys():
+    #     wowhead_items[key].name_ua = translations[key]
+    #
+    # for key in wowhead_items_sod.keys() & translations_sod.keys():
+    #     wowhead_items_sod[key].name_ua = translations_sod[key]
     #
     # questie_item_ids = load_questie_item_lua_ids()
     #
@@ -393,65 +455,224 @@ def retrieve_item_data():
     #     if not wowhead_items[key].name_ua:
     #         wowhead_items[key].name_ua = 'questie'
 
-
-    # print('Merging with TBC')
-    # classic_and_tbc_items = merge_expansions(wowhead_items, wowhead_items_tbc)
-    # print('Merging with WotLK')
-    # all_items = merge_expansions(classic_and_tbc_items, wowhead_items_wrath)
-
-    return {**wowhead_items, **wowhead_items_sod}
+    return all_items
 
 
-# def __try_cast_str_to_int(value: str, default=None):
-#     try:
-#         return int(value)
-#     except ValueError:
-#         return default
-#
-# def read_translations_sheet() -> dict[int, ItemData]:
-#     import csv
-#     all_translations: dict[int, ItemData] = dict()
-#     with open('input/translations.csv', 'r', encoding="utf-8") as input_file:
-#         reader = csv.reader(input_file)
-#         for row in reader:
-#             spell_id = __try_cast_str_to_int(row[0])
-#             if not spell_id:
-#                 print(f'Skipping: {row}')
-#                 continue
-#             name_en = row[1]
-#             name_ua = row[2]
-#             description_en = row[3] if row[3] != '' else None
-#             description_ua = row[4] if row[4] != '' else None
-#             expansion = row[5]
-#             all_translations[spell_id] = ItemData(spell_id, expansion, name=name_en, description=description_en, aura=aura_en,
-#                                                    name_ua=name_ua, description_ua=description_ua, aura_ua=aura_ua,
-#                                                    description_ref=desc_ref, aura_ref=aura_ref, category=category)
-#             (self, id, expansion, name, effects=None, flavor=None, readable=None, random_enchantment=False)
-#
-#     return all_translations
+def __try_cast_str_to_int(value: str, default=None):
+    try:
+        return int(value)
+    except ValueError:
+        return default
 
 
-def create_translation_sheet(items: dict[int, ItemData]): # TODO
+def str_effect_to_effect(str_effect_row) -> ItemEffect:
+    if not str_effect_row:
+        print("Warning! Empty effect row!")
+        return None
+    if str_effect_row.startswith('item#'):
+        return ItemEffect('item', str_effect_row[5:], None)
+    effect_type_link, effect_text = str_effect_row.split(":", 1) if ":" in str_effect_row else (str_effect_row, None)
+    effect_text = effect_text[1:] if effect_text else None
+    effect_type, effect_spell_id = effect_type_link.split("#", 1) if '#' in effect_type_link else (effect_type_link, None)
+    if str_effect_row.startswith('Rune#'):
+        return ItemEffect('Rune', effect_spell_id, None, effect_text)
+    return ItemEffect(effect_type, effect_spell_id, effect_text)
+
+
+def str_effects_to_effects(str_effects: str) -> list[ItemEffect]:
+    import re
+    if not str_effects:
+        return []
+    effect_types = ('Desc', 'Equip', 'Hit', 'Use', 'Flavor', 'item#', 'Rune#', 'Ref#')
+    effects = list()
+    for effect_row in re.split(r'\n(?=(?:Desc|Equip|Hit|Use|Flavor):|item#|(?:Equip|Hit|Use|Rune|Ref)#\d+:)', str_effects):
+        if effect_row.startswith(effect_types):
+            effect = str_effect_to_effect(effect_row)
+            if effect:
+                effects.append(effect)
+    return effects
+
+
+def read_translations_sheet() -> dict[int, dict[str, ItemData]]:
+    import csv
+    all_translations: dict[int, dict[str, ItemData]] = dict()
+    with open('input/translations.csv', 'r', encoding="utf-8") as input_file:
+        reader = csv.reader(input_file)
+        for row in reader:
+            item_id = __try_cast_str_to_int(row[0])
+            if not item_id:
+                print(f'Skipping: {row}')
+                continue
+            name_en = row[1]
+            name_ua = row[2]
+            effects = str_effects_to_effects(row[3]) if row[3] else []
+            ref = effects_ua = None
+            if row[4].startswith('ref='):
+                ref = row[4][4:]
+            else:
+                effects_ua = str_effects_to_effects(row[4]) if row[4] else []
+            expansion = row[6]
+            all_translations[item_id] = all_translations.get(item_id, dict())
+            if expansion in all_translations[item_id].keys():
+                print(f'Warning! Duplicate for item#{item_id}:{expansion}')
+            all_translations[item_id][expansion] = ItemData(item_id, expansion, name=name_en, name_ua=name_ua,
+                                                            effects=effects, effects_ua=effects_ua, ref=ref)
+
+    return all_translations
+
+
+def lua_effect_to_effect(field: str, lua_effects) -> list[ItemEffect]:
+    if lua_effects is None:
+        return []
+    elif type(lua_effects) == str:
+        return [ItemEffect(field.capitalize(), None, lua_effects.replace(r'\n', '\n'))]
+    elif type(lua_effects) == int:
+        field_name = 'item' if field == 'recipe_result_item' else field.capitalize()
+        return [ItemEffect(field_name, lua_effects, None)]
+    elif type(lua_effects) == list:
+        effects = list()
+        for lua_effect in lua_effects:
+            effects.extend(lua_effect_to_effect(field, lua_effect))
+        return effects
+
+
+def decoded_lua_item_to_effects_list(decoded_item) -> list[ItemEffect]:
+    effects = list()
+    fields = ['desc', 'equip', 'hit', 'use', 'flavor', 'recipe_result_item', 'ref']
+    for field in fields:
+        effects.extend(lua_effect_to_effect(field, decoded_item.get(field)))
+    return effects
+
+def read_classicua_translations(items_root_path: str, item_data: dict[int, dict[str, ItemData]]):
+    from slpp import slpp as lua
+    file_contents = list()
+    for foldername, subfolders, filenames in os.walk(items_root_path):
+        for filename in filenames:
+            # Construct the full path to the file
+            file_path = foldername + '\\' + filename
+
+            # Read the contents of the file
+            with open(file_path, 'r', encoding="utf-8") as file:
+                file_content = file.read()
+                file_contents.append((file_path, file_content))
+
+    all_items: dict[int, dict[str, ItemData]] = dict()
+
+    for file_path, lua_file in file_contents:
+        expansion, file_name = file_path.split('\\')[-2:]
+        lua_table = lua_file[lua_file.find(' = {\n') + 2:lua_file.find('\n}\n') + 2]
+        decoded_items = lua.decode(lua_table)
+        for item_id, decoded_item in decoded_items.items():
+            if item_id in all_items and expansion in all_items[item_id]:
+                print(f'Warning! Duplicate for item#{item_id}:{expansion}')
+            if type(decoded_item) == list:
+                item = ItemData(id=id,
+                                expansion=expansion,
+                                name_ua=decoded_item[0],
+                                effects_ua=[])
+            else:
+                effects = decoded_lua_item_to_effects_list(decoded_item)
+                item = ItemData(id=id,
+                                expansion=expansion,
+                                name_ua=decoded_item.get(0),
+                                effects_ua=effects)
+
+            all_items[item_id] = all_items.get(item_id, dict())
+            all_items[item_id][expansion] = item
+    return all_items
+
+
+def create_translation_sheet(items: dict[int, dict[str, ItemData]]):
     with open(f'output/translate_this.tsv', mode='w', encoding='utf-8') as f:
         f.write('ID\tName(EN)\tName(UA)\tDescription(EN)\tDescription(UA)\tNote\texpansion\n')
-        for key, item in sorted(items.items()):
-            if item.expansion == 'sod' and item.name_ua is None:
-                effects_text = '\n'.join(map(lambda x: f'{x.effect_type}: {x.effect_text}', item.effects))
-                f.write(f'{item.id}\t{item.name}\t\t"{effects_text}"\t\t\t{item.expansion}\n')
+        for key in sorted(items.keys()):
+            for expansion, item in sorted(items[key].items()):
+                # if item.expansion == 'sod' and item.name_ua is None:
+                if item.name_ua is not None:
+                    effects_text = '\n'.join(map(lambda x: x.short_str(), item.effects)) if item.effects else ''
+                    effects_ua_text = '\n'.join(map(lambda x: x.short_str(), item.effects_ua)) if item.effects_ua else ''
+                    f.write(f'{item.id}\t{item.name}\t{item.name_ua}\t"{effects_text}"\t"{effects_ua_text}"\t\t{item.expansion}\n')
+
+
+def __effects_eq(effects1: list[ItemEffect], effects2: list[ItemEffect]) -> bool:
+    if len(effects1) != len(effects2):
+        return False
+    for i in range(len(effects1)):
+        if effects1[i].short_str() != effects2[i].short_str():
+            return False
+    return True
+
+
+def apply_translations_to_data(item_data: dict[int, dict[str, ItemData]], translations: dict[int, dict[str, ItemData]]):
+    for key in sorted(item_data.keys() & translations.keys()):
+        for expansion in item_data[key].keys() & translations[key].keys():
+            orig_item = item_data[key][expansion]
+            translation = translations[key][expansion]
+            if orig_item.name != translation.name:
+                print(f'Warning! Original name differs for item#{key}:{expansion}:\n{__diff_fields(orig_item.name, translation.name)}')
+            if not __effects_eq(orig_item.effects, translation.effects):
+                orig_effects = '\n'.join(map(lambda x: x.short_str(), orig_item.effects)) if orig_item.effects else None
+                translation_effects = '\n'.join(map(lambda x: x.short_str(), translation.effects)) if translation.effects else None
+                print(f'Warning! Original effect differs for item#{key}:{expansion}:\n{__diff_fields(orig_effects, translation_effects)}')
+            orig_item.name_ua = translation.name_ua
+            orig_item.effects_ua = translation.effects_ua
+            orig_item.ref = translation.ref
+
+
+def __diff_fields(field1, field2):
+    import difflib
+    differ = difflib.Differ()
+    lines1 = field1.splitlines() if field1 else []
+    lines2 = field2.splitlines() if field2 else []
+    diff = differ.compare(lines1, lines2)
+    return '\n'.join(diff)
+
+def compare_tsv_and_classicua(tsv_translations: dict[int, dict[str, ItemData]], classicua_translations):
+    for key in tsv_translations.keys() - classicua_translations.keys():
+        print(f"Warning! Item#{key} doesn't exist in ClassicUA")
+    for key in classicua_translations.keys() ^ tsv_translations.keys():
+        print(f"Warning! Item#{key} doesn't exist in sheet")
+    for key in tsv_translations.keys() & classicua_translations.keys():
+        for expansion in tsv_translations[key].keys() - classicua_translations[key].keys():
+            print(f"Warning! Item#{key}:{expansion} doesn't exist in ClassicUA")
+        for expansion in classicua_translations[key].keys() - tsv_translations[key].keys():
+            print(f"Warning! Item#{key}:{expansion} doesn't exist in sheet")
+        for expansion in tsv_translations[key].keys() & classicua_translations[key].keys():
+            tsv_translation = tsv_translations[key][expansion]
+            classicua_translation = classicua_translations[key][expansion]
+
+            tsv_effects = '\n'.join(map(lambda x: x.short_str(), tsv_translation.effects_ua)) if tsv_translation.effects_ua else None
+            classicua_effects = '\n'.join(map(lambda x: x.short_str(), classicua_translation.effects_ua)) if classicua_translation.effects_ua else None
+            if tsv_translation.name_ua != classicua_translation.name_ua:
+                print(f'Warning! Name translation differs for item#{key}:{expansion}:\n{__diff_fields(tsv_translation.name_ua, classicua_translation.name_ua)}')
+            if tsv_effects != classicua_effects:
+                print(f'Warning! Effects translation differs for item#{key}:{expansion}:\n{__diff_fields(tsv_effects, classicua_effects)}')
+
 
 
 if __name__ == '__main__':
+    # parse_wowhead_item_page(SOD, 224409)
+
     parsed_items = retrieve_item_data()
 
-    # tsv_translations = read_translations_sheet()  # check diffs in original text
-    # classicua_translations = read_classicua_translations(r'input\entries', parsed_metadata)
-    #
-    # apply_translations_to_data(parsed_items, tsv_translations)
+    tsv_translations = read_translations_sheet()
+    classicua_translations = read_classicua_translations(r'input\entries', parsed_items)
+    compare_tsv_and_classicua(tsv_translations, classicua_translations)
+
+    # apply_translations_to_data(parsed_items, classicua_translations)
+    apply_translations_to_data(parsed_items, tsv_translations)
 
     save_items_to_db(parsed_items)
 
-    # compare sheet and merged translations (just to recheck differences in translations)
-    # validate translations (refs, templates, numbers)
+    # validate translations (refs/spells, templates, numbers, recipe_items)
     # convert translation sheet to ClassicUA lua files
 
-    create_translation_sheet(parsed_items)
+    spells_for_translations_sheet = dict()
+    for key in classicua_translations.keys() - tsv_translations.keys():
+        spells_for_translations_sheet[key] = parsed_items[key]
+    for key in classicua_translations.keys() & tsv_translations.keys():
+        for expansion in classicua_translations[key].keys() - tsv_translations[key].keys():
+            spells_for_translations_sheet[key] = spells_for_translations_sheet.get(key, dict())
+            spells_for_translations_sheet[key][expansion] = parsed_items[key][expansion]
+
+    create_translation_sheet(spells_for_translations_sheet)
