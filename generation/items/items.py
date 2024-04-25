@@ -474,20 +474,23 @@ def str_effect_to_effect(str_effect_row) -> ItemEffect:
     effect_type_link, effect_text = str_effect_row.split(":", 1) if ":" in str_effect_row else (str_effect_row, None)
     effect_text = effect_text[1:] if effect_text else None
     effect_type, effect_spell_id = effect_type_link.split("#", 1) if '#' in effect_type_link else (effect_type_link, None)
+    effect_spell_id = effect_spell_id and int(effect_spell_id)
     if str_effect_row.startswith('Rune#'):
-        return ItemEffect('Rune', effect_spell_id, None, effect_text)
+        return ItemEffect('Rune', effect_spell_id, None, int(effect_text))
     return ItemEffect(effect_type, effect_spell_id, effect_text)
 
 
-def str_effects_to_effects(str_effects: str) -> list[ItemEffect]:
+def str_effects_to_effects(str_effects: str, ignore_desc=False) -> list[ItemEffect]:
     import re
     if not str_effects:
         return []
     effect_types = ('Desc', 'Equip', 'Hit', 'Use', 'Flavor', 'item#', 'Rune#', 'Ref#')
     effects = list()
-    for effect_row in re.split(r'\n(?=(?:Desc|Equip|Hit|Use|Flavor):|item#|(?:Equip|Hit|Use|Rune|Ref)#\d+:)', str_effects):
+    for effect_row in re.split(r'\n(?=(?:Desc|Equip|Hit|Use|Flavor):|item#|(?:Equip|Hit|Use|Rune|Ref)#\d+)', str_effects):
         if effect_row.startswith(effect_types):
             effect = str_effect_to_effect(effect_row)
+            if ignore_desc and effect.effect_type == "Desc":
+                continue
             if effect:
                 effects.append(effect)
     return effects
@@ -503,9 +506,9 @@ def read_translations_sheet() -> dict[int, dict[str, ItemData]]:
             if not item_id:
                 print(f'Skipping: {row}')
                 continue
-            name_en = row[1]
-            name_ua = row[2]
-            effects = str_effects_to_effects(row[3]) if row[3] else []
+            name_en = row[1] if row[1] else None
+            name_ua = row[2] if row[2] else None
+            effects = str_effects_to_effects(row[3], ignore_desc=True) if row[3] else []
             ref = effects_ua = None
             if row[4].startswith('ref='):
                 ref = row[4][4:]
@@ -588,10 +591,10 @@ def create_translation_sheet(items: dict[int, dict[str, ItemData]]):
         for key in sorted(items.keys()):
             for expansion, item in sorted(items[key].items()):
                 # if item.expansion == 'sod' and item.name_ua is None:
-                if item.name_ua is not None:
-                    effects_text = '\n'.join(map(lambda x: x.short_str(), item.effects)) if item.effects else ''
-                    effects_ua_text = '\n'.join(map(lambda x: x.short_str(), item.effects_ua)) if item.effects_ua else ''
-                    f.write(f'{item.id}\t{item.name}\t{item.name_ua}\t"{effects_text}"\t"{effects_ua_text}"\t\t{item.expansion}\n')
+                # if item.name_ua is not None:
+                    effects_text = '\n'.join(map(lambda x: str(x), item.effects)).replace('"', '""') if item.effects else ''
+                    effects_ua_text = '\n'.join(map(lambda x: str(x), item.effects_ua)).replace('"', '""') if item.effects_ua else ''
+                    f.write(f'{item.id}\t{item.name}\t{item.name_ua if item.name_ua else ''}\t"{effects_text}"\t"{effects_ua_text}"\t\t{item.expansion}\n')
 
 
 def __effects_eq(effects1: list[ItemEffect], effects2: list[ItemEffect]) -> bool:
@@ -649,9 +652,138 @@ def compare_tsv_and_classicua(tsv_translations: dict[int, dict[str, ItemData]], 
                 print(f'Warning! Effects translation differs for item#{key}:{expansion}:\n{__diff_fields(tsv_effects, classicua_effects)}')
 
 
+def __prepare_lua_str(value: str) -> str:
+    return value.replace('"', r'\"').replace('\n', r'\n')
+
+def __build_value(value: ItemEffect) -> str:
+    effect_value = value.effect_text or value.effect_id
+    if type(effect_value) == int:
+        return f"{effect_value}"
+    if type(effect_value) == str:
+        return f'"{__prepare_lua_str(effect_value)}"'
+    print('FUCK')
+
+
+def __build_values(values: list[ItemEffect]) -> str:
+    if len(values) == 1:
+        return __build_value(values[0])
+    else:
+        return '{ ' + ', '.join(map(lambda x: __build_value(x), values)) + ' }'
+
+
+def convert_translations_to_lua(translations: list[ItemData], expansion: str):
+    import textwrap
+    path = f'output/entries/{expansion}'
+    os.makedirs(path, exist_ok=True)
+    with open(f'{path}/item.lua', 'w', encoding="utf-8") as output_file:
+        output_file.write(textwrap.dedent("""\
+        local _, addonTable = ...
+        local items = {
+        
+        """))
+        if expansion == CLASSIC:
+            output_file.write(textwrap.dedent("""\
+            -- [id] = {
+            --     [ref]    = ID (optional),
+            --     [1]      = title (optional),
+            --     [desc]   = description (optional),
+            --     [equip]  = text or number (spell id) for "Equip: ..." (green color) (optional)
+            --     [hit]    = text or number (spell id) for "Chance on hit: ..." (green color) (optional)
+            --     [use]    = text or number (spell id) for "Use: ..." (green color) (optional)
+            --     [recipe_result_item] = number (item id) to show the item after the spell-recipe (optional)
+            --     [flavor] = quoted text (golden color) (optional)
+            --     --------
+            --     note: value can be string or table (multiple strings)
+            -- }
+                        
+            """))
+        else:
+            output_file.write(textwrap.dedent("""\
+            -- See /entries/classic/item.lua for data format details.
+                        
+            """))
+        for item in translations:
+            if not item.name_ua and not item.effects_ua:
+                continue
+            desc = None
+            equips = list(filter(lambda x: x.effect_type == "Equip", item.effects_ua))
+            hits = list(filter(lambda x: x.effect_type == "Hit", item.effects_ua))
+            uses = list(filter(lambda x: x.effect_type == "Use", item.effects_ua))
+            flavor = None
+            item_result = None
+            ref = None
+            for effect in item.effects_ua:
+                if effect.effect_type == "Desc":
+                    if desc is not None:
+                        print(f"Warning! Double desc for item#{item.id}:{item.expansion}")
+                    desc = __prepare_lua_str(effect.effect_text)
+                # if effect.effect_type == "Equip":
+                #     equips.append(effect.effect_text and __prepare_lua_str(effect.effect_text) or effect.effect_id)
+                # if effect.effect_type == "Hit":
+                #     hits.append(effect.effect_text and __prepare_lua_str(effect.effect_text) or effect.effect_id)
+                # if effect.effect_type == "Use":
+                #     uses.append(effect.effect_text and __prepare_lua_str(effect.effect_text) or effect.effect_id)
+                if effect.effect_type == "Flavor":
+                    if flavor is not None:
+                        print(f"Warning! Double flavor for item#{item.id}:{item.expansion}")
+                    flavor = __prepare_lua_str(effect.effect_text)
+                if effect.effect_type == "item":
+                    if item_result is not None:
+                        print(f"Warning! Double item_result for item#{item.id}:{item.expansion}")
+                    item_result = effect.effect_id
+                if effect.effect_type == "Ref":
+                    if ref is not None:
+                        print(f"Warning! Double ref for item#{item.id}:{item.expansion}")
+                    ref = effect.effect_id
+
+            translation_strs = list()
+            if item.name_ua:
+                translation_strs.append(f'"{__prepare_lua_str(item.name_ua)}"')
+            if desc:
+                translation_strs.append(f'desc="{desc}"')
+            if equips:
+                translation_strs.append(f'equip={__build_values(equips)}')
+            if hits:
+                translation_strs.append(f'hit={__build_values(hits)}')
+            if uses:
+                translation_strs.append(f'use={__build_values(uses)}')
+            if flavor:
+                translation_strs.append(f'flavor="{flavor}"')
+            if item_result:
+                translation_strs.append(f'recipe_result_item={item_result}')
+            if ref:
+                translation_strs.append(f'ref={ref}')
+
+            translation_str = ", ".join(translation_strs)
+
+            output_file.write('[{}] = {{ {} }}, -- {}\n'.format(item.id, translation_str, item.name))
+
+        output_file.write(textwrap.dedent("""\
+        }
+
+        if addonTable.item then
+            for k, v in pairs(items) do addonTable.item[k] = v end
+        else
+            addonTable.item = items
+        end
+        """))
+
+
+
+def convert_translations_to_entries(all_translations: dict[int, dict[str, ItemData]]):
+    grouped_translations: dict[str, list[ItemData]] = dict()
+    for key in sorted(all_translations.keys()):
+        for expansion, translation in all_translations[key].items():
+            if not (expansion) in grouped_translations:
+                grouped_translations[expansion] = list()
+            grouped_translations[expansion].append(translation)
+
+    for expansion, translations_group in grouped_translations.items():
+        convert_translations_to_lua(translations_group, expansion)
+
 
 if __name__ == '__main__':
-    # parse_wowhead_item_page(SOD, 224409)
+    # parse_wowhead_item_page(CLASSIC, 9328)
 
     parsed_items = retrieve_item_data()
 
@@ -676,3 +808,5 @@ if __name__ == '__main__':
             spells_for_translations_sheet[key][expansion] = parsed_items[key][expansion]
 
     create_translation_sheet(spells_for_translations_sheet)
+
+    convert_translations_to_entries(tsv_translations)

@@ -5,7 +5,7 @@ from typing import Dict, Any
 import requests
 from bs4 import BeautifulSoup, CData
 
-THREADS = 8
+THREADS = os.cpu_count()
 CLASSIC = 'classic'
 SOD = 'sod'
 TBC = 'tbc'
@@ -496,10 +496,10 @@ def retrieve_spell_data() -> dict[int, dict[str, SpellData]]:
 
 def convert_translations_to_lua(translations: list[SpellData], group: tuple[str, str]):
     path = f'output/entries/{group[0]}'
-    catergory = f'_{group[1]}' if group[1] else ''
+    category = f'_{group[1]}' if group[1] else ''
     translations = sorted(translations, key=lambda x: x.name)
     os.makedirs(path, exist_ok=True)
-    with open(f'{path}/spell{catergory}.lua', 'w', encoding="utf-8") as output_file:
+    with open(f'{path}/spell{category}.lua', 'w', encoding="utf-8") as output_file:
         previous_name = None
         for spell in translations:
             if spell.name != previous_name:
