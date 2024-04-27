@@ -625,7 +625,7 @@ def read_classicua_translations(spells_root_path: str, spell_data: dict[int, dic
             if spell_id in spell_data and expansion in spell_data[spell_id].keys():
                 original_name = spell_data[spell_id][expansion].name
             else:
-                print(f"Warning! Spell#{spell_id} doesn't exist on Wowhead!")
+                print(f"Warning! Spell#{spell_id}:{expansion} doesn't exist on Wowhead!")
                 original_name = 'UNKNOWN'
             spell = SpellData(spell_id, expansion, original_name, category=category, name_ua=name_ua,
                               description_ua=description_ua, aura_ua=aura_ua)
@@ -647,11 +647,11 @@ def apply_translations_to_data(spell_data: dict[int, dict[str, SpellData]], tran
             orig_spell = spell_data[key][expansion]
             translation = translations[key][expansion]
             if orig_spell.name != translation.name:
-                print(f'Warning! Original name for spell#{key} differs:\n{__diff_fields(translation.name, orig_spell.name)}')
+                print(f'Warning! Original name for spell#{key}:{expansion} differs:\n{__diff_fields(translation.name, orig_spell.name)}')
             if orig_spell.description != translation.description:
-                print(f'Warning! Original description for spell#{key} differs:\n{__diff_fields(translation.description, orig_spell.description)}')
+                print(f'Warning! Original description for spell#{key}:{expansion} differs:\n{__diff_fields(translation.description, orig_spell.description)}')
             if orig_spell.aura != translation.aura:
-                print(f'Warning! Original aura for spell#{key} differs:\n{__diff_fields(translation.aura, orig_spell.aura)}')
+                print(f'Warning! Original aura for spell#{key}:{expansion} differs:\n{__diff_fields(translation.aura, orig_spell.aura)}')
             orig_spell.name_ua = translation.name_ua
             orig_spell.description_ua = translation.description_ua
             orig_spell.aura_ua = translation.aura_ua
@@ -744,11 +744,11 @@ def compare_tsv_and_classicua(tsv_translations, classicua_translations):
             tsv_translation = tsv_translations[key][expansion]
             classicua_translation = classicua_translations[key][expansion]
             if tsv_translation.name_ua != classicua_translation.name_ua:
-                print(f'Warning! Name translation differs for spell#{key}:\n{__diff_fields(tsv_translation.name_ua, classicua_translation.name_ua)}')
+                print(f'Warning! Name translation differs for spell#{key}:{expansion}:\n{__diff_fields(tsv_translation.name_ua, classicua_translation.name_ua)}')
             if tsv_translation.description_ua != classicua_translation.description_ua:
-                print(f'Warning! Description translation differs for spell#{key}:\n{__diff_fields(tsv_translation.description_ua, classicua_translation.description_ua)}')
+                print(f'Warning! Description translation differs for spell#{key}:{expansion}:\n{__diff_fields(tsv_translation.description_ua, classicua_translation.description_ua)}')
             if tsv_translation.aura_ua != classicua_translation.aura_ua:
-                print(f'Warning! Aura translation differs for spell#{key}:\n{__diff_fields(tsv_translation.aura_ua, classicua_translation.aura_ua)}')
+                print(f'Warning! Aura translation differs for spell#{key}:{expansion}:\n{__diff_fields(tsv_translation.aura_ua, classicua_translation.aura_ua)}')
 
 
 if __name__ == '__main__':
