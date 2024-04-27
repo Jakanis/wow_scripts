@@ -18,6 +18,7 @@ quest_categories_correction = {
     7676: (0, 1),  # White Mechanostrider Replacement -> Eastern Kingdoms/Dun Morogh
     7677: (0, 12),  # White Stallion Exchange -> Eastern Kingdoms/Elwynn Forest
     7678: (0, 12),  # Palomino Exchange -> Eastern Kingdoms/Elwynn Forest
+    7810: (0, 33),  # Arena Grandmaster -> Eastern Kingdoms/Stranglethorn Vale
     7838: (0, 33),  # Arena Grandmaster -> Eastern Kingdoms/Stranglethorn Vale
     8228: (5, -101),  # Could I get a Fishing Flier? -> Professions/Fishing
     8229: (5, -101),  # Could I get a Fishing Flier? -> Professions/Fishing
@@ -129,6 +130,19 @@ known_categories = {
         28: 'Western Plaguelands',
         40: 'Westfall',
         11: 'Wetlands',
+        5145: 'Abyssal Depths',
+        287: 'Hillsbrad',
+        4815: 'Kelpthar Forest',
+        4953: 'Kelpthar Forest',
+        131: 'Kharanos',
+        95: 'Redridge Canyons',
+        4706: 'Ruins Of Gilneas',
+        236: 'Shadowfang Keep',
+        5144: 'Shimmering Expanse',
+        4411: 'Stormwind Harbor',
+        5287: 'The Cape Of Stranglethorn',
+        4922: 'Twilight Highlands',
+        5146: 'Vashjir',
     },
     1: {
         'Name': 'Kalimdor',
@@ -158,7 +172,15 @@ known_categories = {
         1216: 'Timbermaw Hold',
         490: 'Un\'Goro Crater',
         618: 'Winterspring',
-        442: 'Auberdine', # Addod in SoD
+        442: 'Auberdine', # Added in SoD
+        1939: 'Abyssal Sands',
+        393: 'Darkspear Strand',
+        368: 'Echo Isles',
+        616: 'Mount Hyjal',
+        989: 'Ruins Of Uldum',
+        4709: 'Southern Barrens',
+        4707: 'The Lost Isles',
+        5034: 'Uldum',
     },
     2: {
         'Name': 'Dungeons',
@@ -205,6 +227,22 @@ known_categories = {
         1196: 'Utgarde Pinnacle',
         718: 'Wailing Caverns',
         1176: 'Zul\'Farrak',
+        4926: 'Blackrock Caverns',
+        4950: 'Grim Batol',
+        4945: 'Halls Of Origination',
+        3563: 'Hellfire Citadel',
+        3562: 'Hellfire Ramparts',
+        5396: 'Lost City Of The Tolvir',
+        3791: 'Sethekk Halls',
+        3848: 'The Arcatraz',
+        3713: 'The Blood Furnace',
+        3847: 'The Botanica',
+        3849: 'The Mechanar',
+        3714: 'The Shattered Halls',
+        5088: 'The Stonecore',
+        5035: 'The Vortex Pinnacle',
+        5004: 'Throne Of The Tides',
+        4723: 'Trial Of The Champion'
     },
     3: {
         'Name': 'Raids',
@@ -256,6 +294,7 @@ known_categories = {
         -373: 'Jewelcrafting',
         -182: 'Leatherworking',
         -264: 'Tailoring',
+        -377: 'Archaeology',
     },
     6: {
         'Name': 'Battlegrounds',
@@ -325,6 +364,17 @@ known_categories = {
         -241: 'Tournament',
         4197: 'Wintergrasp',
         66: 'Zul\'Drak'
-    }
+    },
+    11: {'Name': 'Cataclysm',
+         -23: 'Cataclysm',
+         5042: 'Deepholm',
+         -381: 'Elemental Bonds',
+         -379: 'Firelands Invasion',
+         4714: 'Gilneas',
+         4755: 'Gilneas City',
+         4737: 'Kezan',
+         5733: 'Molten Front',
+         4720: 'The Lost Isles',
+         5095: 'Tol Barad',
+         5389: 'Tol Barad Peninsula'}
 }
-

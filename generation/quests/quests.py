@@ -14,6 +14,8 @@ CLASSIC = 'classic'
 SOD = 'sod'
 TBC = 'tbc'
 WRATH = 'wrath'
+CATA = 'cata'
+RETAIL = 'retail'
 WOWHEAD_URL = 'wowhead_url'
 METADATA_CACHE = 'metadata_cache'
 HTML_CACHE = 'html_cache'
@@ -55,8 +57,7 @@ expansion_data = {
         IGNORES: [
             1, 785, 912, 999, 1005, 1006, 1099, 1174, 1272, 1500, 2000, 5383, 6843, 7522, 7561, 7797, 7906, 7961, 7962, 8226, 8259, 8289, 8296, 8478, 8489, 8618, 8896, 9065,  # Not used in all expansions
             # 236,  # Still Wintergrasp. Doesn't exist for TBC
-            9511, 9880, 9881, 10375, 10376, 10377, 10378, 10379, 10383, 10386, 10387, 10638, 10779, 10844, 10999, 11027, 11334, 11345, 11551, 11976, 24508, 24509, 65221, 65222, 65223, 65224, # Appeared in TBC, not used
-            11196,  # Used in Cata
+            9511, 9880, 9881, 10375, 10376, 10377, 10378, 10379, 10383, 10386, 10387, 10638, 10779, 10844, 10999, 11027, 11196, 11334, 11345, 11551, 11976, 24508, 24509, 65221, 65222, 65223, 65224, # Appeared in TBC, not used
             24580, 24581, 24582, 24583, # from Wrath
         ]
     },
@@ -68,11 +69,34 @@ expansion_data = {
         METADATA_FILTERS: ('', '', ''),
         IGNORES: [
             1, 785, 912, 999, 1005, 1006, 1099, 1174, 1272, 1500, 2000, 5383, 6843, 7522, 7561, 7797, 7906, 7961, 7962, 8226, 8259, 8289, 8296, 8478, 8489, 8618, 8896, 9065,  # Not used in all expansions
-            9511, 9880, 9881, 10375, 10376, 10377, 10378, 10379, 10383, 10386, 10387, 10638, 10779, 10844, 10999, 11027, 11334, 11345, 11551, 11976, 24508, 24509, 65221, 65222, 65223, 65224,  # Appeared in TBC, not used
-            11179, 13997, 11402, 11461, 11578, 11579, 11939, 11987, 11992, 12162, 12163, 12426, 12586, 13299, 13317, 25306, 12233, 12493, 12586, 12825, 12834, 12835, 12837, 12881, 12890, 12911, 13977, # Appeared in Wrath, not used
-            60860, 70685,  # Rewards for... ergh... TCG? Doesn't exist for other expansions and Wowhead has no text
-            25055, 25092,  # TODO: Looks like pre-Cata. Check later
-            11196,  # Used in Cata
+            9511, 9880, 9881, 10375, 10376, 10377, 10378, 10379, 10383, 10386, 10387, 10638, 10779, 10844, 10999, 11027, 11196, 11334, 11345, 11551, 11976, 24508, 24509, 65221, 65222, 65223, 65224,  # Appeared in TBC, not used
+            11179, 13997, 11402, 11461, 11578, 11579, 11939, 11987, 11992, 12162, 12163, 12426, 12586, 13175, 13176, 13184, 13203, 13299, 13317, 13475, 13477, 12233, 12493, 12586, 12825, 12834, 12835, 12837, 12881, 12890, 12911, 13977, 24821, 24840, 25055, 25092, 25306, 60860, 70685, # Appeared in Wrath, not used
+        ]
+    },
+    CATA: {
+        WOWHEAD_URL: 'https://www.wowhead.com/cata',
+        METADATA_CACHE: 'wowhead_cata_metadata_cache',
+        HTML_CACHE: 'wowhead_cata_quests_html',
+        QUESTS_CACHE: 'wowhead_cata_quest_cache',
+        METADATA_FILTERS: ('', '', ''),
+        IGNORES: [
+            1, 785, 912, 999, 1005, 1006, 1099, 1174, 1272, 1500, 2000, 5383, 6843, 7522, 7561, 7797, 7906, 7961, 7962, 8226, 8259, 8289, 8296, 8478, 8489, 8618, 8896, 9065,  # Not used in all expansions
+            9511, 9880, 9881, 10375, 10376, 10377, 10378, 10379, 10383, 10386, 10387, 10638, 10779, 10844, 10999, 11027, 11196, 11334, 11345, 11551, 11976, 24508, 24509, 65221, 65222, 65223, 65224,  # Appeared in TBC, not used
+            11179, 13997, 11402, 11461, 11578, 11579, 11939, 11987, 11992, 12162, 12163, 12426, 12586, 13175, 13176, 13184, 13203, 13299, 13317, 13475, 13477, 12233, 12493, 12586, 12825, 12834, 12835, 12837, 12881, 12890, 12911, 13977, 24821, 24840, 25055, 25092, 25306, 60860, 70685, # Appeared in Wrath, not used
+            13802, 14220, 14231, 14427, 14450, 14451, 25639, 26282, 27543, 27819, 28106, 28365, 28601, 29091, 29183, 29185, 29258, 29339, 29340, 29341, 29372, 29373, 30110, 30111, 30173, 30538 # Appeared in Cata, not used
+        ]
+    },
+    RETAIL: {
+        WOWHEAD_URL: 'https://www.wowhead.com',
+        METADATA_CACHE: 'wowhead_retail_metadata_cache',
+        HTML_CACHE: 'wowhead_retail_quests_html',
+        QUESTS_CACHE: 'wowhead_retail_quest_cache',
+        METADATA_FILTERS: ('8:', '5:', '50001:'),
+        IGNORES: [
+            1, 785, 912, 999, 1005, 1006, 1099, 1174, 1272, 1500, 2000, 5383, 6843, 7522, 7561, 7797, 7906, 7961, 7962, 8226, 8259, 8289, 8296, 8478, 8489, 8618, 8896, 9065,  # Not used in all expansions
+            9511, 9880, 9881, 10375, 10376, 10377, 10378, 10379, 10383, 10386, 10387, 10638, 10779, 10844, 10999, 11027, 11196, 11334, 11345, 11551, 11976, 24508, 24509, 65221, 65222, 65223, 65224,  # Appeared in TBC, not used
+            11179, 13997, 11402, 11461, 11578, 11579, 11939, 11987, 11992, 12162, 12163, 12426, 12586, 13175, 13176, 13184, 13203, 13299, 13317, 13475, 13477, 12233, 12493, 12586, 12825, 12834, 12835, 12837, 12881, 12890, 12911, 13977, 24821, 24840, 25055, 25092, 25306, 60860, 70685, # Appeared in Wrath, not used
+            13802, 14220, 14231, 14427, 14450, 14451, 25639, 26282, 27543, 27819, 28106, 28365, 28601, 29091, 29183, 29185, 29258, 29339, 29340, 29341, 29372, 29373, 30110, 30111, 30173, 30538 # Appeared in Cata, not used
         ]
     }
 }
@@ -910,12 +934,14 @@ def merge_quest(id: int, old_quests: dict[str, QuestEntity], new_quests: dict[st
     if len(old_quests) == 1 and len(new_quests) == 1:
         old_quest = next(iter(old_quests.values()))
         new_quest = next(iter(new_quests.values()))
+        old_expansion = old_quest.expansion
+        new_expansion = new_quest.expansion
 
         old_quest.merge_metadata(new_quest)
 
         if old_quest.name != new_quest.name:
             print('-' * 100)
-            print(f'Warning0: Quest #{id} name was changed: "{old_quest.name}" -> "{new_quest.name}"')
+            print(f'Warning0: Quest #{id}:{old_expansion}/{new_expansion} name was changed: "{old_quest.name}" -> "{new_quest.name}"')
             print('\n'.join(old_quest.diff(new_quest)))
             return {**old_quests, **new_quests}
 
@@ -925,45 +951,45 @@ def merge_quest(id: int, old_quests: dict[str, QuestEntity], new_quests: dict[st
 
         if len(changes) > 0 and len(additions) > 0 and len(deletions) > 0:
             print('-' * 100)
-            print(f'WARNING1!: Quest #{old_quest.id} "{old_quest.name}" text is a mess:')
+            print(f'WARNING1!: Quest #{old_quest.id}:{old_expansion}/{new_expansion} "{old_quest.name}" text is a mess:')
             print('\n'.join(old_quest.diff(new_quest)))
             return {**old_quests, **new_quests}
 
         if len(changes) > 0 and len(additions) > 0:
             print('-' * 100)
-            print(f'Warning2: Quest #{old_quest.id} "{old_quest.name}" text has changes and additions:')
+            print(f'Warning2: Quest #{old_quest.id}:{old_expansion}/{new_expansion} "{old_quest.name}" text has changes and additions:')
             print('\n'.join(old_quest.diff(new_quest)))
             old_quest.accept_text_additions(new_quest)
             return {**old_quests, **new_quests}
 
         if len(changes) > 0 and len(deletions) > 0:
             print('-' * 100)
-            print(f'WARNING3!: Quest #{old_quest.id} "{old_quest.name}" text has changes and deletions:')
+            print(f'WARNING3!: Quest #{old_quest.id}:{old_expansion}/{new_expansion} "{old_quest.name}" text has changes and deletions:')
             print('\n'.join(old_quest.diff(new_quest)))
             return {**old_quests, **new_quests}
 
         if len(additions) > 0 and len(deletions) > 0:
             print('-' * 100)
-            print(f'WARNING4!: Quest #{old_quest.id} "{old_quest.name}" text has additions and deletions:')
+            print(f'WARNING4!: Quest #{old_quest.id}:{old_expansion}/{new_expansion} "{old_quest.name}" text has additions and deletions:')
             print('\n'.join(old_quest.diff(new_quest)))
             return {**old_quests, **new_quests}
 
         if len(changes) > 0:  # Check (546)
             print('-' * 100)
-            print(f'Warning5: Quest #{old_quest.id} "{old_quest.name}" text was changed:')
+            print(f'Warning5: Quest #{old_quest.id}:{old_expansion}/{new_expansion} "{old_quest.name}" text was changed:')
             print('\n'.join(changes))
             return {**old_quests, **new_quests}
 
         if len(additions) > 0:  # Usually no problems (55)
             print('-' * 100)
-            print(f'Warning6: Quest #{old_quest.id} "{old_quest.name}" text has additions:')
+            print(f'Warning6: Quest #{old_quest.id}:{old_expansion}/{new_expansion} "{old_quest.name}" text has additions:')
             print('\n'.join(additions))
             old_quest.accept_text_additions(new_quest)
             return old_quests
 
         if len(deletions) > 0:  # Maybe Wowhead haven't parsed some strings (usually PROGRESS) for next expansions
             print('-' * 100)
-            print(f'Warning7: Quest #{old_quest.id} "{old_quest.name}" text has deletions:')
+            print(f'Warning7: Quest #{old_quest.id}:{old_expansion}/{new_expansion} "{old_quest.name}" text has deletions:')
             print('\n'.join(deletions))
             return old_quests
 
@@ -972,7 +998,7 @@ def merge_quest(id: int, old_quests: dict[str, QuestEntity], new_quests: dict[st
         diff = old_quest.diff(new_quest)
         if old_quest != new_quest or len(diff) > 0:
             print('-' * 100)
-            print(f'WARNING8!: Quest #{old_quest.id} "{old_quest.name}" still has diffs:')
+            print(f'WARNING8!: Quest #{old_quest.id}:{old_expansion}/{new_expansion} "{old_quest.name}" still has diffs:')
             print('\n'.join(diff))
             return {**old_quests, **new_quests}
 
@@ -1095,20 +1121,20 @@ def fix_classic_quests(classic_quests: dict[int, dict[str, QuestEntity]]):
     classic_quests[8044][CLASSIC].progress = classic_quests[8044][CLASSIC].progress.replace("\n\n\n\n", "\n\n<Jin'rokh bows.>\n\n")
     classic_quests[8046][CLASSIC].completion += "\n\n<Jin'rokh shudders.>"
     classic_quests[8052][CLASSIC].progress = classic_quests[8052][CLASSIC].progress.replace("\n\n\n\n", "\n\n<Al'tabim sighs.>\n\n")
-    classic_quests[8146][CLASSIC].progress = "Ah, <name>, it is good to smell you again.\n\n<Falthir grins.>\n\nYou'll have to excuse my sense of humor. It can be most foul at times.\n\nI sense that you have caused great anguish to our enemies. The forces of Hakkar cry out your name in anger. This is most excellent.\n\nYou have earned another weave on your talisman. Hand it to me."
-    classic_quests[8316][CLASSIC].completion = "War comes, <name>, and with it comes untold horrors. You have done all that could be asked of you and for that you should be rewarded.\n\nShould this... this prophecy ever come to pass...\n\n<Geologist Larksbane turns pale.>\n\nThe future of us all could be at an end.\n\nThese armaments will prove invaluable to your campaign in this desert."
-    classic_quests[8376][CLASSIC].completion = "War comes, <name>, and with it comes untold horrors. You have done all that could be asked of you and for that you should be rewarded.\n\nShould this... this prophecy ever come to pass...\n\n<Geologist Larksbane turns pale.>\n\nThe future of us all could be at an end.\n\nThese armaments will prove invaluable to your campaign in this desert."
-    classic_quests[8377][CLASSIC].completion = "War comes, <name>, and with it comes untold horrors. You have done all that could be asked of you and for that you should be rewarded.\n\nShould this... this prophecy ever come to pass...\n\n<Geologist Larksbane turns pale.>\n\nThe future of us all could be at an end.\n\nThese armaments will prove invaluable to your campaign in this desert."
-    classic_quests[8378][CLASSIC].completion = "War comes, <name>, and with it comes untold horrors. You have done all that could be asked of you and for that you should be rewarded.\n\nShould this... this prophecy ever come to pass...\n\n<Geologist Larksbane turns pale.>\n\nThe future of us all could be at an end.\n\nThese armaments will prove invaluable to your campaign in this desert."
-    classic_quests[8379][CLASSIC].completion = "War comes, <name>, and with it comes untold horrors. You have done all that could be asked of you and for that you should be rewarded.\n\nShould this... this prophecy ever come to pass...\n\n<Geologist Larksbane turns pale.>\n\nThe future of us all could be at an end.\n\nThese armaments will prove invaluable to your campaign in this desert."
-    classic_quests[8380][CLASSIC].completion = "War comes, <name>, and with it comes untold horrors. You have done all that could be asked of you and for that you should be rewarded.\n\nShould this... this prophecy ever come to pass...\n\n<Geologist Larksbane turns pale.>\n\nThe future of us all could be at an end.\n\nThese armaments will prove invaluable to your campaign in this desert."
-    classic_quests[8381][CLASSIC].completion = "War comes, <name>, and with it comes untold horrors. You have done all that could be asked of you and for that you should be rewarded.\n\nShould this... this prophecy ever come to pass...\n\n<Geologist Larksbane turns pale.>\n\nThe future of us all could be at an end.\n\nThese armaments will prove invaluable to your campaign in this desert."
-    classic_quests[8382][CLASSIC].completion = "War comes, <name>, and with it comes untold horrors. You have done all that could be asked of you and for that you should be rewarded.\n\nShould this... this prophecy ever come to pass...\n\n<Geologist Larksbane turns pale.>\n\nThe future of us all could be at an end.\n\nThese armaments will prove invaluable to your campaign in this desert."
+    classic_quests[8146][CLASSIC].progress = classic_quests[8146][CLASSIC].progress.replace("\n\n\n\n", "\n\n<Falthir grins.>\n\n")
+    classic_quests[8316][CLASSIC].completion = classic_quests[8316][CLASSIC].completion.replace("\n\n\n\n", "\n\n<Geologist Larksbane turns pale.>\n\n")
+    classic_quests[8376][CLASSIC].completion = classic_quests[8376][CLASSIC].completion.replace("\n\n\n\n", "\n\n<Geologist Larksbane turns pale.>\n\n")
+    classic_quests[8377][CLASSIC].completion = classic_quests[8377][CLASSIC].completion.replace("\n\n\n\n", "\n\n<Geologist Larksbane turns pale.>\n\n")
+    classic_quests[8378][CLASSIC].completion = classic_quests[8378][CLASSIC].completion.replace("\n\n\n\n", "\n\n<Geologist Larksbane turns pale.>\n\n")
+    classic_quests[8379][CLASSIC].completion = classic_quests[8379][CLASSIC].completion.replace("\n\n\n\n", "\n\n<Geologist Larksbane turns pale.>\n\n")
+    classic_quests[8380][CLASSIC].completion = classic_quests[8380][CLASSIC].completion.replace("\n\n\n\n", "\n\n<Geologist Larksbane turns pale.>\n\n")
+    classic_quests[8381][CLASSIC].completion = classic_quests[8381][CLASSIC].completion.replace("\n\n\n\n", "\n\n<Geologist Larksbane turns pale.>\n\n")
+    classic_quests[8382][CLASSIC].completion = classic_quests[8382][CLASSIC].completion.replace("\n\n\n\n", "\n\n<Geologist Larksbane turns pale.>\n\n")
     classic_quests[8742][CLASSIC].progress = 'The Scepter of the Shifting Sands is whole once more, <name>.\n\nIt must be you who uses the scepter. It must be you who heralds the next age of your people.\n\nYou must wait for the armies of the Horde and the Alliance to arrive in Silithus before you may ring the Scarab Gong.'
     classic_quests[9269][CLASSIC].progress = 'I must not interfere, <race>.'
     classic_quests[9269][CLASSIC].completion = 'The magnitude of this accomplishment must not be understated, <name>. You have done what most would have thought to be impossible. Alas, it was fated. The staff has made its choice...'
     classic_quests[9319][CLASSIC].progress = 'Have you found your way through the dark?'
-    classic_quests[9319][CLASSIC].completion = 'Your essence sings with the energy of the flames you found, <name>. The fire you encountered is potent, and with the right knowledge, its power can be harnessed...\n\n<The Flamekeeper mutters an incantation in a strange, arcane tongue, then pulls out a glowing bottle.>\n\nAh! Here we are. May this light your path, no matter where you tread.'
+    classic_quests[9319][CLASSIC].completion = classic_quests[9319][CLASSIC].completion.replace("\n\n\n\n", "\n\n<The Flamekeeper mutters an incantation in a strange, arcane tongue, then pulls out a glowing bottle.>\n\n")
     classic_quests[9322][CLASSIC].progress = 'Are the flames of Kalimdor burning brightly?'
     classic_quests[9323][CLASSIC].progress = 'Are the flames of Eastern Kingdoms burning brightly?'
 
@@ -1119,7 +1145,24 @@ def fix_classic_quests(classic_quests: dict[int, dict[str, QuestEntity]]):
     classic_quests[4081][CLASSIC].progress = "What is it, <race>? Can't you see I have a platoon to command?"
     classic_quests[5044][CLASSIC].completion += ' <snort>'
     classic_quests[5265][CLASSIC].description = classic_quests[5265][CLASSIC].description.replace('\nthe Argent Hold ', '\nThe Argent Hold ')
-    classic_quests[9136][CLASSIC].completion = 'I am much obliged, <name>.\n\n<Rayne bows.>\n\nPlease remember that I am always accepting fronds.'
+    classic_quests[9136][CLASSIC].completion = classic_quests[9136][CLASSIC].completion.replace("\n\n\n\n", "\n\n<Rayne bows.>\n\n")
+
+    #Fixes from Cata:
+    classic_quests[47][CLASSIC].description = classic_quests[47][CLASSIC].description.replace('The Kobolds', 'The kobolds')
+    classic_quests[60][CLASSIC].description = classic_quests[60][CLASSIC].description.replace('mines ... the Fargodeep mine', 'mines... the Fargodeep Mine')
+    classic_quests[85][CLASSIC].description = classic_quests[85][CLASSIC].description.replace('necklace, and think that', 'necklace and I think that').replace('Maclure vineyards', 'Maclure Vineyards').replace('back for me, and you', 'back for me and you')
+    classic_quests[112][CLASSIC].description = classic_quests[112][CLASSIC].description.replace('the Liquor, I need', 'the liquor, I need')
+    classic_quests[930][CLASSIC].description = classic_quests[930][CLASSIC].description.replace('beneath its fronds', 'beneath the fronds')
+    classic_quests[3093][CLASSIC].description = classic_quests[3093][CLASSIC].description.replace("reading it's contents", 'reading its contents')
+    classic_quests[5893][CLASSIC].objective = classic_quests[5893][CLASSIC].objective.replace('Quatermaster', 'Quartermaster')
+    classic_quests[6961][CLASSIC].objective = classic_quests[6961][CLASSIC].objective.replace('Greatfather', 'Great-father')
+    classic_quests[6961][CLASSIC].description = classic_quests[6961][CLASSIC].description.replace('Greatfather', 'Great-father')
+    classic_quests[6962][CLASSIC].objective = classic_quests[6962][CLASSIC].objective.replace('Greatfather', 'Great-father')
+    classic_quests[6962][CLASSIC].description = classic_quests[6962][CLASSIC].description.replace('Greatfather', 'Great-father')
+    classic_quests[7062][CLASSIC].objective = classic_quests[7062][CLASSIC].objective.replace("Explorer's League", "Explorers' League")
+    classic_quests[7062][CLASSIC].description = classic_quests[7062][CLASSIC].description.replace("Explorer's League", "Explorers' League")
+    classic_quests[8827][CLASSIC].description = classic_quests[8827][CLASSIC].description.replace('Smokeywood', "Smokywood")
+    classic_quests[8828][CLASSIC].description = classic_quests[8828][CLASSIC].description.replace('Smokeywood', "Smokywood")
 
 
 def fix_classic_sod_quests(classic_quests: dict[int, dict[str, QuestEntity]], sod_quests: dict[int, dict[str, QuestEntity]]):
@@ -1234,18 +1277,58 @@ def fix_tbc_quests(tbc_quests: dict[int, dict[str, QuestEntity]]):
     tbc_quests[8044][TBC].progress = tbc_quests[8044][TBC].progress.replace("\n\n\n\n", "\n\n<Jin'rokh bows.>\n\n")
     tbc_quests[8046][TBC].completion += "\n\n<Jin'rokh shudders.>"
     tbc_quests[8052][TBC].progress = tbc_quests[8052][TBC].progress.replace("\n\n\n\n", "\n\n<Al'tabim sighs.>\n\n")
-    tbc_quests[8146][TBC].progress = "Ah, <name>, it is good to smell you again.\n\n<Falthir grins.>\n\nYou'll have to excuse my sense of humor. It can be most foul at times.\n\nI sense that you have caused great anguish to our enemies. The forces of Hakkar cry out your name in anger. This is most excellent.\n\nYou have earned another weave on your talisman. Hand it to me."
-    tbc_quests[8316][TBC].completion = "War comes, <name>, and with it comes untold horrors. You have done all that could be asked of you and for that you should be rewarded.\n\nShould this... this prophecy ever come to pass...\n\n<Geologist Larksbane turns pale.>\n\nThe future of us all could be at an end.\n\nThese armaments will prove invaluable to your campaign in this desert."
-    tbc_quests[8376][TBC].completion = "War comes, <name>, and with it comes untold horrors. You have done all that could be asked of you and for that you should be rewarded.\n\nShould this... this prophecy ever come to pass...\n\n<Geologist Larksbane turns pale.>\n\nThe future of us all could be at an end.\n\nThese armaments will prove invaluable to your campaign in this desert."
-    tbc_quests[8377][TBC].completion = "War comes, <name>, and with it comes untold horrors. You have done all that could be asked of you and for that you should be rewarded.\n\nShould this... this prophecy ever come to pass...\n\n<Geologist Larksbane turns pale.>\n\nThe future of us all could be at an end.\n\nThese armaments will prove invaluable to your campaign in this desert."
-    tbc_quests[8378][TBC].completion = "War comes, <name>, and with it comes untold horrors. You have done all that could be asked of you and for that you should be rewarded.\n\nShould this... this prophecy ever come to pass...\n\n<Geologist Larksbane turns pale.>\n\nThe future of us all could be at an end.\n\nThese armaments will prove invaluable to your campaign in this desert."
-    tbc_quests[8379][TBC].completion = "War comes, <name>, and with it comes untold horrors. You have done all that could be asked of you and for that you should be rewarded.\n\nShould this... this prophecy ever come to pass...\n\n<Geologist Larksbane turns pale.>\n\nThe future of us all could be at an end.\n\nThese armaments will prove invaluable to your campaign in this desert."
-    tbc_quests[8380][TBC].completion = "War comes, <name>, and with it comes untold horrors. You have done all that could be asked of you and for that you should be rewarded.\n\nShould this... this prophecy ever come to pass...\n\n<Geologist Larksbane turns pale.>\n\nThe future of us all could be at an end.\n\nThese armaments will prove invaluable to your campaign in this desert."
-    tbc_quests[8381][TBC].completion = "War comes, <name>, and with it comes untold horrors. You have done all that could be asked of you and for that you should be rewarded.\n\nShould this... this prophecy ever come to pass...\n\n<Geologist Larksbane turns pale.>\n\nThe future of us all could be at an end.\n\nThese armaments will prove invaluable to your campaign in this desert."
-    tbc_quests[8382][TBC].completion = "War comes, <name>, and with it comes untold horrors. You have done all that could be asked of you and for that you should be rewarded.\n\nShould this... this prophecy ever come to pass...\n\n<Geologist Larksbane turns pale.>\n\nThe future of us all could be at an end.\n\nThese armaments will prove invaluable to your campaign in this desert."
-    tbc_quests[9136][TBC].completion = 'I am much obliged, <name>.\n\n<Rayne bows.>\n\nPlease remember that I am always accepting fronds.'
+    tbc_quests[8146][TBC].progress = tbc_quests[8146][TBC].progress.replace("\n\n\n\n", "\n\n<Falthir grins.>\n\n")
+    tbc_quests[8316][TBC].completion = tbc_quests[8316][TBC].completion.replace("\n\n\n\n", "\n\n<Geologist Larksbane turns pale.>\n\n")
+    tbc_quests[8376][TBC].completion = tbc_quests[8376][TBC].completion.replace("\n\n\n\n", "\n\n<Geologist Larksbane turns pale.>\n\n")
+    tbc_quests[8377][TBC].completion = tbc_quests[8377][TBC].completion.replace("\n\n\n\n", "\n\n<Geologist Larksbane turns pale.>\n\n")
+    tbc_quests[8378][TBC].completion = tbc_quests[8378][TBC].completion.replace("\n\n\n\n", "\n\n<Geologist Larksbane turns pale.>\n\n")
+    tbc_quests[8379][TBC].completion = tbc_quests[8379][TBC].completion.replace("\n\n\n\n", "\n\n<Geologist Larksbane turns pale.>\n\n")
+    tbc_quests[8380][TBC].completion = tbc_quests[8380][TBC].completion.replace("\n\n\n\n", "\n\n<Geologist Larksbane turns pale.>\n\n")
+    tbc_quests[8381][TBC].completion = tbc_quests[8381][TBC].completion.replace("\n\n\n\n", "\n\n<Geologist Larksbane turns pale.>\n\n")
+    tbc_quests[8382][TBC].completion = tbc_quests[8382][TBC].completion.replace("\n\n\n\n", "\n\n<Geologist Larksbane turns pale.>\n\n")
+    tbc_quests[9136][TBC].completion = tbc_quests[9136][TBC].completion.replace("\n\n\n\n", "\n\n<Rayne bows.>\n\n")
     tbc_quests[9319][TBC].progress = 'Have you found your way through the dark?'
-    tbc_quests[9319][TBC].completion = 'Your essence sings with the energy of the flames you found, <name>. The fire you encountered is potent, and with the right knowledge, its power can be harnessed...\n\n<The Flamekeeper mutters an incantation in a strange, arcane tongue, then pulls out a glowing bottle.>\n\nAh! Here we are. May this light your path, no matter where you tread.'
+    tbc_quests[9319][TBC].completion = tbc_quests[9319][TBC].completion.replace("\n\n\n\n", "\n\n<The Flamekeeper mutters an incantation in a strange, arcane tongue, then pulls out a glowing bottle.>\n\n")
+
+    #Fixes from Cata:
+    tbc_quests[47][TBC].description = tbc_quests[47][TBC].description.replace('The Kobolds', 'The kobolds')
+    tbc_quests[60][TBC].description = tbc_quests[60][TBC].description.replace('mines ... the Fargodeep mine', 'mines... the Fargodeep Mine')
+    tbc_quests[85][TBC].description = tbc_quests[85][TBC].description.replace('necklace, and think that', 'necklace and I think that').replace('Maclure vineyards', 'Maclure Vineyards').replace('back for me, and you', 'back for me and you')
+    tbc_quests[112][TBC].description = tbc_quests[112][TBC].description.replace('the Liquor, I need', 'the liquor, I need')
+    tbc_quests[930][TBC].description = tbc_quests[930][TBC].description.replace('beneath its fronds', 'beneath the fronds')
+    tbc_quests[3093][TBC].description = tbc_quests[3093][TBC].description.replace("reading it's contents", 'reading its contents')
+    tbc_quests[5893][TBC].objective = tbc_quests[5893][TBC].objective.replace('Quatermaster', 'Quartermaster')
+    tbc_quests[6961][TBC].objective = tbc_quests[6961][TBC].objective.replace('Greatfather', 'Great-father')
+    tbc_quests[6961][TBC].description = tbc_quests[6961][TBC].description.replace('Greatfather', 'Great-father')
+    tbc_quests[6962][TBC].objective = tbc_quests[6962][TBC].objective.replace('Greatfather', 'Great-father')
+    tbc_quests[6962][TBC].description = tbc_quests[6962][TBC].description.replace('Greatfather', 'Great-father')
+    tbc_quests[7062][TBC].objective = tbc_quests[7062][TBC].objective.replace("Explorer's League", "Explorers' League")
+    tbc_quests[7062][TBC].description = tbc_quests[7062][TBC].description.replace("Explorer's League", "Explorers' League")
+    tbc_quests[8827][TBC].description = tbc_quests[8827][TBC].description.replace('Smokeywood', "Smokywood")
+    tbc_quests[8828][TBC].description = tbc_quests[8828][TBC].description.replace('Smokeywood', "Smokywood")
+    tbc_quests[9452][TBC].description = tbc_quests[9452][TBC].description.replace('river to the east to catch', "river to the east, to catch")
+    tbc_quests[9635][TBC].description = tbc_quests[9635][TBC].description.replace('laying around', "lying around")
+    tbc_quests[9636][TBC].description = tbc_quests[9636][TBC].description.replace('laying around', "lying around")
+    tbc_quests[9688][TBC].objective = tbc_quests[9688][TBC].objective.replace('Viridian', "Veridian")
+    tbc_quests[9756][TBC].description = tbc_quests[9756][TBC].description.replace('is a draenei on', "is a <race> on")
+    tbc_quests[9761][TBC].description = tbc_quests[9761][TBC].description.replace('fearless of draenei will', "fearless will")
+    tbc_quests[9955][TBC].description = tbc_quests[9955][TBC].description.replace("Cho'war the pillager", "Cho'war the Pillager")
+    tbc_quests[10004][TBC].description = tbc_quests[10004][TBC].description.replace('Terokkar forest', 'Terokkar Forest')
+    tbc_quests[10116][TBC].description = tbc_quests[10116][TBC].description.replace("chietain's", "chieftain's")
+    tbc_quests[10117][TBC].description = tbc_quests[10117][TBC].description.replace("chietain's", "chieftain's")
+    tbc_quests[10124][TBC].description = tbc_quests[10124][TBC].description.replace('Foward', 'Forward')
+    tbc_quests[10436][TBC].description = tbc_quests[10436][TBC].description.replace('if one those decides', 'if one of those decides')
+    tbc_quests[10438][TBC].description = tbc_quests[10438][TBC].description.replace('Protecotrate', 'Protectorate')
+    tbc_quests[10667][TBC].description = tbc_quests[10667][TBC].description.replace('Underwold', 'Underworld')
+    tbc_quests[10764][TBC].description = tbc_quests[10764][TBC].description.replace('the Fel Reavers', 'the fel reavers')
+    tbc_quests[10859][TBC].description = tbc_quests[10859][TBC].description.replace('attact', 'attract')
+    tbc_quests[10876][TBC].objective = tbc_quests[10876][TBC].objective.replace('Force Commander Gorax', 'Force-Commander Gorax')
+    tbc_quests[10876][TBC].description = tbc_quests[10876][TBC].description.replace('Force Commander Gorax', 'Force-Commander Gorax')
+    tbc_quests[10917][TBC].description = tbc_quests[10917][TBC].description.replace('marked by death', 'marked for death')
+    tbc_quests[11731][TBC].description = tbc_quests[11731][TBC].description.replace('lession', 'lesson')
+    tbc_quests[11922][TBC].description = tbc_quests[11922][TBC].description.replace('lession', 'lesson')
+    tbc_quests[12133][TBC].description = tbc_quests[12133][TBC].description.replace('pumpking', 'pumpkin')
+    tbc_quests[12155][TBC].description = tbc_quests[12155][TBC].description.replace('pumpking', 'pumpkin')
 
 
 def fix_wrath_quests(wrath_quests: dict[int, dict[str, QuestEntity]]):
@@ -1281,18 +1364,131 @@ def fix_wrath_quests(wrath_quests: dict[int, dict[str, QuestEntity]]):
     wrath_quests[8044][WRATH].progress = wrath_quests[8044][WRATH].progress.replace("\n\n\n\n", "\n\n<Jin'rokh bows.>\n\n")
     wrath_quests[8046][WRATH].completion += "\n\n<Jin'rokh shudders.>"
     wrath_quests[8052][WRATH].progress = wrath_quests[8052][WRATH].progress.replace("\n\n\n\n", "\n\n<Al'tabim sighs.>\n\n")
-    wrath_quests[8146][WRATH].progress = "Ah, <name>, it is good to smell you again.\n\n<Falthir grins.>\n\nYou'll have to excuse my sense of humor. It can be most foul at times.\n\nI sense that you have caused great anguish to our enemies. The forces of Hakkar cry out your name in anger. This is most excellent.\n\nYou have earned another weave on your talisman. Hand it to me."
-    wrath_quests[8316][WRATH].completion = "War comes, <name>, and with it comes untold horrors. You have done all that could be asked of you and for that you should be rewarded.\n\nShould this... this prophecy ever come to pass...\n\n<Geologist Larksbane turns pale.>\n\nThe future of us all could be at an end.\n\nThese armaments will prove invaluable to your campaign in this desert."
-    wrath_quests[8376][WRATH].completion = "War comes, <name>, and with it comes untold horrors. You have done all that could be asked of you and for that you should be rewarded.\n\nShould this... this prophecy ever come to pass...\n\n<Geologist Larksbane turns pale.>\n\nThe future of us all could be at an end.\n\nThese armaments will prove invaluable to your campaign in this desert."
-    wrath_quests[8377][WRATH].completion = "War comes, <name>, and with it comes untold horrors. You have done all that could be asked of you and for that you should be rewarded.\n\nShould this... this prophecy ever come to pass...\n\n<Geologist Larksbane turns pale.>\n\nThe future of us all could be at an end.\n\nThese armaments will prove invaluable to your campaign in this desert."
-    wrath_quests[8378][WRATH].completion = "War comes, <name>, and with it comes untold horrors. You have done all that could be asked of you and for that you should be rewarded.\n\nShould this... this prophecy ever come to pass...\n\n<Geologist Larksbane turns pale.>\n\nThe future of us all could be at an end.\n\nThese armaments will prove invaluable to your campaign in this desert."
-    wrath_quests[8379][WRATH].completion = "War comes, <name>, and with it comes untold horrors. You have done all that could be asked of you and for that you should be rewarded.\n\nShould this... this prophecy ever come to pass...\n\n<Geologist Larksbane turns pale.>\n\nThe future of us all could be at an end.\n\nThese armaments will prove invaluable to your campaign in this desert."
-    wrath_quests[8380][WRATH].completion = "War comes, <name>, and with it comes untold horrors. You have done all that could be asked of you and for that you should be rewarded.\n\nShould this... this prophecy ever come to pass...\n\n<Geologist Larksbane turns pale.>\n\nThe future of us all could be at an end.\n\nThese armaments will prove invaluable to your campaign in this desert."
-    wrath_quests[8381][WRATH].completion = "War comes, <name>, and with it comes untold horrors. You have done all that could be asked of you and for that you should be rewarded.\n\nShould this... this prophecy ever come to pass...\n\n<Geologist Larksbane turns pale.>\n\nThe future of us all could be at an end.\n\nThese armaments will prove invaluable to your campaign in this desert."
-    wrath_quests[8382][WRATH].completion = "War comes, <name>, and with it comes untold horrors. You have done all that could be asked of you and for that you should be rewarded.\n\nShould this... this prophecy ever come to pass...\n\n<Geologist Larksbane turns pale.>\n\nThe future of us all could be at an end.\n\nThese armaments will prove invaluable to your campaign in this desert."
-    wrath_quests[9136][WRATH].completion = 'I am much obliged, <name>.\n\n<Rayne bows.>\n\nPlease remember that I am always accepting fronds.'
+    wrath_quests[8146][WRATH].progress = wrath_quests[8146][WRATH].progress.replace("\n\n\n\n", "\n\n<Falthir grins.>\n\n")
+    wrath_quests[8316][WRATH].completion = wrath_quests[8316][WRATH].completion.replace("\n\n\n\n", "\n\n<Geologist Larksbane turns pale.>\n\n")
+    wrath_quests[8376][WRATH].completion = wrath_quests[8376][WRATH].completion.replace("\n\n\n\n", "\n\n<Geologist Larksbane turns pale.>\n\n")
+    wrath_quests[8377][WRATH].completion = wrath_quests[8377][WRATH].completion.replace("\n\n\n\n", "\n\n<Geologist Larksbane turns pale.>\n\n")
+    wrath_quests[8378][WRATH].completion = wrath_quests[8378][WRATH].completion.replace("\n\n\n\n", "\n\n<Geologist Larksbane turns pale.>\n\n")
+    wrath_quests[8379][WRATH].completion = wrath_quests[8379][WRATH].completion.replace("\n\n\n\n", "\n\n<Geologist Larksbane turns pale.>\n\n")
+    wrath_quests[8380][WRATH].completion = wrath_quests[8380][WRATH].completion.replace("\n\n\n\n", "\n\n<Geologist Larksbane turns pale.>\n\n")
+    wrath_quests[8381][WRATH].completion = wrath_quests[8381][WRATH].completion.replace("\n\n\n\n", "\n\n<Geologist Larksbane turns pale.>\n\n")
+    wrath_quests[8382][WRATH].completion = wrath_quests[8382][WRATH].completion.replace("\n\n\n\n", "\n\n<Geologist Larksbane turns pale.>\n\n")
+    wrath_quests[9136][WRATH].completion = wrath_quests[9136][WRATH].completion.replace("\n\n\n\n", "\n\n<Rayne bows.>\n\n")
     wrath_quests[9319][WRATH].progress = 'Have you found your way through the dark?'
-    wrath_quests[9319][WRATH].completion = 'Your essence sings with the energy of the flames you found, <name>. The fire you encountered is potent, and with the right knowledge, its power can be harnessed...\n\n<The Flamekeeper mutters an incantation in a strange, arcane tongue, then pulls out a glowing bottle.>\n\nAh! Here we are. May this light your path, no matter where you tread.'
+    wrath_quests[9319][WRATH].completion = wrath_quests[9319][WRATH].completion.replace("\n\n\n\n", "\n\n<The Flamekeeper mutters an incantation in a strange, arcane tongue, then pulls out a glowing bottle.>\n\n")
+
+    #Fixes from Cata:
+    wrath_quests[47][WRATH].description = wrath_quests[47][WRATH].description.replace('The Kobolds', 'The kobolds')
+    wrath_quests[60][WRATH].description = wrath_quests[60][WRATH].description.replace('mines ... the Fargodeep mine', 'mines... the Fargodeep Mine')
+    wrath_quests[85][WRATH].description = wrath_quests[85][WRATH].description.replace('necklace, and think that', 'necklace and I think that').replace('Maclure vineyards', 'Maclure Vineyards').replace('back for me, and you', 'back for me and you')
+    wrath_quests[112][WRATH].description = wrath_quests[112][WRATH].description.replace('the Liquor, I need', 'the liquor, I need')
+    wrath_quests[930][WRATH].description = wrath_quests[930][WRATH].description.replace('beneath its fronds', 'beneath the fronds')
+    wrath_quests[3093][WRATH].description = wrath_quests[3093][WRATH].description.replace("reading it's contents", 'reading its contents')
+    wrath_quests[5893][WRATH].objective = wrath_quests[5893][WRATH].objective.replace('Quatermaster', 'Quartermaster')
+    wrath_quests[6961][WRATH].objective = wrath_quests[6961][WRATH].objective.replace('Greatfather', 'Great-father')
+    wrath_quests[6961][WRATH].description = wrath_quests[6961][WRATH].description.replace('Greatfather', 'Great-father')
+    wrath_quests[6962][WRATH].objective = wrath_quests[6962][WRATH].objective.replace('Greatfather', 'Great-father')
+    wrath_quests[6962][WRATH].description = wrath_quests[6962][WRATH].description.replace('Greatfather', 'Great-father')
+    wrath_quests[7062][WRATH].objective = wrath_quests[7062][WRATH].objective.replace("Explorer's League", "Explorers' League")
+    wrath_quests[7062][WRATH].description = wrath_quests[7062][WRATH].description.replace("Explorer's League", "Explorers' League")
+    wrath_quests[8827][WRATH].description = wrath_quests[8827][WRATH].description.replace('Smokeywood', "Smokywood")
+    wrath_quests[8828][WRATH].description = wrath_quests[8828][WRATH].description.replace('Smokeywood', "Smokywood")
+    wrath_quests[9452][WRATH].description = wrath_quests[9452][WRATH].description.replace('river to the east to catch', "river to the east, to catch")
+    wrath_quests[9635][WRATH].description = wrath_quests[9635][WRATH].description.replace('laying around', "lying around")
+    wrath_quests[9636][WRATH].description = wrath_quests[9636][WRATH].description.replace('laying around', "lying around")
+    wrath_quests[9688][WRATH].objective = wrath_quests[9688][WRATH].objective.replace('Viridian', "Veridian")
+    wrath_quests[9756][WRATH].description = wrath_quests[9756][WRATH].description.replace('is a draenei on', "is a <race> on")
+    wrath_quests[9761][WRATH].description = wrath_quests[9761][WRATH].description.replace('fearless of draenei will', "fearless will")
+    wrath_quests[9955][WRATH].description = wrath_quests[9955][WRATH].description.replace("Cho'war the pillager", "Cho'war the Pillager")
+    wrath_quests[10004][WRATH].description = wrath_quests[10004][WRATH].description.replace('Terokkar forest', 'Terokkar Forest')
+    wrath_quests[10116][WRATH].description = wrath_quests[10116][WRATH].description.replace("chietain's", "chieftain's")
+    wrath_quests[10117][WRATH].description = wrath_quests[10117][WRATH].description.replace("chietain's", "chieftain's")
+    wrath_quests[10124][WRATH].description = wrath_quests[10124][WRATH].description.replace('Foward', 'Forward')
+    wrath_quests[10436][WRATH].description = wrath_quests[10436][WRATH].description.replace('if one those decides', 'if one of those decides')
+    wrath_quests[10438][WRATH].description = wrath_quests[10438][WRATH].description.replace('Protecotrate', 'Protectorate')
+    wrath_quests[10504][WRATH].objective = wrath_quests[10504][WRATH].objective.replace('Slayl', 'Slay') # Updated in Wrath
+    wrath_quests[10667][WRATH].description = wrath_quests[10667][WRATH].description.replace('Underwold', 'Underworld')
+    wrath_quests[10764][WRATH].description = wrath_quests[10764][WRATH].description.replace('the Fel Reavers', 'the fel reavers')
+    wrath_quests[10859][WRATH].description = wrath_quests[10859][WRATH].description.replace('attact', 'attract')
+    wrath_quests[10876][WRATH].objective = wrath_quests[10876][WRATH].objective.replace('Force Commander Gorax', 'Force-Commander Gorax')
+    wrath_quests[10876][WRATH].description = wrath_quests[10876][WRATH].description.replace('Force Commander Gorax', 'Force-Commander Gorax')
+    wrath_quests[10917][WRATH].description = wrath_quests[10917][WRATH].description.replace('marked by death', 'marked for death')
+    wrath_quests[11731][WRATH].description = wrath_quests[11731][WRATH].description.replace('lession', 'lesson')
+    wrath_quests[11922][WRATH].description = wrath_quests[11922][WRATH].description.replace('lession', 'lesson')
+    wrath_quests[12133][WRATH].description = wrath_quests[12133][WRATH].description.replace('pumpking', 'pumpkin')
+    wrath_quests[12155][WRATH].description = wrath_quests[12155][WRATH].description.replace('pumpking', 'pumpkin')
+
+    #Fixes from Cata (added in Wrath):
+    wrath_quests[11457][WRATH].objective = wrath_quests[11457][WRATH].objective.replace('obain', 'obtain')
+    wrath_quests[11471][WRATH].description = wrath_quests[11471][WRATH].description.replace('action as lead will', 'action as leader will')
+    wrath_quests[11884][WRATH].name = wrath_quests[11884][WRATH].name.replace('Ned', 'Nedar')
+    wrath_quests[11884][WRATH].description = wrath_quests[11884][WRATH].description.replace("against Ned's", "against his").replace('Ned has', 'Nedar has').replace("but Ned's tainted", "but Nedar's tainted")
+    wrath_quests[11984][WRATH].description = wrath_quests[11984][WRATH].description.replace("Drak' Zin", "Drak'Zin")
+    wrath_quests[12050][WRATH].description = wrath_quests[12050][WRATH].description.replace('he Harp', 'he harp')
+    wrath_quests[12157][WRATH].objective = wrath_quests[12157][WRATH].objective.replace("Star's Rest", "Stars' Rest")
+    wrath_quests[12199][WRATH].description = wrath_quests[12199][WRATH].description.replace('construct called', 'construct, called')
+    wrath_quests[12225][WRATH].description = wrath_quests[12225][WRATH].description.replace('the the', 'the')
+    wrath_quests[12260][WRATH].objective = wrath_quests[12260][WRATH].objective.replace('you steal the image of a Onslaught', 'you to steal the image of an Onslaught')
+    wrath_quests[12500][WRATH].objective = wrath_quests[12500][WRATH].objective.replace('Vangaurd', 'Vanguard')
+    wrath_quests[12559][WRATH].name = wrath_quests[12559][WRATH].name.replace("Maker's Perch", "Makers' Perch")
+    wrath_quests[12559][WRATH].objective = wrath_quests[12559][WRATH].objective.replace("Maker's Perch", "Makers' Perch")
+    wrath_quests[12559][WRATH].description = wrath_quests[12559][WRATH].description.replace("Maker's Perch", "Makers' Perch")
+    wrath_quests[12570][WRATH].objective = wrath_quests[12570][WRATH].objective.replace('Rainspaker', 'Rainspeaker')
+    wrath_quests[12607][WRATH].description = wrath_quests[12607][WRATH].description.replace('and skip it over', 'and slip it over')
+    wrath_quests[12611][WRATH].objective = wrath_quests[12611][WRATH].objective.replace('wants you defeat', 'wants you to defeat')
+    wrath_quests[12613][WRATH].name = wrath_quests[12613][WRATH].name.replace("Maker's Overlook", "Makers' Overlook")
+    wrath_quests[12613][WRATH].objective = wrath_quests[12613][WRATH].objective.replace("Maker's Overlook", "Makers' Overlook")
+    wrath_quests[12763][WRATH].objective = wrath_quests[12763][WRATH].objective.replace('Onequah', 'Oneqwah')
+    wrath_quests[12904][WRATH].description = wrath_quests[12904][WRATH].description.replace('grizzly', 'grisly')
+    wrath_quests[13103][WRATH].objective = wrath_quests[13103][WRATH].objective.replace('empty cheese platter', 'Empty Cheese Platter')
+    wrath_quests[13115][WRATH].objective = wrath_quests[13115][WRATH].objective.replace('empty cheese platter', 'Empty Cheese Platter')
+    wrath_quests[13296][WRATH].objective = wrath_quests[13296][WRATH].objective.replace('Ymriheim', 'Ymirheim')
+    wrath_quests[13479][WRATH].objective = wrath_quests[13479][WRATH].objective.replace('Sping Gatherer', 'Spring Gatherer')
+    wrath_quests[13779][WRATH].objective = wrath_quests[13779][WRATH].objective.replace('Deathsalker', 'Deathstalker') # quest still have valid diff in description
+    wrath_quests[13845][WRATH].objective = wrath_quests[13845][WRATH].objective.replace('Seal Vial', 'Sealed Vial')
+    wrath_quests[13850][WRATH].description = wrath_quests[13850][WRATH].description.replace('area of of the', 'area of the')
+    wrath_quests[13903][WRATH].description = wrath_quests[13903][WRATH].description.replace('in center of', 'in the center of')
+    wrath_quests[13917][WRATH].description = wrath_quests[13917][WRATH].description.replace('in center of', 'in the center of')
+    wrath_quests[13938][WRATH].objective = wrath_quests[13938][WRATH].objective.replace('at the Wonderworks', 'at The Wonderworks')
+    wrath_quests[14041][WRATH].description = wrath_quests[14041][WRATH].description.replace('Thunder Bluff.', 'Thunder Bluff?')
+    wrath_quests[14074][WRATH].description = wrath_quests[14074][WRATH].description.replace('kvaldir', 'Kvaldir')
+    wrath_quests[14101][WRATH].description = wrath_quests[14101][WRATH].description.replace('kvaldir', 'Kvaldir')
+    wrath_quests[14143][WRATH].description = wrath_quests[14143][WRATH].description.replace('kvaldir', 'Kvaldir')
+    wrath_quests[24586][WRATH].description = wrath_quests[24586][WRATH].description.replace('reigning fire', 'raining fire')
+    wrath_quests[24682][WRATH].objective = wrath_quests[24682][WRATH].objective.replace('entrace', 'entrance')
+    wrath_quests[24712][WRATH].description = wrath_quests[24712][WRATH].description.replace('rise. There', 'rise.\n\nThere')
+    wrath_quests[24713][WRATH].description = wrath_quests[24713][WRATH].description.replace('my Dark Rangers', 'my dark rangers')
+
+
+def fix_cata_quests(cata_quests: dict[int, dict[str, QuestEntity]]):
+    # Common fixes
+    cata_quests[8801][CATA].objective = cata_quests[8801][CATA].objective.replace("Caelastrasz", "Caelestrasz")
+    cata_quests[9875][CATA].completion = cata_quests[9875][CATA].completion.replace("Purple Leafed Forsäkenrium", "Purple Leafed <name>rium")
+    cata_quests[65604][CATA].completion = cata_quests[65604][CATA].completion.replace("I have known that <race> for many years", "I have known that orc for many years")
+
+    #Fixes from ClassicDB/Wowpedia:
+    cata_quests[172][CATA].completion = cata_quests[172][CATA].completion.replace('be like a big brother to me', 'be like a big <brother/sister> to me')
+    cata_quests[1468][CATA].completion = cata_quests[1468][CATA].completion.replace('be like a big brother to me', 'be like a big <brother/sister> to me').replace(', yes sir.', ', yes <sir/lady>.')
+    cata_quests[5044][CATA].completion += ' <snort>'
+    cata_quests[7936][CATA].completion = cata_quests[7936][CATA].completion.replace('A prize fit for a king!', 'A prize fit for a <king/queen>!')
+    cata_quests[8044][CATA].progress = cata_quests[8044][CATA].progress.replace("\n\n\n\n", "\n\n<Jin'rokh bows.>\n\n")
+    cata_quests[8046][CATA].completion += "\n\n<Jin'rokh shudders.>"
+    cata_quests[8052][CATA].progress = cata_quests[8052][CATA].progress.replace("\n\n\n\n", "\n\n<Al'tabim sighs.>\n\n")
+    cata_quests[8146][CATA].progress = cata_quests[8146][CATA].progress.replace("\n\n\n\n", "\n\n<Falthir grins.>\n\n")
+    cata_quests[8316][CATA].completion = cata_quests[8316][CATA].completion.replace("\n\n\n\n", "\n\n<Geologist Larksbane turns pale.>\n\n")
+    cata_quests[8376][CATA].completion = cata_quests[8376][CATA].completion.replace("\n\n\n\n", "\n\n<Geologist Larksbane turns pale.>\n\n")
+    cata_quests[8377][CATA].completion = cata_quests[8377][CATA].completion.replace("\n\n\n\n", "\n\n<Geologist Larksbane turns pale.>\n\n")
+    cata_quests[8378][CATA].completion = cata_quests[8378][CATA].completion.replace("\n\n\n\n", "\n\n<Geologist Larksbane turns pale.>\n\n")
+    cata_quests[8379][CATA].completion = cata_quests[8379][CATA].completion.replace("\n\n\n\n", "\n\n<Geologist Larksbane turns pale.>\n\n")
+    cata_quests[8380][CATA].completion = cata_quests[8380][CATA].completion.replace("\n\n\n\n", "\n\n<Geologist Larksbane turns pale.>\n\n")
+    cata_quests[8381][CATA].completion = cata_quests[8381][CATA].completion.replace("\n\n\n\n", "\n\n<Geologist Larksbane turns pale.>\n\n")
+    cata_quests[8382][CATA].completion = cata_quests[8382][CATA].completion.replace("\n\n\n\n", "\n\n<Geologist Larksbane turns pale.>\n\n")
+    cata_quests[9319][CATA].progress = 'Have you found your way through the dark?'
+    cata_quests[9319][CATA].completion = cata_quests[9319][CATA].completion.replace("\n\n\n\n", "\n\n<The Flamekeeper mutters an incantation in a strange, arcane tongue, then pulls out a glowing bottle.>\n\n")
+
+
+
+
 
 
 def fix_expansion(classic_quests: dict[int, dict[str, QuestEntity]], sod_quests: dict[int, dict[str, QuestEntity]], tbc_quests: dict[int, dict[str, QuestEntity]], wrath_quests: dict[int, dict[str, QuestEntity]]):
@@ -1311,16 +1507,22 @@ def populate_cache_db_with_quest_data():
     wowhead_metadata_sod = get_wowhead_quests_metadata(SOD)
     wowhead_metadata_tbc = get_wowhead_quests_metadata(TBC)
     wowhead_metadata_wrath = get_wowhead_quests_metadata(WRATH)
+    wowhead_metadata_cata = get_wowhead_quests_metadata(CATA)
+    wowhead_metadata_retail = get_wowhead_quests_metadata(RETAIL)
 
     save_htmls_from_wowhead(CLASSIC, set(wowhead_metadata.keys()))
     save_htmls_from_wowhead(SOD, set(wowhead_metadata_sod.keys()))
     save_htmls_from_wowhead(TBC, set(wowhead_metadata_tbc.keys()))
     save_htmls_from_wowhead(WRATH, set(wowhead_metadata_wrath.keys()))
+    save_htmls_from_wowhead(CATA, set(wowhead_metadata_cata.keys()))
+    save_htmls_from_wowhead(RETAIL, set(wowhead_metadata_retail.keys()))
 
     wowhead_quests = parse_wowhead_pages(CLASSIC, wowhead_metadata)
     wowhead_quests_sod = parse_wowhead_pages(SOD, wowhead_metadata_sod)
     wowhead_quests_tbc = parse_wowhead_pages(TBC, wowhead_metadata_tbc)
     wowhead_quests_wrath = parse_wowhead_pages(WRATH, wowhead_metadata_wrath)
+    wowhead_quests_cata = parse_wowhead_pages(CATA, wowhead_metadata_cata)
+    wowhead_quests_retail = parse_wowhead_pages(RETAIL, wowhead_metadata_retail)
 
     fix_expansion(wowhead_quests, wowhead_quests_sod, wowhead_quests_tbc, wowhead_quests_wrath)
 
@@ -1328,11 +1530,16 @@ def populate_cache_db_with_quest_data():
     fix_classic_sod_quests(wowhead_quests, wowhead_quests_sod)
     fix_tbc_quests(wowhead_quests_tbc)
     fix_wrath_quests(wowhead_quests_wrath)
+    fix_cata_quests(wowhead_quests_cata)
 
     print('Merging with TBC')
     classic_and_tbc_quests = merge_expansions({**wowhead_quests, **wowhead_quests_sod}, wowhead_quests_tbc)
     print('Merging with WotLK')
-    all_quests = merge_expansions(classic_and_tbc_quests, wowhead_quests_wrath)
+    classic_tbc_wrath_quests = merge_expansions(classic_and_tbc_quests, wowhead_quests_wrath)
+    print('Merging with Cata')
+    all_quests = merge_expansions(classic_tbc_wrath_quests, wowhead_quests_cata)
+    # print('Merging with Retail')
+    # all_quests = merge_expansions(classic_tbc_wrath_cata_quests, wowhead_quests_retail)
 
     classicua_data = get_all_quests_from_db('classicua.db')
     print('Merging with ClassicUA')
@@ -1341,13 +1548,7 @@ def populate_cache_db_with_quest_data():
     # fix_quests(quests)
     # fix_metadata(metadata)
 
-    start_time = time.time()
-
     save_quests_to_cache_db(all_quests)
-
-    end_time = time.time()
-    elapsed_time = end_time - start_time
-    print(f"Save time: {elapsed_time} seconds")
 
 
 
@@ -1426,9 +1627,10 @@ def check_categories():
     wowhead_categories = get_wowhead_categories(CLASSIC)
     wowhead_categories_tbc = get_wowhead_categories(TBC)
     wowhead_categories_wrath = get_wowhead_categories(WRATH)
+    wowhead_categories_cata = get_wowhead_categories(CATA)
 
     dict1 = known_categories
-    dict2 = wowhead_categories_wrath
+    dict2 = wowhead_categories_cata
 
     added_keys = {k: dict2[k] for k in dict2 if k not in dict1}
     removed_keys = {k: dict1[k] for k in dict1 if k not in dict2}
