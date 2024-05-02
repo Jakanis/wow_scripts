@@ -378,7 +378,7 @@ def load_merged_translations() -> dict[int, dict[str, NPC_MD]]:
     import csv
     merged_translations = dict()
     with open(f'input/merged_translations.tsv', 'r', encoding="utf-8") as input_file:
-        reader = csv.reader(input_file, delimiter="\t")
+        reader = csv.reader(input_file, delimiter="\t", quoting=csv.QUOTE_NONE)
         for row in reader:
             npc_id = __try_cast_str_to_int(row[0])
             if not npc_id:
