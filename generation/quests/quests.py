@@ -10,6 +10,7 @@ import difflib
 
 THREADS = 32
 
+CROWDIN_PROJECT_ID = 393919
 CLASSIC = 'classic'
 SOD = 'sod'
 TBC = 'tbc'
@@ -57,7 +58,7 @@ expansion_data = {
         IGNORES: [
             1, 785, 912, 999, 1005, 1006, 1099, 1174, 1272, 1500, 2000, 5383, 6843, 7522, 7561, 7797, 7906, 7961, 7962, 8226, 8259, 8289, 8296, 8478, 8489, 8618, 8896, 9065,  # Not used in all expansions
             # 236,  # Still Wintergrasp. Doesn't exist for TBC
-            9511, 9880, 9881, 10375, 10376, 10377, 10378, 10379, 10383, 10386, 10387, 10638, 10779, 10844, 10999, 11027, 11196, 11334, 11345, 11551, 11976, 24508, 24509, 65221, 65222, 65223, 65224, # Appeared in TBC, not used
+            9511, 9880, 9881, 10375, 10376, 10377, 10378, 10379, 10383, 10386, 10387, 10558, 10559, 10560, 10561, 10638, 10779, 10844, 10999, 11027, 11196, 11334, 11345, 11551, 11976, 24508, 24509, 65221, 65222, 65223, 65224, # Appeared in TBC, not used
             24580, 24581, 24582, 24583, # from Wrath
         ]
     },
@@ -69,7 +70,7 @@ expansion_data = {
         METADATA_FILTERS: ('', '', ''),
         IGNORES: [
             1, 785, 912, 999, 1005, 1006, 1099, 1174, 1272, 1500, 2000, 5383, 6843, 7522, 7561, 7797, 7906, 7961, 7962, 8226, 8259, 8289, 8296, 8478, 8489, 8618, 8896, 9065,  # Not used in all expansions
-            9511, 9880, 9881, 10375, 10376, 10377, 10378, 10379, 10383, 10386, 10387, 10638, 10779, 10844, 10999, 11027, 11196, 11334, 11345, 11551, 11976, 24508, 24509, 65221, 65222, 65223, 65224,  # Appeared in TBC, not used
+            9511, 9880, 9881, 10375, 10376, 10377, 10378, 10379, 10383, 10386, 10387, 10558, 10559, 10560, 10561, 10638, 10779, 10844, 10999, 11027, 11196, 11334, 11345, 11551, 11976, 24508, 24509, 65221, 65222, 65223, 65224,  # Appeared in TBC, not used
             11179, 13997, 11402, 11461, 11578, 11579, 11939, 11987, 11992, 12162, 12163, 12426, 12586, 13175, 13176, 13184, 13203, 13299, 13317, 13475, 13477, 12233, 12493, 12586, 12825, 12834, 12835, 12837, 12881, 12890, 12911, 13977, 24821, 24840, 25055, 25092, 25306, 60860, 70685, # Appeared in Wrath, not used
         ]
     },
@@ -81,7 +82,7 @@ expansion_data = {
         METADATA_FILTERS: ('', '', ''),
         IGNORES: [
             1, 785, 912, 999, 1005, 1006, 1099, 1174, 1272, 1500, 2000, 5383, 6843, 7522, 7561, 7797, 7906, 7961, 7962, 8226, 8259, 8289, 8296, 8478, 8489, 8618, 8896, 9065,  # Not used in all expansions
-            9511, 9880, 9881, 10375, 10376, 10377, 10378, 10379, 10383, 10386, 10387, 10638, 10779, 10844, 10999, 11027, 11196, 11334, 11345, 11551, 11976, 24508, 24509, 65221, 65222, 65223, 65224,  # Appeared in TBC, not used
+            9511, 9880, 9881, 10375, 10376, 10377, 10378, 10379, 10383, 10386, 10387, 10558, 10559, 10560, 10561, 10638, 10779, 10844, 10999, 11027, 11196, 11334, 11345, 11551, 11976, 24508, 24509, 65221, 65222, 65223, 65224,  # Appeared in TBC, not used
             11179, 13997, 11402, 11461, 11578, 11579, 11939, 11987, 11992, 12162, 12163, 12426, 12586, 13175, 13176, 13184, 13203, 13299, 13317, 13475, 13477, 12233, 12493, 12586, 12825, 12834, 12835, 12837, 12881, 12890, 12911, 13977, 24821, 24840, 25055, 25092, 25306, 60860, 70685, # Appeared in Wrath, not used
             13802, 14220, 14231, 14427, 14450, 14451, 25639, 26282, 27543, 27819, 28106, 28365, 28601, 29091, 29183, 29185, 29258, 29339, 29340, 29341, 29372, 29373, 30110, 30111, 30173, 30538 # Appeared in Cata, not used
         ]
@@ -94,7 +95,7 @@ expansion_data = {
         METADATA_FILTERS: ('8:', '5:', '50001:'),
         IGNORES: [
             1, 785, 912, 999, 1005, 1006, 1099, 1174, 1272, 1500, 2000, 5383, 6843, 7522, 7561, 7797, 7906, 7961, 7962, 8226, 8259, 8289, 8296, 8478, 8489, 8618, 8896, 9065,  # Not used in all expansions
-            9511, 9880, 9881, 10375, 10376, 10377, 10378, 10379, 10383, 10386, 10387, 10638, 10779, 10844, 10999, 11027, 11196, 11334, 11345, 11551, 11976, 24508, 24509, 65221, 65222, 65223, 65224,  # Appeared in TBC, not used
+            9511, 9880, 9881, 10375, 10376, 10377, 10378, 10379, 10383, 10386, 10387, 10558, 10559, 10560, 10561, 10638, 10779, 10844, 10999, 11027, 11196, 11334, 11345, 11551, 11976, 24508, 24509, 65221, 65222, 65223, 65224,  # Appeared in TBC, not used
             11179, 13997, 11402, 11461, 11578, 11579, 11939, 11987, 11992, 12162, 12163, 12426, 12586, 13175, 13176, 13184, 13203, 13299, 13317, 13475, 13477, 12233, 12493, 12586, 12825, 12834, 12835, 12837, 12881, 12890, 12911, 13977, 24821, 24840, 25055, 25092, 25306, 60860, 70685, # Appeared in Wrath, not used
             13802, 14220, 14231, 14427, 14450, 14451, 25639, 26282, 27543, 27819, 28106, 28365, 28601, 29091, 29183, 29185, 29258, 29339, 29340, 29341, 29372, 29373, 30110, 30111, 30173, 30538 # Appeared in Cata, not used
         ]
@@ -515,7 +516,7 @@ def save_htmls_from_wowhead(expansion, ids: set[int]):
         print(f"There's some redundant IDs: {redundant_ids}")
 
     with multiprocessing.Pool(THREADS) as p:
-        p.map(save_func, ids)
+        p.map(save_func, save_ids)
 
 
 def __cleanup_text(text):
@@ -1159,6 +1160,10 @@ def fix_classic_quests(classic_quests: dict[int, dict[str, QuestEntity]]):
     classic_quests[6961][CLASSIC].description = classic_quests[6961][CLASSIC].description.replace('Greatfather', 'Great-father')
     classic_quests[6962][CLASSIC].objective = classic_quests[6962][CLASSIC].objective.replace('Greatfather', 'Great-father')
     classic_quests[6962][CLASSIC].description = classic_quests[6962][CLASSIC].description.replace('Greatfather', 'Great-father')
+    classic_quests[7021][CLASSIC].objective = classic_quests[7021][CLASSIC].objective.replace('Greatfather', 'Great-father')
+    classic_quests[7021][CLASSIC].description = classic_quests[7021][CLASSIC].description.replace('Greatfather', 'Great-father')
+    classic_quests[7024][CLASSIC].objective = classic_quests[7024][CLASSIC].objective.replace('Greatfather', 'Great-father')
+    classic_quests[7024][CLASSIC].description = classic_quests[7024][CLASSIC].description.replace('Greatfather', 'Great-father')
     classic_quests[7062][CLASSIC].objective = classic_quests[7062][CLASSIC].objective.replace("Explorer's League", "Explorers' League")
     classic_quests[7062][CLASSIC].description = classic_quests[7062][CLASSIC].description.replace("Explorer's League", "Explorers' League")
     classic_quests[8827][CLASSIC].description = classic_quests[8827][CLASSIC].description.replace('Smokeywood', "Smokywood")
@@ -1184,6 +1189,7 @@ def fix_classic_sod_quests(classic_quests: dict[int, dict[str, QuestEntity]], so
 def fix_tbc_quests(tbc_quests: dict[int, dict[str, QuestEntity]]):
     # Common fixes
     tbc_quests[915][TBC].completion = tbc_quests[915][TBC].completion.replace("Tigule and Foror know to", "Tigule knows how to")
+    tbc_quests[1046][TBC].progress = tbc_quests[1046][TBC].progress.replace("to humans like you", "to <race> like you")
     tbc_quests[1068][TBC].description = tbc_quests[1068][TBC].description.replace(" shaman ", " shamans ")
     tbc_quests[1168][TBC].progress = "Mok'Morokk tell all ogres to stay and keep this place safe. Me think ogres need to kill black dragon army and get old home back.\n\nYou help ogres get home back. Help ogres get revenge."
     tbc_quests[1678][TBC].description = tbc_quests[1678][TBC].description.replace("south of Frostmane Hold", "south of Frostmane Hold.")
@@ -1302,6 +1308,10 @@ def fix_tbc_quests(tbc_quests: dict[int, dict[str, QuestEntity]]):
     tbc_quests[6961][TBC].description = tbc_quests[6961][TBC].description.replace('Greatfather', 'Great-father')
     tbc_quests[6962][TBC].objective = tbc_quests[6962][TBC].objective.replace('Greatfather', 'Great-father')
     tbc_quests[6962][TBC].description = tbc_quests[6962][TBC].description.replace('Greatfather', 'Great-father')
+    tbc_quests[7021][TBC].objective = tbc_quests[7021][TBC].objective.replace('Greatfather', 'Great-father')
+    tbc_quests[7021][TBC].description = tbc_quests[7021][TBC].description.replace('Greatfather', 'Great-father')
+    tbc_quests[7024][TBC].objective = tbc_quests[7024][TBC].objective.replace('Greatfather', 'Great-father')
+    tbc_quests[7024][TBC].description = tbc_quests[7024][TBC].description.replace('Greatfather', 'Great-father')
     tbc_quests[7062][TBC].objective = tbc_quests[7062][TBC].objective.replace("Explorer's League", "Explorers' League")
     tbc_quests[7062][TBC].description = tbc_quests[7062][TBC].description.replace("Explorer's League", "Explorers' League")
     tbc_quests[8827][TBC].description = tbc_quests[8827][TBC].description.replace('Smokeywood', "Smokywood")
@@ -1334,6 +1344,7 @@ def fix_tbc_quests(tbc_quests: dict[int, dict[str, QuestEntity]]):
 def fix_wrath_quests(wrath_quests: dict[int, dict[str, QuestEntity]]):
     # Common fixes
     wrath_quests[915][WRATH].completion = wrath_quests[915][WRATH].completion.replace("Tigule and Foror know to", "Tigule knows how to")
+    wrath_quests[1046][WRATH].progress = wrath_quests[1046][WRATH].progress.replace("to humans like you", "to <race> like you")
     wrath_quests[1068][WRATH].description = wrath_quests[1068][WRATH].description.replace(" shaman ", " shamans ")
     wrath_quests[4822][WRATH].completion = wrath_quests[4822][WRATH].completion.replace("Tigule and Foror know to", "Tigule knows how to")
     wrath_quests[7792][WRATH].progress = 'We are currently gathering wool. A donation of sixty pieces of wool cloth will net you full recognition by our people for your generous actions.\n\nIf you currently have sixty pieces, you may donate them now.'
@@ -1389,6 +1400,10 @@ def fix_wrath_quests(wrath_quests: dict[int, dict[str, QuestEntity]]):
     wrath_quests[6961][WRATH].description = wrath_quests[6961][WRATH].description.replace('Greatfather', 'Great-father')
     wrath_quests[6962][WRATH].objective = wrath_quests[6962][WRATH].objective.replace('Greatfather', 'Great-father')
     wrath_quests[6962][WRATH].description = wrath_quests[6962][WRATH].description.replace('Greatfather', 'Great-father')
+    wrath_quests[7021][WRATH].objective = wrath_quests[7021][WRATH].objective.replace('Greatfather', 'Great-father')
+    wrath_quests[7021][WRATH].description = wrath_quests[7021][WRATH].description.replace('Greatfather', 'Great-father')
+    wrath_quests[7024][WRATH].objective = wrath_quests[7024][WRATH].objective.replace('Greatfather', 'Great-father')
+    wrath_quests[7024][WRATH].description = wrath_quests[7024][WRATH].description.replace('Greatfather', 'Great-father')
     wrath_quests[7062][WRATH].objective = wrath_quests[7062][WRATH].objective.replace("Explorer's League", "Explorers' League")
     wrath_quests[7062][WRATH].description = wrath_quests[7062][WRATH].description.replace("Explorer's League", "Explorers' League")
     wrath_quests[8827][WRATH].description = wrath_quests[8827][WRATH].description.replace('Smokeywood', "Smokywood")
@@ -1458,6 +1473,24 @@ def fix_wrath_quests(wrath_quests: dict[int, dict[str, QuestEntity]]):
     wrath_quests[24682][WRATH].objective = wrath_quests[24682][WRATH].objective.replace('entrace', 'entrance')
     wrath_quests[24712][WRATH].description = wrath_quests[24712][WRATH].description.replace('rise. There', 'rise.\n\nThere')
     wrath_quests[24713][WRATH].description = wrath_quests[24713][WRATH].description.replace('my Dark Rangers', 'my dark rangers')
+    wrath_quests[24819][WRATH].completion = "May you find what you're looking for, <brother/sister>."
+    wrath_quests[24820][WRATH].completion = "May you find what you're looking for, <brother/sister>."
+    wrath_quests[24822][WRATH].completion = "May you find what you're looking for, <brother/sister>."
+    wrath_quests[24836][WRATH].completion = "May you find what you're looking for, <brother/sister>."
+    wrath_quests[24837][WRATH].completion = "May you find what you're looking for, <brother/sister>."
+    wrath_quests[24838][WRATH].completion = "May you find what you're looking for, <brother/sister>."
+    wrath_quests[24839][WRATH].completion = "May you find what you're looking for, <brother/sister>."
+    wrath_quests[24841][WRATH].completion = "May you find what you're looking for, <brother/sister>."
+    wrath_quests[24842][WRATH].completion = "May you find what you're looking for, <brother/sister>."
+    wrath_quests[24843][WRATH].completion = "May you find what you're looking for, <brother/sister>."
+    wrath_quests[24844][WRATH].completion = "May you find what you're looking for, <brother/sister>."
+    wrath_quests[24845][WRATH].completion = "May you find what you're looking for, <brother/sister>."
+    wrath_quests[24846][WRATH].completion = "May you find what you're looking for, <brother/sister>."
+    wrath_quests[24847][WRATH].completion = "May you find what you're looking for, <brother/sister>."
+    wrath_quests[25246][WRATH].completion = "May you find what you're looking for, <brother/sister>."
+    wrath_quests[25247][WRATH].completion = "May you find what you're looking for, <brother/sister>."
+    wrath_quests[25248][WRATH].completion = "May you find what you're looking for, <brother/sister>."
+    wrath_quests[25249][WRATH].completion = "May you find what you're looking for, <brother/sister>."
 
 
 def fix_cata_quests(cata_quests: dict[int, dict[str, QuestEntity]]):
@@ -1486,6 +1519,24 @@ def fix_cata_quests(cata_quests: dict[int, dict[str, QuestEntity]]):
     cata_quests[9319][CATA].progress = 'Have you found your way through the dark?'
     cata_quests[9319][CATA].completion = cata_quests[9319][CATA].completion.replace("\n\n\n\n", "\n\n<The Flamekeeper mutters an incantation in a strange, arcane tongue, then pulls out a glowing bottle.>\n\n")
 
+    cata_quests[24819][CATA].completion = "May you find what you're looking for, <brother/sister>."
+    cata_quests[24820][CATA].completion = "May you find what you're looking for, <brother/sister>."
+    cata_quests[24822][CATA].completion = "May you find what you're looking for, <brother/sister>."
+    cata_quests[24836][CATA].completion = "May you find what you're looking for, <brother/sister>."
+    cata_quests[24837][CATA].completion = "May you find what you're looking for, <brother/sister>."
+    cata_quests[24838][CATA].completion = "May you find what you're looking for, <brother/sister>."
+    cata_quests[24839][CATA].completion = "May you find what you're looking for, <brother/sister>."
+    cata_quests[24841][CATA].completion = "May you find what you're looking for, <brother/sister>."
+    cata_quests[24842][CATA].completion = "May you find what you're looking for, <brother/sister>."
+    cata_quests[24843][CATA].completion = "May you find what you're looking for, <brother/sister>."
+    cata_quests[24844][CATA].completion = "May you find what you're looking for, <brother/sister>."
+    cata_quests[24845][CATA].completion = "May you find what you're looking for, <brother/sister>."
+    cata_quests[24846][CATA].completion = "May you find what you're looking for, <brother/sister>."
+    cata_quests[24847][CATA].completion = "May you find what you're looking for, <brother/sister>."
+    cata_quests[25246][CATA].completion = "May you find what you're looking for, <brother/sister>."
+    cata_quests[25247][CATA].completion = "May you find what you're looking for, <brother/sister>."
+    cata_quests[25248][CATA].completion = "May you find what you're looking for, <brother/sister>."
+    cata_quests[25249][CATA].completion = "May you find what you're looking for, <brother/sister>."
 
 
 
@@ -1493,6 +1544,7 @@ def fix_cata_quests(cata_quests: dict[int, dict[str, QuestEntity]]):
 
 def fix_expansion(classic_quests: dict[int, dict[str, QuestEntity]], sod_quests: dict[int, dict[str, QuestEntity]], tbc_quests: dict[int, dict[str, QuestEntity]], wrath_quests: dict[int, dict[str, QuestEntity]]):
     # Discovered in SoD?
+    classic_quests[6221] = dict()
     classic_quests[6221][CLASSIC] = sod_quests[6221][SOD]
     classic_quests[6221][CLASSIC].expansion = CLASSIC
 
@@ -1538,7 +1590,7 @@ def populate_cache_db_with_quest_data():
     classic_tbc_wrath_quests = merge_expansions(classic_and_tbc_quests, wowhead_quests_wrath)
     print('Merging with Cata')
     all_quests = merge_expansions(classic_tbc_wrath_quests, wowhead_quests_cata)
-    # print('Merging with Retail')
+    print('Merging with Retail')
     # all_quests = merge_expansions(classic_tbc_wrath_cata_quests, wowhead_quests_retail)
 
     classicua_data = get_all_quests_from_db('classicua.db')
@@ -1580,7 +1632,7 @@ def compare_databases(cache_db, main_db):
         #     __update_quest_type_and_lvls(cache_metadata, db_conn)
 
 
-def compare_directories(dir1, dir2):
+def compare_directories(dir1, dir2) -> list:
     import filecmp, difflib
     # print('-'*100)
     # print('-'*100)
@@ -1599,6 +1651,8 @@ def compare_directories(dir1, dir2):
     if len(only_in_dir2) > 0:
         print("Files only in", dir2, ":", only_in_dir2)
 
+    diffed_files = list()
+
     for common_file in dcmp.common_files:
         file1 = os.path.join(dir1, common_file)
         file2 = os.path.join(dir2, common_file)
@@ -1616,11 +1670,13 @@ def compare_directories(dir1, dir2):
                 lines2 = content2.splitlines()
                 diff = differ.compare(lines1, lines2)
                 print('\n'.join(diff))
+                diffed_files.append(file2)
 
     # Recursively compare subdirectories
     for subdir in dcmp.common_dirs:
-        compare_directories(os.path.join(dir1, subdir), os.path.join(dir2, subdir))
+        diffed_files.extend(compare_directories(os.path.join(dir1, subdir), os.path.join(dir2, subdir)))
 
+    return diffed_files
 
 def check_categories():
     from utils import known_categories
@@ -1697,6 +1753,51 @@ def generate_sources():
     print(f'Generated {count} sources.')
 
 
+def __get_crowdin_files(client) -> dict[str, int]:
+    crowdin_dirs = dict()
+    offset = 0
+    page_size = 500
+    while (True):
+        files = client.source_files.list_files(CROWDIN_PROJECT_ID, offset=offset, limit=page_size)
+        if not files['data']:
+            break
+        for file in files['data']:
+            file_id = file['data']['id']
+            file_path = file['data']['path']
+            crowdin_dirs[file_path] = file_id
+        offset += page_size
+    return crowdin_dirs
+
+
+
+def update_on_crowdin(diffs: list):
+    import pathlib
+    from crowdin_api import CrowdinClient
+    from crowdin_api.api_resources.source_files.enums import FileUpdateOption
+
+    if not diffs:
+        print('No diffs in files.')
+        return
+    print('Going to update diffed files on Crowdin. Type "UPDATE" to confirm: ')
+    user_input = input()
+    if user_input != 'UPDATE':
+        print('Ok, cancelling update')
+        return
+    token = os.getenv('CROWDIN_TOKEN')
+    client = CrowdinClient(token=token)
+    crowdin_files = __get_crowdin_files(client)
+    for diff in diffs:
+        file_path = '/' + pathlib.Path(*pathlib.Path(diff).parts[1:]).as_posix()
+        if file_path in crowdin_files:
+            print(f'Updating {file_path}')
+            storage = client.storages.add_storage(open(diff, 'rb'))
+            uploaded_file = client.source_files.update_file(projectId=CROWDIN_PROJECT_ID,
+                                                         storageId=storage['data']['id'],
+                                                         fileId=crowdin_files[file_path],
+                                                         updateOption=FileUpdateOption.KEEP_TRANSLATIONS)
+        else:
+            print(f'File path "{file_path}" not found')
+
 
 if __name__ == '__main__':
     # check_categories() # Check categories and update known_categories in utils if needed
@@ -1707,7 +1808,9 @@ if __name__ == '__main__':
 
     generate_sources()
 
-    compare_directories('source_from_crowdin', 'source_for_crowdin')
+    diffs = compare_directories('source_from_crowdin', 'source_for_crowdin')
+
+    update_on_crowdin(diffs)
 
     # TODO: Validations for duplicating strings (may be wrong data from ClassicDB)
     # TODO: Validations for empty rows (\n\n\n\n) (may be skipped in Wowhead)

@@ -1,6 +1,7 @@
 quest_categories_correction = {
     1782: (4, -81),  # Furen's Armor -> Classes/Warrior
     2882: (1, 440),  # Cuergo's Gold -> Kalimdor/Tanaris
+    3721: (0, 33),  # An OOX of Your Own -> Eastern Kingdoms/Stranglethorn Vale
     3861: (9, -1001),  # CLUCK! -> World Events/Winter Veil (actually Uncategorized)
     6721: (4, -261),  # The Hunter's Path -> Classes/Hunter
     6722: (4, -261),  # The Hunter's Path -> Classes/Hunter
