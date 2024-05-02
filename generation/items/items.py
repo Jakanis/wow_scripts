@@ -633,7 +633,7 @@ def __diff_fields(field1, field2):
 def compare_tsv_and_classicua(tsv_translations: dict[int, dict[str, ItemData]], classicua_translations):
     for key in tsv_translations.keys() - classicua_translations.keys():
         print(f"Warning! Item#{key} doesn't exist in ClassicUA")
-    for key in classicua_translations.keys() ^ tsv_translations.keys():
+    for key in classicua_translations.keys() - tsv_translations.keys():
         print(f"Warning! Item#{key} doesn't exist in sheet")
     for key in tsv_translations.keys() & classicua_translations.keys():
         for expansion in tsv_translations[key].keys() - classicua_translations[key].keys():
@@ -769,7 +769,6 @@ def convert_translations_to_lua(translations: list[ItemData], expansion: str):
         """))
 
 
-
 def convert_translations_to_entries(all_translations: dict[int, dict[str, ItemData]]):
     grouped_translations: dict[str, list[ItemData]] = dict()
     for key in sorted(all_translations.keys()):
@@ -780,6 +779,27 @@ def convert_translations_to_entries(all_translations: dict[int, dict[str, ItemDa
 
     for expansion, translations_group in grouped_translations.items():
         convert_translations_to_lua(translations_group, expansion)
+
+
+def __validate_effects(item: ItemData):
+    import re
+    if not item.effects or not item.effects_ua:
+        return
+    orig_effects = '\n'.join(map(lambda x: x.effect_text, filter(lambda x: x.effect_type in ['Use', 'Equip', 'Hit', 'Chance on hit'] and x.effect_text, item.effects)))
+    ua_effects = '\n'.join(map(lambda x: x.effect_text, filter(lambda x: x.effect_type in ['Use', 'Equip', 'Hit', 'Chance on hit'] and x.effect_text, item.effects_ua)))
+    if not orig_effects or not ua_effects:
+        return
+    if set(re.findall(r'\d+', orig_effects)) and set(re.findall(r'\d+', orig_effects)) != set(re.findall(r'\d+', ua_effects)):
+        print(f"Warning! Numbers don't match for item#{item.id}:{item.expansion}")
+
+
+def validate_translations(items: dict[int, dict[str, ItemData]]):
+    for key in items.keys():
+        for item in items[key].values():
+            __validate_effects(item)
+    # check templates
+    ## warning - No templates for raw values
+    # check references
 
 
 if __name__ == '__main__':
@@ -796,17 +816,8 @@ if __name__ == '__main__':
 
     save_items_to_db(parsed_items)
 
-    # validate translations (refs/spells, templates, numbers, recipe_items)
-    # convert translation sheet to ClassicUA lua files
+    validate_translations(parsed_items)
 
-    spells_for_translations_sheet = dict()
-    for key in classicua_translations.keys() - tsv_translations.keys():
-        spells_for_translations_sheet[key] = parsed_items[key]
-    for key in classicua_translations.keys() & tsv_translations.keys():
-        for expansion in classicua_translations[key].keys() - tsv_translations[key].keys():
-            spells_for_translations_sheet[key] = spells_for_translations_sheet.get(key, dict())
-            spells_for_translations_sheet[key][expansion] = parsed_items[key][expansion]
-
-    create_translation_sheet(spells_for_translations_sheet)
+    create_translation_sheet(parsed_items)
 
     convert_translations_to_entries(tsv_translations)
