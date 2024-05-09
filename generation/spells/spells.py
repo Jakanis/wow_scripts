@@ -10,6 +10,7 @@ CLASSIC = 'classic'
 SOD = 'sod'
 TBC = 'tbc'
 WRATH = 'wrath'
+CATA = 'cata'
 WOWHEAD_URL = 'wowhead_url'
 METADATA_CACHE = 'metadata_cache'
 HTML_CACHE = 'html_cache'
@@ -45,9 +46,7 @@ expansion_data = {
                   435445, 436419, 436425, 436563, 437666, 441532, 441540, 444651, 444652, 444890, 444891, 446096, 446120, 446150, 446160, 447947, 449008, 449010, # DNT
                   424684, 425151, 427780, 427781, 429336, 429337, 429338, 429355, 435884, 436529, 436895, 440247, 440856, 442543, 444651, 444652, 444890, 444891, 446096, 446120, 446160, 446374, 446847, 427123, 429432, 429436, 434435, 434436, 434698, # S03
                   398608, 398609, 399699, 423434, 423435, 428996, 428998, 429953, 431996, 443758, 445461, 445462, 445463, 426192, 436508, 436513, 436514, 436515, 436538, #TEST
-
                   ]
-
     },
     TBC: {
         INDEX: 1,
@@ -68,6 +67,17 @@ expansion_data = {
         SPELL_CACHE: 'wowhead_wrath_spell_cache',
         METADATA_FILTERS: ('', '', ''),
         PARENT_EXPANSIONS: [CLASSIC, TBC],
+        CALCULATE: True,
+        IGNORES: []
+    },
+    CATA: {
+        INDEX: 3,
+        WOWHEAD_URL: 'https://www.wowhead.com/cata',
+        METADATA_CACHE: 'wowhead_cata_metadata_cache',
+        HTML_CACHE: 'wowhead_cata_spell_html',
+        SPELL_CACHE: 'wowhead_cata_spell_cache',
+        METADATA_FILTERS: ('', '', ''),
+        PARENT_EXPANSIONS: [CLASSIC, TBC, WRATH],
         CALCULATE: True,
         IGNORES: []
     }
