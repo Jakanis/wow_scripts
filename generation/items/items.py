@@ -67,6 +67,8 @@ class ItemMD:
         self.firstseenpatch = firstseenpatch
 
 
+EFFECT_TYPES = ('Desc', 'Equip', 'Hit', 'Use', 'Flavor', 'Item', 'Rune', 'Ref')
+
 class ItemEffect:
     def __init__(self, effect_type, effect_id, effect_text, rune_spell_id=None):
         self.effect_type = effect_type
@@ -74,10 +76,13 @@ class ItemEffect:
         self.effect_text = effect_text
         self.rune_spell_id = rune_spell_id
 
+    def get_type(self):
+        return 'Hit' if self.effect_type == 'Chance on hit' else self.effect_type
+
     def __str__(self):
         res = f"{self.effect_type.replace('Chance on hit', 'Hit')}" if self.effect_type else ''
         res += f'#{self.effect_id}' if self.effect_id else ''
-        if self.effect_type == 'item':
+        if self.effect_type == 'Item':
             return res
         res += f': {self.effect_text}' if self.effect_text else ':'
         res += f'#{self.rune_spell_id}' if self.rune_spell_id else ''
@@ -85,7 +90,7 @@ class ItemEffect:
 
     def short_str(self):
         res = f"{self.effect_type.replace('Chance on hit', 'Hit')}" if self.effect_type else ''
-        if self.effect_type == 'item':
+        if self.effect_type == 'Item':
             return res + f'#{self.effect_id}'
         if self.effect_type == 'Rune':
             return res + f'#{self.effect_id}'
@@ -267,13 +272,14 @@ def parse_wowhead_item_page(expansion, id) -> ItemData:
                     print(f'Warning! Unexpected double reference effect for item #{id}:{expansion}!')
             else:
                 effect_text = a_tag.text
+                effect_text = effect_text[:effect_text.find('. (Proc') + 1] if '. (Proc' in effect_text else effect_text # Remove (Proc chance: x%) text
                 effect_link = a_tag.get('href')
                 if '/item-set=' in effect_link:  # to prevent fetching next item links
                     break
                 if '/item=' in effect_link:  # recipes
                     item_ids = re.findall(r'/item=(\d+)', effect_link)
                     if item_ids:
-                        effects.append(ItemEffect('item', item_ids[0], effect_text))
+                        effects.append(ItemEffect('Item', item_ids[0], effect_text))
                         flavor = None
                     break
                 effect_spell_ids = re.findall(r'/spell=(\d+)', effect_link)
@@ -469,8 +475,8 @@ def str_effect_to_effect(str_effect_row) -> ItemEffect:
     if not str_effect_row:
         print("Warning! Empty effect row!")
         return None
-    if str_effect_row.startswith('item#'):
-        return ItemEffect('item', str_effect_row[5:], None)
+    if str_effect_row.startswith('Item#'):
+        return ItemEffect('Item', str_effect_row[5:], None)
     effect_type_link, effect_text = str_effect_row.split(":", 1) if ":" in str_effect_row else (str_effect_row, None)
     effect_text = effect_text[1:] if effect_text else None
     effect_type, effect_spell_id = effect_type_link.split("#", 1) if '#' in effect_type_link else (effect_type_link, None)
@@ -484,12 +490,11 @@ def str_effects_to_effects(str_effects: str, ignore_desc=False) -> list[ItemEffe
     import re
     if not str_effects:
         return []
-    effect_types = ('Desc', 'Equip', 'Hit', 'Use', 'Flavor', 'item#', 'Rune#', 'Ref#')
     effects = list()
-    for effect_row in re.split(r'\n(?=(?:Desc|Equip|Hit|Use|Flavor):|item#|(?:Equip|Hit|Use|Rune|Ref)#\d+)', str_effects):
-        if effect_row.startswith(effect_types):
+    for effect_row in re.split(r'\n(?=(?:Desc|Equip|Hit|Use|Flavor):|(?:Equip|Hit|Use|Rune|Ref|Item)#\d+)', str_effects):
+        if effect_row.startswith(EFFECT_TYPES):
             effect = str_effect_to_effect(effect_row)
-            if ignore_desc and effect.effect_type == "Desc":
+            if ignore_desc and effect.get_type() == "Desc":
                 continue
             if effect:
                 effects.append(effect)
@@ -530,7 +535,7 @@ def lua_effect_to_effect(field: str, lua_effects) -> list[ItemEffect]:
     elif type(lua_effects) == str:
         return [ItemEffect(field.capitalize(), None, lua_effects.replace(r'\n', '\n'))]
     elif type(lua_effects) == int:
-        field_name = 'item' if field == 'recipe_result_item' else field.capitalize()
+        field_name = 'Item' if field == 'recipe_result_item' else field.capitalize()
         return [ItemEffect(field_name, lua_effects, None)]
     elif type(lua_effects) == list:
         effects = list()
@@ -590,8 +595,7 @@ def create_translation_sheet(items: dict[int, dict[str, ItemData]]):
         f.write('ID\tName(EN)\tName(UA)\tDescription(EN)\tDescription(UA)\tNote\texpansion\n')
         for key in sorted(items.keys()):
             for expansion, item in sorted(items[key].items()):
-                # if item.expansion == 'sod' and item.name_ua is None:
-                # if item.name_ua is not None:
+                if item.expansion == 'classic' and item.name_ua is None and item.id >= 13000 and item.id < 15000:
                     effects_text = '\n'.join(map(lambda x: str(x), item.effects)).replace('"', '""') if item.effects else ''
                     effects_ua_text = '\n'.join(map(lambda x: str(x), item.effects_ua)).replace('"', '""') if item.effects_ua else ''
                     f.write(f'{item.id}\t{item.name}\t{item.name_ua if item.name_ua else ''}\t"{effects_text}"\t"{effects_ua_text}"\t\t{item.expansion}\n')
@@ -631,6 +635,7 @@ def __diff_fields(field1, field2):
     return '\n'.join(diff)
 
 def compare_tsv_and_classicua(tsv_translations: dict[int, dict[str, ItemData]], classicua_translations):
+    from functools import cmp_to_key
     for key in tsv_translations.keys() - classicua_translations.keys():
         print(f"Warning! Item#{key} doesn't exist in ClassicUA")
     for key in classicua_translations.keys() - tsv_translations.keys():
@@ -644,12 +649,12 @@ def compare_tsv_and_classicua(tsv_translations: dict[int, dict[str, ItemData]], 
             tsv_translation = tsv_translations[key][expansion]
             classicua_translation = classicua_translations[key][expansion]
 
-            tsv_effects = '\n'.join(map(lambda x: x.short_str(), tsv_translation.effects_ua)) if tsv_translation.effects_ua else None
-            classicua_effects = '\n'.join(map(lambda x: x.short_str(), classicua_translation.effects_ua)) if classicua_translation.effects_ua else None
+            tsv_effects = '\n'.join(map(lambda x: x.short_str(), sorted(tsv_translation.effects_ua, key=cmp_to_key(lambda x, y: EFFECT_TYPES.index(x.get_type()) - EFFECT_TYPES.index(y.get_type()))))) if tsv_translation.effects_ua else None
+            classicua_effects = '\n'.join(map(lambda x: x.short_str(), sorted(classicua_translation.effects_ua, key=cmp_to_key(lambda x, y: EFFECT_TYPES.index(x.get_type()) - EFFECT_TYPES.index(y.get_type()))))) if classicua_translation.effects_ua else None
             if tsv_translation.name_ua != classicua_translation.name_ua:
-                print(f'Warning! Name translation differs for item#{key}:{expansion}:\n{__diff_fields(tsv_translation.name_ua, classicua_translation.name_ua)}')
+                print(f'Warning! Name translation differs for item#{key}:{expansion}:\n{__diff_fields(classicua_translation.name_ua, tsv_translation.name_ua)}')
             if tsv_effects != classicua_effects:
-                print(f'Warning! Effects translation differs for item#{key}:{expansion}:\n{__diff_fields(tsv_effects, classicua_effects)}')
+                print(f'Warning! Effects translation differs for item#{key}:{expansion}:\n{__diff_fields(classicua_effects, tsv_effects)}')
 
 
 def __prepare_lua_str(value: str) -> str:
@@ -706,14 +711,14 @@ def convert_translations_to_lua(translations: list[ItemData], expansion: str):
             if not item.name_ua and not item.effects_ua:
                 continue
             desc = None
-            equips = list(filter(lambda x: x.effect_type == "Equip", item.effects_ua))
-            hits = list(filter(lambda x: x.effect_type == "Hit", item.effects_ua))
-            uses = list(filter(lambda x: x.effect_type == "Use", item.effects_ua))
+            equips = list(filter(lambda x: x.get_type() == "Equip", item.effects_ua))
+            hits = list(filter(lambda x: x.get_type() == "Hit", item.effects_ua))
+            uses = list(filter(lambda x: x.get_type() == "Use", item.effects_ua))
             flavor = None
             item_result = None
             ref = None
             for effect in item.effects_ua:
-                if effect.effect_type == "Desc":
+                if effect.get_type() == "Desc":
                     if desc is not None:
                         print(f"Warning! Double desc for item#{item.id}:{item.expansion}")
                     desc = __prepare_lua_str(effect.effect_text)
@@ -723,15 +728,15 @@ def convert_translations_to_lua(translations: list[ItemData], expansion: str):
                 #     hits.append(effect.effect_text and __prepare_lua_str(effect.effect_text) or effect.effect_id)
                 # if effect.effect_type == "Use":
                 #     uses.append(effect.effect_text and __prepare_lua_str(effect.effect_text) or effect.effect_id)
-                if effect.effect_type == "Flavor":
+                if effect.get_type() == "Flavor":
                     if flavor is not None:
                         print(f"Warning! Double flavor for item#{item.id}:{item.expansion}")
                     flavor = __prepare_lua_str(effect.effect_text)
-                if effect.effect_type == "item":
+                if effect.get_type() == "Item":
                     if item_result is not None:
                         print(f"Warning! Double item_result for item#{item.id}:{item.expansion}")
                     item_result = effect.effect_id
-                if effect.effect_type == "Ref":
+                if effect.get_type() == "Ref":
                     if ref is not None:
                         print(f"Warning! Double ref for item#{item.id}:{item.expansion}")
                     ref = effect.effect_id
@@ -781,22 +786,43 @@ def convert_translations_to_entries(all_translations: dict[int, dict[str, ItemDa
         convert_translations_to_lua(translations_group, expansion)
 
 
-def __validate_effects(item: ItemData):
+def __validate_template(orig_effect: ItemEffect, ua_effect: ItemEffect):
+    pass
+
+
+def __validate_item(item: ItemData):
     import re
-    if not item.effects or not item.effects_ua:
+    from functools import cmp_to_key
+    if (not item.effects or not item.effects_ua
+            or item.effects_ua[0].get_type() == 'Ref'
+            or item.effects[0].get_type() == 'Rune'):
         return
-    orig_effects = '\n'.join(map(lambda x: x.effect_text, filter(lambda x: x.effect_type in ['Use', 'Equip', 'Hit', 'Chance on hit'] and x.effect_text, item.effects)))
-    ua_effects = '\n'.join(map(lambda x: x.effect_text, filter(lambda x: x.effect_type in ['Use', 'Equip', 'Hit', 'Chance on hit'] and x.effect_text, item.effects_ua)))
-    if not orig_effects or not ua_effects:
-        return
-    if set(re.findall(r'\d+', orig_effects)) and set(re.findall(r'\d+', orig_effects)) != set(re.findall(r'\d+', ua_effects)):
-        print(f"Warning! Numbers don't match for item#{item.id}:{item.expansion}")
+    orig_effects = list(filter(lambda x: x.get_type() in ['Use', 'Equip', 'Hit', 'Flavor'], sorted(item.effects, key=cmp_to_key(lambda x, y: EFFECT_TYPES.index(x.get_type()) - EFFECT_TYPES.index(y.get_type())))))
+    ua_effects = list(filter(lambda x: x.get_type() in ['Use', 'Equip', 'Hit', 'Flavor'], sorted(item.effects_ua, key=cmp_to_key(lambda x, y: EFFECT_TYPES.index(x.get_type()) - EFFECT_TYPES.index(y.get_type())))))
+    if len(orig_effects) != len(ua_effects):
+        print(f"Warning! Effects count doesn't match for item#{item.id}:{item.expansion}")
+    else:
+        for i in range(len(orig_effects)):
+            ua_effect = ua_effects[i]
+            orig_effect = orig_effects[i]
+
+            if (ua_effect.get_type() != orig_effect.get_type()
+                    and item.id not in [203992, 206384, 216738, 216740, 216744, 216745, 216746, 216747, 216748, 216764, 216767, 216768, 216769, 216770, 216771, 221978, 223163]):
+                print(f'Warning! Effect type differs for item#{item.id}:{item.expansion}[{i}]')
+            if ua_effect.effect_text:
+                if '#' in ua_effect.effect_text:
+                    __validate_template(orig_effect, ua_effect)
+                else:
+                    if (set(re.findall(r'\d+', orig_effect.effect_text)) != set(re.findall(r'\d+', ua_effect.effect_text))
+                            and item.id not in [744, 10725, 11808, 11819, 12794, 19883, 203784, 203785, 203786, 203787, 204688, 204689, 204690, 207106, 207107, 207108, 207109, 208035, 208036, 208037, 208038, 208213, 208215, 208218, 208219, 208601, 208602, 208603, 208604, 213701, 213709, 215461, 221307]):
+                        print(f"Warning! Numbers don't match for item#{item.id}:{item.expansion}[{i}]")
+
 
 
 def validate_translations(items: dict[int, dict[str, ItemData]]):
-    for key in items.keys():
+    for key in sorted(items.keys()):
         for item in items[key].values():
-            __validate_effects(item)
+            __validate_item(item)
     # check templates
     ## warning - No templates for raw values
     # check references
