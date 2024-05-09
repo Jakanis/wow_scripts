@@ -10,6 +10,8 @@ THREADS = 16
 WOWDB = 'WOWDB'
 CLASSICDB = 'CLASSICDB'
 EVOWOW = 'EVOWOW'
+TWINHEAD = 'TWINSTAR'
+WARCRAFTDB = 'WARCRAFTDB'
 WOWHEAD = 'WOWHEAD'
 URL = 'URL'
 HTML_FOLDER = 'HTML_FOLDER'
@@ -31,11 +33,23 @@ sources = {
         HTML_FOLDER: 'cache/evowow_zone_htmls',
         ZONES_CACHE: 'cache/tmp/evowow_zone_cache.pkl'
     },
+    TWINHEAD: {  # Actually it's a private server, but it's at least limited with Wrath content
+        URL: 'https://cata-twinhead.twinstar.cz/',
+        HTML_FOLDER: 'cache/twinhead_zone_htmls',
+        ZONES_CACHE: 'cache/tmp/twinhead_zone_cache.pkl'
+    },
+    WARCRAFTDB: {  # Actually it's a private server, but it's at least limited with Wrath content
+        URL: 'https://warcraftdb.com/cataclysm',
+        HTML_FOLDER: 'cache/warcraftdb_zone_htmls',
+        ZONES_CACHE: 'cache/tmp/warcraftdb_zone_cache.pkl'
+    },
     WOWHEAD: {
-        URL: 'https://www.wowhead.com/wotlk'
+        URL: 'https://www.wowhead.com/cata'
     }
 }
-IGNORES = [5, 30, 49, 81, 82, 83, 84, 500, 877, 1218, 1518, 2037, 2159, 2280, 2877, 3428, 3817, 3941, 3948, 4072, 4076, 4096, 4471, 4602, 4621, 4688, 4774, 14284, 14285, 14286, 14287]
+IGNORES = [5, 30, 49, 81, 82, 83, 84, 471, 472, 473, 500, 877, 926, 1218, 1518, 2037, 2159, 2238, 2239, 2280, 2877,
+           3428, 3695, 3817, 3941, 3948, 3995, 4072, 4076, 4096, 4471, 4602, 4621, 4688, 4774, 5311, 5894, 5895, 14284,
+           14285, 14286, 14287]
 
 CATEGORIES = {
     "Northrend": "Нортренд",
@@ -122,7 +136,7 @@ def save_wowdb_zone_page(id) -> str:
         output_file.write(r.text)
 
 def save_wowdb_zones_htmls():
-    ids = range(1, 5000)
+    ids = range(1, 10000)
     os.makedirs(sources[WOWDB][HTML_FOLDER], exist_ok=True)
     with multiprocessing.Pool(THREADS) as p:
         p.map(save_wowdb_zone_page, ids)
@@ -136,7 +150,7 @@ def save_classicdb_zone_page(id) -> str:
         output_file.write(r.text)
 
 def save_classicdb_zones_htmls():
-    ids = range(1, 5000)
+    ids = range(1, 10000)
     os.makedirs(sources[CLASSICDB][HTML_FOLDER], exist_ok=True)
     with multiprocessing.Pool(THREADS) as p:
         p.map(save_classicdb_zone_page, ids)
@@ -151,10 +165,47 @@ def save_evowow_zone_page(id) -> str:
         output_file.write(r.text)
 
 def save_evowow_zones_htmls():
-    ids = range(1, 5000)
+    ids = range(1, 10000)
     os.makedirs(sources[EVOWOW][HTML_FOLDER], exist_ok=True)
     with multiprocessing.Pool(THREADS) as p:
         p.map(save_evowow_zone_page, ids)
+
+
+def save_twinhead_zone_page(id) -> str:
+    # if os.path.exists(f'{sources[TWINHEAD][HTML_FOLDER]}/{id}.html'):
+    #     return
+    url = sources[TWINHEAD][URL] + f'/?zone={id}'
+    r = requests.get(url)
+    if 'Sorry, you have been blocked' in r.text:
+        print('CloudFlare')
+    with open(f'{sources[TWINHEAD][HTML_FOLDER]}/{id}.html', 'w', encoding="utf-8") as output_file:
+        output_file.write(r.text)
+
+def save_twinhead_zones_htmls():
+    ids = range(1, 10000)
+    os.makedirs(sources[TWINHEAD][HTML_FOLDER], exist_ok=True)
+    with multiprocessing.Pool(THREADS) as p:
+        p.map(save_twinhead_zone_page, ids)
+
+
+def save_warcraftdb_zone_page(id) -> str:
+    # if os.path.exists(f'{sources[TWINHEAD][HTML_FOLDER]}/{id}.html'):
+    #     return
+    url = sources[WARCRAFTDB][URL] + f'/zone/{id}'
+    r = requests.get(url)
+    if not r.ok:
+        print(f'Not OK for {id}!')
+        return
+    with open(f'{sources[WARCRAFTDB][HTML_FOLDER]}/{id}.html', 'w', encoding="utf-8") as output_file:
+        output_file.write(r.text)
+
+def save_warcraftdb_zones_htmls():
+    ids = range(1, 10000)
+    os.makedirs(sources[WARCRAFTDB][HTML_FOLDER], exist_ok=True)
+    with multiprocessing.Pool(THREADS) as p:
+        p.map(save_warcraftdb_zone_page, ids)
+    # for id in ids:
+    #     save_warcraftdb_zone_page(id)
 
 
 def parse_wowdb_zone_page(file_name) -> (int, str):
@@ -249,7 +300,7 @@ def parse_evowow_zone_page(file_name) -> (int, str):
     soup = BeautifulSoup(html, 'html5lib')
     zone_name = soup.find_all('h1')[1].text
 
-    match = re.search('This zone is part of \[zone=(\d+)]', html)
+    match = re.search(r'This zone is part of [zone=(\d+)]', html)
     if match:
         parent_zone_id = int(match.group(1))
         return (id, zone_name, parent_zone_id)
@@ -286,7 +337,119 @@ def parse_evowow_zone_pages() -> dict[int, str]:
     return zones_dict
 
 
-def save_temp_zones_to_cache_db(wowhead: dict[int, WowheadZone], wowdb: dict[int, str], classicdb: dict[int, str], evowow: dict[int, str]):
+def parse_twinhead_zone_page(file_name) -> (int, str):
+    import re
+    id = int(file_name.removesuffix(".html"))
+    html_path = f'{sources[TWINHEAD][HTML_FOLDER]}/{id}.html'
+    with open(html_path, 'r', encoding="utf-8") as file:
+        html = file.read()
+
+    if "Zone does not exist" in html:
+        return None
+
+    soup = BeautifulSoup(html, 'html5lib')
+    zone_name_divs = soup.find_all('h1')
+    zone_name = zone_name_divs[0].text if zone_name_divs else None
+
+    match = re.search(r'This is an area of zone [zone=(\d+)]', html)
+    if match:
+        parent_zone_id = int(match.group(1))
+        return (id, zone_name, parent_zone_id)
+
+    return (id, zone_name)
+
+
+def parse_twinhead_zone_pages() -> dict[int, str]:
+    import pickle
+    cache_path = sources[TWINHEAD][ZONES_CACHE]
+    if os.path.exists(cache_path):
+        print(f'Loading cached TWINHEAD zones')
+        with open(cache_path, 'rb') as f:
+            twinhead_zones = pickle.load(f)
+    else:
+        print(f'Parsing TWINHEAD zones')
+        # with multiprocessing.Pool(THREADS) as p:
+        #     twinhead_zones = p.map(parse_twinhead_zone_page, os.listdir(sources[TWINHEAD][HTML_FOLDER]))
+
+        twinhead_zones = []
+        for file_name in os.listdir(sources[TWINHEAD][HTML_FOLDER]):
+            twinhead_zones.append(parse_twinhead_zone_page(file_name))
+
+        os.makedirs('cache/tmp', exist_ok=True)
+        with open(cache_path, 'wb') as f:
+            pickle.dump(twinhead_zones, f)
+
+    zones_dict = {zone[0]: zone[1:] for zone in twinhead_zones if zone}
+
+    for zone_id, zone in zones_dict.items():
+        if len(zone) == 2:
+            zones_dict[zone_id] = (zone[0], zones_dict[zone[1]][0])
+
+    return zones_dict
+
+
+def parse_warcraftdb_zone_page(file_name) -> (int, str):
+    import json
+    import re
+    id = int(file_name.removesuffix(".html"))
+    html_path = f'{sources[WARCRAFTDB][HTML_FOLDER]}/{id}.html'
+    with open(html_path, 'r', encoding="utf-8") as file:
+        html = file.read()
+
+    if "Zone does not exist" in html:
+        return None
+
+    soup = BeautifulSoup(html, 'html5lib')
+    script_content = soup.find_all('script')[1].string
+    json_data = script_content[16:]
+    if not json_data:
+        return None
+    zone_json = json.loads(json_data)
+
+    zone_name = zone_json['dataView']['title']
+    content_xml = zone_json['dataView']['content']
+    soup = BeautifulSoup(content_xml, 'lxml')
+    zone_name2 = soup.find('tt-item-line', {'data-line-type': 'zone-name'}).text
+    if zone_name != zone_name2:
+        print(f"Different names for #{id}")
+    parent_zone_div = soup.find('tt-item-line', {'data-line-type': 'zone-parent'})
+    if parent_zone_div:
+        parent_zone_name = parent_zone_div.text.replace('Location: ', '')
+        return (id, zone_name, parent_zone_name)
+
+    return (id, zone_name)
+
+
+def parse_warcraftdb_zone_pages() -> dict[int, str]:
+    import pickle
+    cache_path = sources[WARCRAFTDB][ZONES_CACHE]
+    if os.path.exists(cache_path):
+        print(f'Loading cached WARCRAFTDB zones')
+        with open(cache_path, 'rb') as f:
+            warcraftdb_zones = pickle.load(f)
+    else:
+        print(f'Parsing TWINHEAD zones')
+        # with multiprocessing.Pool(THREADS) as p:
+        #     warcraftdb_zones = p.map(parse_warcraftdb_zone_page, os.listdir(sources[WARCRAFTDB][HTML_FOLDER]))
+
+        warcraftdb_zones = []
+        for file_name in os.listdir(sources[WARCRAFTDB][HTML_FOLDER]):
+            warcraftdb_zones.append(parse_warcraftdb_zone_page(file_name))
+
+        os.makedirs('cache/tmp', exist_ok=True)
+        with open(cache_path, 'wb') as f:
+            pickle.dump(warcraftdb_zones, f)
+
+    zones_dict = {zone[0]: zone[1:] for zone in warcraftdb_zones if zone}
+
+    for zone_id, zone in zones_dict.items():
+        if len(zone) == 2:
+            zones_dict[zone_id] = (zone[0], zone[1])
+
+    return zones_dict
+
+
+def save_temp_zones_to_cache_db(wowhead: dict[int, WowheadZone], wowdb: dict[int, str], classicdb: dict[int, str], evowow: dict[int, str], warcraftdb: dict[int, str]):
     import sqlite3
     print('Saving temp zones data to cache DB')
     conn = sqlite3.connect('cache/zones.db')
@@ -298,12 +461,14 @@ def save_temp_zones_to_cache_db(wowhead: dict[int, WowheadZone], wowdb: dict[int
                         classicdb_name TEXT,
                         classicdb_parent TEXT,
                         evowow_name TEXT,
-                        evowow_parent TEXT
+                        evowow_parent TEXT,
+                        warcraftdb_name TEXT,
+                        warcraftdb_parent TEXT
                 )''')
 
     conn.commit()
     with conn:
-        for key in wowdb.keys() | classicdb.keys() | evowow.keys() | wowhead.keys():
+        for key in wowdb.keys() | classicdb.keys() | evowow.keys() | warcraftdb.keys() | wowhead.keys():
             wowhead_zone = wowhead.get(key)
             wowhead_name = None
             if wowhead_zone:
@@ -328,9 +493,17 @@ def save_temp_zones_to_cache_db(wowhead: dict[int, WowheadZone], wowdb: dict[int
                 if len(evowow_zone) == 2:  # Has parent id - replacing with its name
                     evowow_parent = evowow_zone[1]
 
-            conn.execute(f'''INSERT INTO zones_temp(id, wowhead_name, wowdb_name, classicdb_name, classicdb_parent, evowow_name, evowow_parent)
-                                VALUES(?, ?, ?, ?, ?, ?, ?)''',
-                        (key, wowhead_name, wowdb_name, classicdb_name, classicdb_parent, evowow_name, evowow_parent))
+            warcraftdb_name = None
+            warcraftdb_parent = None
+            warcraftdb_zone = warcraftdb.get(key)
+            if warcraftdb_zone:
+                warcraftdb_name = warcraftdb_zone[0]
+                if len(warcraftdb_zone) == 2:  # Has parent id - replacing with its name
+                    warcraftdb_parent = warcraftdb_zone[1]
+
+            conn.execute(f'''INSERT INTO zones_temp(id, wowhead_name, wowdb_name, classicdb_name, classicdb_parent, evowow_name, evowow_parent, warcraftdb_name, warcraftdb_parent)
+                                VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?)''',
+                        (key, wowhead_name, wowdb_name, classicdb_name, classicdb_parent, evowow_name, evowow_parent, warcraftdb_name, warcraftdb_parent))
 
 
 def read_new_translations() -> dict[str, str]:
@@ -370,11 +543,11 @@ def __cleanup_name(name: str) -> str:
     result = result.replace('UNUSED', '')
     return result.strip()
 
-def merge_zones(wowhead: dict[int, WowheadZone], wowdb: dict[int, str], classicdb: dict[int, str], evowow: dict[int, str], translated: dict[str, str]) -> dict[str, Zone]:
+def merge_zones(wowhead: dict[int, WowheadZone], wowdb: dict[int, str], classicdb: dict[int, str], evowow: dict[int, str], warcraftdb: dict[int, str], translated: dict[str, str]) -> dict[str, Zone]:
     added_names = set()
     merged_zones = dict()
 
-    for zone_id in wowhead.keys() | wowdb.keys() | classicdb.keys() | evowow.keys():
+    for zone_id in wowhead.keys() | wowdb.keys() | classicdb.keys() | evowow.keys() | warcraftdb.keys():
         if zone_id in IGNORES:
             continue
         name_set = set()
@@ -398,6 +571,12 @@ def merge_zones(wowhead: dict[int, WowheadZone], wowdb: dict[int, str], classicd
             name_set.add(__cleanup_name(evowow_zone[0]))
             if len(evowow_zone) == 2:  # Has parent id - replacing with its name
                 parent_set.add(__cleanup_name(evowow_zone[1]))
+
+        warcraftdb_zone = warcraftdb.get(zone_id)
+        if warcraftdb_zone:
+            name_set.add(__cleanup_name(warcraftdb_zone[0]))
+            if len(warcraftdb_zone) == 2:  # Has parent id - replacing with its name
+                parent_set.add(__cleanup_name(warcraftdb_zone[1]))
 
         if len(name_set) < 1:
             print(f'! No name for id #{zone_id}')
@@ -425,6 +604,8 @@ def merge_zones(wowhead: dict[int, WowheadZone], wowdb: dict[int, str], classicd
                 sources.append('classicdb')
             if evowow_zone and zone_name == __cleanup_name(evowow_zone[0]):
                 sources.append('evowow')
+            if warcraftdb_zone and zone_name == __cleanup_name(warcraftdb_zone[0]):
+                sources.append('warcraftdb')
 
             translated_name = None
             if translated.get(zone_name):
@@ -482,20 +663,20 @@ def read_zones_from_glossary() -> dict[str, str]:
         for row in reader:
             if row[0] == 'Term [uk]':
                 continue
-            if 'локація' in row[4]:
-                translation = row[0]
-                name = row[3]
+            if 'локація' in row[1]:
+                translation = row[3]
+                name = row[0]
                 if name in all_zones:
                     print(f'Zone "{id}" duplicated')
                 all_zones[name] = translation
     return all_zones
 
 
-def generate_glossary_row(zone_name:str, zones: dict[str, Zone]) -> str:
-    if not zones.get(zone_name):
-        print(f'! No zone for {zone_name}')
-        return zone_name
-    zone = zones[zone_name]
+def generate_glossary_row(zone_key: str, zones: dict[str, Zone]) -> str:
+    if not zones.get(zone_key):
+        print(f'! No zone for {zone_key}')
+        return zone_key
+    zone = zones[zone_key]
     zone_description = 'локація'
     if zone.parent_zone:
         zone_description += f', {zones[zone.parent_zone].translation}'
@@ -506,9 +687,10 @@ def generate_glossary_row(zone_name:str, zones: dict[str, Zone]) -> str:
             zone_description += f', {CATEGORIES[zone.category]}'
         else:
             print(f'! No parent zone for {zone.name} ({zone.category})')
+    zone_name = zone.name[4:] if zone.name.startswith('The ') else zone.name
     row = '"{}","{}","{}"'.format(
         zone.translation.replace('"', '""'),
-        zone.name.replace('"', '""'),
+        zone_name.replace('"', '""'),
         zone_description
     )
     return row
@@ -527,25 +709,31 @@ def save_translations_to_glossary(translated_zones: dict[str, str], glossary_zon
 
 
 if __name__ == '__main__':
+    # save_warcraftdb_zone_page(5502)
+    # test_zone = parse_warcraftdb_zone_page('5502.html')
+
     # save_wowdb_zones_htmls()
     # save_classicdb_zones_htmls()
     # save_evowow_zones_htmls()
+    # # save_twinhead_zones_htmls() # protected by CloudFlare
+    # save_warcraftdb_zones_htmls()
 
     wowhead_zones = get_wowhead_zones()
     wowdb_zones = parse_wowdb_zone_pages()
     classicdb_zones = parse_classicdb_zone_pages()
     evowow_zones = parse_evowow_zone_pages()
+    # twinhead_zones = parse_twinhead_zone_pages()
+    warcraftdb_zones = parse_warcraftdb_zone_pages()
     translated_zones = read_new_translations()  # To generate glossary import rows for Crowdin
     glossary_zones = read_zones_from_glossary()  # To generate DB with up-to-date translations
 
     for key in (translated_zones.keys() & glossary_zones.keys()):
         print(f'Warning: clashing translations for {key}: "{translated_zones[key]}" and "{glossary_zones[key]}"')
     merged_translations = {**translated_zones, **glossary_zones}
-    merged_translations['Stormwind City'] = merged_translations['Stormwind']
 
-    save_temp_zones_to_cache_db(wowhead_zones, wowdb_zones, classicdb_zones, evowow_zones)
+    save_temp_zones_to_cache_db(wowhead_zones, wowdb_zones, classicdb_zones, evowow_zones, warcraftdb_zones)
 
-    merged_zones = merge_zones(wowhead_zones, wowdb_zones, classicdb_zones, evowow_zones, merged_translations)
+    merged_zones = merge_zones(wowhead_zones, wowdb_zones, classicdb_zones, evowow_zones, warcraftdb_zones, merged_translations)
     save_zones_to_db(merged_zones)
 
     save_translations_to_glossary(translated_zones, glossary_zones, merged_zones)
