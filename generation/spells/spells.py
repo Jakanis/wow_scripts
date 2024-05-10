@@ -204,7 +204,7 @@ def get_wowhead_spell_metadata(expansion) -> dict[int, SpellMD]:
 
 def save_page_raw(expansion, id):
     url = expansion_data[expansion][WOWHEAD_URL] + f'/spell={id}'
-    xml_file_path = f'cache/{expansion_data[expansion][HTML_CACHE]}/{id}.html'
+    xml_file_path = f'cache/{expansion_data[expansion][HTML_CACHE]}_raw/{id}.html'
     if os.path.exists(xml_file_path):
         print(f'Warning! Trying to download existing HTML for #{id}')
         return
@@ -219,7 +219,7 @@ def save_page_calc(expansion, id):
     from requests_html import HTMLSession
     session = HTMLSession()
     url = expansion_data[expansion][WOWHEAD_URL] + f'/spell={id}'
-    xml_file_path = f'cache/{expansion_data[expansion][HTML_CACHE]}/{id}.html'
+    xml_file_path = f'cache/{expansion_data[expansion][HTML_CACHE]}_rendered/{id}.html'
     if os.path.exists(xml_file_path):
         print(f'Warning! Trying to download existing HTML for #{id}')
         return
@@ -253,27 +253,31 @@ def save_pages_async(expansion, ids):
             output_file.write(response.html.html)
 
 
-def save_htmls_from_wowhead(expansion, ids: set[int], calculate: bool = True):
+def save_htmls_from_wowhead(expansion, ids: set[int], render: bool, force: set[int] = None):
     from functools import partial
     import multiprocessing
-    cache_dir = f'cache/{expansion_data[expansion][HTML_CACHE]}'
+    html_type = 'rendered' if render else 'raw'
+    cache_dir = f'cache/{expansion_data[expansion][HTML_CACHE]}_{html_type}'
     os.makedirs(cache_dir, exist_ok=True)
     existing_files = os.listdir(cache_dir)
     existing_ids = set(int(file_name.split('.')[0]) for file_name in existing_files)
 
     if os.path.exists(cache_dir) and existing_ids == ids:
-        print(f'HTML cache for all Wowhead({expansion}) spells ({len(ids)}) exists and seems legit. Skipping.')
+        print(f'HTML({html_type}) cache for all Wowhead({expansion}) spells ({len(ids)}) exists and seems legit. Skipping.')
         return
 
     save_ids = ids - existing_ids
-    print(f'Saving HTMLs for {len(save_ids)} of {len(ids)} spells from Wowhead({expansion}).')
+    if force:
+        print(f'Force saving HTMLs({html_type}) for {len(force)} spells from Wowhead({expansion}).')
+        save_ids += force
+    print(f'Saving HTMLs({html_type}) for {len(save_ids)} of {len(ids)} spells from Wowhead({expansion}).')
 
     redundant_ids = existing_ids - ids
     if len(redundant_ids) > 0:
         print(f"There's some redundant IDs: {redundant_ids}")
 
-    save_page = save_page_calc if calculate else save_page_raw
-    threads = THREADS // 2 if calculate else THREADS * 2
+    save_page = save_page_calc if render else save_page_raw
+    threads = THREADS // 2 if render else THREADS * 2
     # for id in ids:
     #     save_page(expansion, id)
     save_func = partial(save_page, expansion)
@@ -281,9 +285,10 @@ def save_htmls_from_wowhead(expansion, ids: set[int], calculate: bool = True):
         p.map(save_func, save_ids)
     # save_pages_async(expansion, list(save_ids)[:100])
 
-def parse_wowhead_spell_page(expansion, id) -> SpellData:
+
+def parse_wowhead_spell_page(expansion, render, id) -> SpellData:
     import re
-    html_path = f'cache/{expansion_data[expansion][HTML_CACHE]}/{id}.html'
+    html_path = f'cache/{expansion_data[expansion][HTML_CACHE]}_{'rendered' if render else 'raw'}/{id}.html'
     with open(html_path, 'r', encoding="utf-8") as file:
         html = file.read()
 
@@ -332,20 +337,21 @@ def parse_wowhead_spell_page(expansion, id) -> SpellData:
     return SpellData(id, expansion, name, description, aura)
 
 
-def parse_wowhead_pages(expansion, metadata: dict[int, SpellMD]) -> dict[int, SpellData]:
+def parse_wowhead_pages(expansion, metadata: dict[int, SpellMD], render: bool) -> dict[int, SpellData]:
     import pickle
     import multiprocessing
     from functools import partial
-    cache_path = f'cache/tmp/{expansion_data[expansion][SPELL_CACHE]}.pkl'
+    spells_type = 'rendered' if render else 'raw'
+    cache_path = f'cache/tmp/{expansion_data[expansion][SPELL_CACHE]}_{spells_type}.pkl'
 
     if os.path.exists(cache_path):
         print(f'Loading cached Wowhead({expansion}) spells')
         with open(cache_path, 'rb') as f:
             wowhead_spells = pickle.load(f)
     else:
-        print(f'Parsing Wowhead({expansion}) spell pages')
+        print(f'Parsing {spells_type} Wowhead({expansion}) spell pages')
         # wowhead_spells = {id: parse_wowhead_spell_page(expansion, id) for id in metadata.keys()}
-        parse_func = partial(parse_wowhead_spell_page, expansion)
+        parse_func = partial(parse_wowhead_spell_page, expansion, render)
         with multiprocessing.Pool(THREADS) as p:
             wowhead_spells = p.map(parse_func, metadata.keys())
         wowhead_spells = {item.id: item for item in wowhead_spells}
@@ -489,17 +495,50 @@ def merge_expansions(old_expansion: dict[int, dict[str, SpellData]], new_expansi
         result[id] = merge_spell(id, old_expansion[id], new_expansion[id])
     return result
 
-def retrieve_spell_data() -> dict[int, dict[str, SpellData]]:
-    wowhead_md = dict()
-    wowhead_spells = dict()
-    all_spells = dict()
 
+def compare_stored_raw_spells(expansion, fresh_spells: dict[int, SpellData]) -> set[int]:
+    import pickle
+    diffed_spells = set()
+    print(f'Comparing raw spells for {expansion}')
+    cache_path = f'cache/tmp/wowhead_{expansion}_spell_cache_raw_stored.pkl'
+    if os.path.exists(cache_path):
+        print(f'Loading stored raw Wowhead({expansion}) spells')
+        with open(cache_path, 'rb') as f:
+            stored_spells = pickle.load(f)
+        absent_keys = stored_spells.keys() ^ fresh_spells.keys()
+        if absent_keys:
+            print(f'These keys absent in one of sets: {absent_keys}')
+        for spell_id in stored_spells.keys() & fresh_spells.keys():
+            if (stored_spells[spell_id].name != fresh_spells[spell_id].name or
+                    stored_spells[spell_id].description != fresh_spells[spell_id].description or
+                    stored_spells[spell_id].aura != fresh_spells[spell_id].aura):
+                diffed_spells.add(spell_id)
+    return diffed_spells
+
+
+def store_raw_spells(expansion, fresh_spells: dict[int, SpellData]):
+    import pickle
+    cache_path = f'cache/tmp/wowhead_{expansion}_spell_cache_raw_stored.pkl'
+    os.makedirs('cache/tmp', exist_ok=True)
+    with open(cache_path, 'wb') as f:
+        pickle.dump(fresh_spells, f)
+
+
+def retrieve_spell_data() -> dict[int, dict[str, SpellData]]:
+    all_spells = dict()
     for expansion, expansion_properties in expansion_data.items():
-        wowhead_md[expansion] = get_wowhead_spell_metadata(expansion)
-        save_htmls_from_wowhead(expansion, set(wowhead_md[expansion].keys()), calculate=expansion_properties[CALCULATE])
-        wowhead_spells[expansion] = parse_wowhead_pages(expansion, wowhead_md[expansion])
+        wowhead_md = get_wowhead_spell_metadata(expansion)
+
+        save_htmls_from_wowhead(expansion, set(wowhead_md.keys()), render=False)
+        wowhead_spells_raw = parse_wowhead_pages(expansion, wowhead_md, render=False)
+
+        changed_spells = compare_stored_raw_spells(expansion, wowhead_spells_raw)
+        save_htmls_from_wowhead(expansion, set(wowhead_md.keys()), render=True, force=changed_spells)
+        wowhead_spells_rendered = parse_wowhead_pages(expansion, wowhead_md, render=True)
+        store_raw_spells(expansion, wowhead_spells_raw)
+
         print(f'Merging with {expansion}')
-        all_spells = merge_expansions(all_spells, wowhead_spells[expansion])
+        all_spells = merge_expansions(all_spells, wowhead_spells_rendered)
 
     return all_spells
 
@@ -745,8 +784,10 @@ def validate_translations(spells: dict[int, dict[str, SpellData]]):
 
 
 def compare_tsv_and_classicua(tsv_translations, classicua_translations):
-    for key in tsv_translations.keys() ^ classicua_translations.keys():
-        print(f"Warning! Spell#{key} doesn't exist in one of translations")
+    for key in tsv_translations.keys() - classicua_translations.keys():
+        print(f"Warning! Spell#{key} doesn't exist in ClassicUA")
+    for key in classicua_translations.keys() - tsv_translations.keys():
+        print(f"Warning! Spell#{key} doesn't exist in TSV")
     for key in tsv_translations.keys() & classicua_translations.keys():
         for expansion in tsv_translations[key].keys() ^ classicua_translations[key].keys():
             print(f"Warning! Spell#{key}:{expansion} doesn't exist in one of translations")
