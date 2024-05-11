@@ -119,8 +119,8 @@ class SpellMD:
 
 class SpellData:
     def __init__(self, id, expansion, name, description=None, aura=None, name_ua=None,
-                 description_ua=None, aura_ua=None, description_ref: int = 0, aura_ref: int = 0,
-                 spell_md: SpellMD = None, category=None, rank=None):
+                 description_ua=None, aura_ua=None, spell_md: SpellMD = None, category=None, group: str = None, rank=None,
+                 ref: int = None, name_ref: int = None, description_ref: int = None, aura_ref: int = None):
         self.id = id
         self.expansion = expansion
         self.name = name
@@ -129,10 +129,13 @@ class SpellData:
         self.name_ua = name_ua
         self.description_ua = description_ua
         self.aura_ua = aura_ua
+        self.ref = ref
+        self.name_ref = name_ref
         self.description_ref = description_ref
         self.aura_ref = aura_ref
         self.spell_md = spell_md
         self.category = category
+        self.group = group
         self.rank = rank
 
 
@@ -386,6 +389,8 @@ def save_spells_to_db(spells: dict[int, dict[str, SpellData]]):
                         schools INT,
                         class INT,
                         skill TEXT,
+                        ref INT,
+                        name_ref INT,
                         desc_ref INT,
                         aura_ref INT
                 )''')
@@ -406,16 +411,17 @@ def save_spells_to_db(spells: dict[int, dict[str, SpellData]]):
                     continue
                 md_skill = str(spell.spell_md.skill) if spell.spell_md.skill else None
                 conn.execute(
-                    'INSERT INTO spells(id, expansion, name, name_ua, description, description_ua, aura, aura_ua, rank, cat, level, schools, class, skill, desc_ref, aura_ref) VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+                    'INSERT INTO spells(id, expansion, name, name_ua, description, description_ua, aura, aura_ua, rank, cat, level, schools, class, skill, ref, name_ref, desc_ref, aura_ref) VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
                     (spell.id, spell.expansion, spell.name, spell.name_ua, spell.description, spell.description_ua,
                      spell.aura, spell.aura_ua,
                      spell.spell_md.rank, spell.spell_md.cat, spell.spell_md.level, spell.spell_md.schools,
                      spell.spell_md.get_class(), md_skill,
-                     spell.description_ref, spell.aura_ref))
+                     spell.ref, spell.name_ref, spell.description_ref, spell.aura_ref))
 
 
 def populate_similarity(spells: dict[int, dict[str, SpellData]]):
     import re
+    name_to_id: dict[str, dict[str, int]] = dict()
     description_to_id: dict[str, dict[str, int]] = dict()
     aura_to_id: dict[str, dict[str, int]] = dict()
     for expansion in expansion_data.keys():
@@ -423,6 +429,21 @@ def populate_similarity(spells: dict[int, dict[str, SpellData]]):
             spell = spells[key][expansion]
             description = re.sub(r'\d+(\.\d+)?', '{d}', spell.description) if spell.description else None
             aura = re.sub(r'\d+(\.\d+)?', '{d}', spell.aura) if spell.aura else None
+
+            if spell.name in name_to_id.keys():
+                common_parents = name_to_id[spell.name].keys() & set(expansion_data[expansion][PARENT_EXPANSIONS] + [expansion])
+                if len(common_parents) == 1:
+                    common_parent = next(iter(common_parents))
+                    spell.name_ref = name_to_id[spell.name][common_parent]
+                elif len(common_parents) == 0:
+                    if name_to_id[spell.name].keys() != {'sod'}:
+                        print(f"Warning. Suspicious name parent situation for {key}:{expansion}.")
+                    name_to_id[spell.name][expansion] = key
+                else:
+                    print(f"Warning! Strange name parent situation for {key}:{expansion}!")
+            else:
+                name_to_id[spell.name] = {expansion: key}
+
             if description and description in description_to_id.keys():
                 common_parents = description_to_id[description].keys() & set(expansion_data[expansion][PARENT_EXPANSIONS] + [expansion])
                 if len(common_parents) == 1:
@@ -451,14 +472,22 @@ def populate_similarity(spells: dict[int, dict[str, SpellData]]):
             else:
                 aura_to_id[aura] = {expansion: key}
 
+def __to_tsv_val(value) -> str:
+    if value:
+        return '"' + str(value).replace('"', '""') + '"'
+    else:
+        return ''
 
 def create_translation_sheet(spells: dict[int, dict[str, SpellData]]):
     with open(f'translate_this.tsv', mode='w', encoding='utf-8') as f:
-        f.write('ID\tName(EN)\tName(UA)\tDescription(EN)\tDescription(UA)\tAura(EN)\tAura(UA)\tdesc_ref\taura_ref\n')
+        f.write('ID\tName(EN)\tName(UA)\tDescription(EN)\tDescription(UA)\tAura(EN)\tAura(UA)\tref\tname_ref\tdesc_ref\taura_ref\texpansion\tcategory\tgroup\n')
         for key in sorted(spells.keys()):
             for expansion, spell in spells[key].items():
-                if getattr(spell.spell_md, 'chrclass') == 1 and spell.expansion == SOD and spell.name_ua is None:
-                    f.write(f'{spell.id}\t{spell.name}\t\t"{spell.description}"\t\t"{spell.aura}"\t\t{spell.description_ref}\t{spell.aura_ref}\n')
+                # if getattr(spell.spell_md, 'chrclass') == 1 and spell.expansion == SOD and spell.name_ua is None:
+                if spell.expansion != SOD and (spell.name_ua or spell.ref):
+                    fields = [spell.id, spell.name, spell.name_ua, spell.description, spell.description_ua, spell.aura,
+                              spell.aura_ua, spell.ref, spell.name_ref, spell.description_ref, spell.aura_ref, spell.expansion, spell.category, spell.group]
+                    f.write(f'{'\t'.join(map(lambda x: __to_tsv_val(x), fields))}\n')
 
 
 def merge_spell(id: int, old_spells: dict[str, SpellData], new_spell: SpellData) -> dict[str, SpellData]:
@@ -535,6 +564,7 @@ def retrieve_spell_data() -> dict[int, dict[str, SpellData]]:
         changed_spells = compare_stored_raw_spells(expansion, wowhead_spells_raw)
         save_htmls_from_wowhead(expansion, set(wowhead_md.keys()), render=True, force=changed_spells)
         wowhead_spells_rendered = parse_wowhead_pages(expansion, wowhead_md, render=True)
+
         store_raw_spells(expansion, wowhead_spells_raw)
 
         print(f'Merging with {expansion}')
@@ -543,39 +573,216 @@ def retrieve_spell_data() -> dict[int, dict[str, SpellData]]:
     return all_spells
 
 
-def convert_translations_to_lua(translations: list[SpellData], group: tuple[str, str]):
-    path = f'output/entries/{group[0]}'
-    category = f'_{group[1]}' if group[1] else ''
-    translations = sorted(translations, key=lambda x: x.name)
-    os.makedirs(path, exist_ok=True)
-    with open(f'{path}/spell{category}.lua', 'w', encoding="utf-8") as output_file:
-        previous_name = None
-        for spell in translations:
-            if spell.name != previous_name:
-                output_file.write(f'\n-- {spell.name}\n')
-            description_text = 'nil'
-            rune_refs = []
-            if spell.description_ua:
-                if spell.description_ua.startswith('ref='):
-                    ref = int(spell.description_ua.split('=')[-1])
-                    output_file.write('[{}] = {{ ref={} }}, -- {}\n'.format(spell.id, ref, spell.name))
-                    continue
-                description_text = []
-                for line in spell.description_ua.splitlines():
-                    if 'spell#' in line:
-                        rune_refs.append(line.split('#')[-1])
-                    else:
-                        description_text.append(line)
-                description_text = '\n'.join(description_text).replace('"', '\\"').replace('\n', '\\n')
-                description_text = f'"{description_text}"'
-            aura_text = spell.aura_ua.replace('"', '\\"').replace('\n', '\\n') if spell.aura_ua else None
-            aura_text = f'"{aura_text}"' if aura_text else 'nil'
-            if rune_refs:  # We take only first rune_ref. Take whole list if we can handle templates
-                rune_text = rune_refs[0] if len(rune_refs) == 1 else '{' + ', '.join(rune_refs) + '}'
-                output_file.write('[{}] = {{ "{}", {}, {}, rune={} }}, -- {}\n'.format(spell.id, spell.name_ua, description_text, aura_text, rune_text, spell.name))
+def __spell_guide_header() -> str:
+    import textwrap
+    return textwrap.dedent("""\
+        --[[
+        
+        ## Термінологія для опису заклять в spell*.lua та ефектів у item*.lua
+        
+        Balance spells                      -- закляття спеціалізації "Баланс"
+        Affliction spells                   -- закляття спеціалізації "Химородь"
+        Destruction spells                  -- закляття спеціалізації "Руйнація"
+        
+        X Physical damage                   -- X фізичної шкоди
+        X Arcane damage                     -- X шкоди арканою
+        X Fire damage                       -- X шкоди вогнем
+        X Frost damage                      -- X шкоди кригою
+        X Nature damage                     -- X шкоди природою
+        X Shadow damage                     -- X шкоди тінню
+        X Holy damage                       -- X шкоди святістю
+        X weapon damage                     -- X шкоди зброєю
+        initial damage                      -- первинна шкода
+        main hand / off-hand                -- основна рука / неосновна рука
+        parry chance                        -- імовірність парирувати
+        dodge chance                        -- імовірність ухилитися
+        hit chance                          -- імовірність поцілити
+        dual wield                          -- бій з двох рук
+        
+        all attributes                      -- всі характеристики
+        Intelligence                        -- інтелект
+        Strength                            -- сила
+        Agility                             -- спритність
+        Stamina                             -- витривалість
+        Frenzy effect                       -- ефект навіженості
+        Disease effect                      -- ефект хвороби
+        Poison effect                       -- ефект отрути
+        Curse effect                        -- ефект прокляття
+        spell / ability                     -- закляття / здібність (синоніми, залежить від контексту)
+        cooldown                            -- поновлення
+        instance                            -- ігровимір
+        to purge                            -- очистити / вичистити / чистити
+        to dispel                           -- розсіяти
+        resistance                          -- супротив (вогню, кризі, ...)
+        harmful spell                       -- шкідливе закляття
+        beneficial spell                    -- сприятливе закляття
+        offensive spells                    -- атакуючі закляття
+        defensive spells                    -- захисні закляття
+        stealth detection                   -- здатність виявлення непомітності
+        Target cannot stealth or turn invisible -- Ціль не може стати непомітною або невидимою
+        This effect stack up to X times     -- Ефект накладається до {X} разів
+        Causes a high amount of threat      -- Спричиняє високий рівень загрози
+        Movement Impairing effects          -- ефекти перешкоди руху
+        Only usable outdoors                -- Можна використовувати лише просто неба
+        Only usable out of combat           -- Можна використовувати лише поза боєм
+        must channel to maintain the spell  -- повинен підтримувати закляття
+        yields experience or honor          -- приносить досвід або честь
+        to silence the target               -- знемовити ціль
+        fully resisted spell                -- повністю протидіяти закляттю
+        life drained / mana drained         -- (обсяг) випитого життя / випитої мани / висушувати
+        which serves as a mount             -- для верхової їзди / на якому можна їздити верхи (якщо опис дозволяє)
+        happiness                           -- щасливість (показник у вихованців мисливців)
+        mount                               -- транспорт (при можливості уникати прямого слова, якщо контекст дозволяє)
+        pet                                 -- вихованець (у мисливців) / прислужник (у чорнокнижників)
+        
+        Dazed                               -- Запаморочений
+        Asleep                              -- Сплячий
+        Feared                              -- Наляканий
+        Rooted                              -- Прикований
+        Frozen                              -- Заморожений
+        Chilled                             -- Охолоджений
+        Charmed                             -- Причарований
+        Stunned                             -- Приголомшений
+        Taunted                             -- Підбурений
+        Enraged                             -- Розлючений
+        Silenced                            -- Знемовлений
+        Disarmed                            -- Роззброєний
+        Enslaved                            -- Поневолений
+        Horrified                           -- Нажаханий
+        Invisible                           -- Невидимий
+        Stealthed                           -- Непомітний
+        Disoriented                         -- Дезорієнтований
+        Immobilized / Immobile              -- Знерухомлений / Нерухомий
+        Invulnerable                        -- Невразливий
+        Incapacitated                       -- Недієздатний
+        
+        Fear and Horror effects             -- ефекти страху та жаху
+        Increases your Defense skill by X   -- Збільшує вашу захисну здібність на X
+        Awards 1 combo point                -- Збільшує довжину комбінації на X прийом
+        Target must be facing you           -- Ціль має бути повернута до вас
+        Must be behind the target           -- Необхідно бути позаду цілі
+        Must be stealthed                   -- Необхідно бути непомітним
+        Does not break stealth              -- Не порушує непомітності
+        More effective than XXXXX (Rank X)  -- Дієвіше за "XXXXX" (Ранг X)
+        Requires a dagger in the main hand  -- Працює лише за наявності кинджалу в основній руці
+        Any damage caused will revive the target -- Будь-яка шкода знімає ефект з ураженої цілі
+        Any damage caused will awaken the target -- Будь-яка шкода пробудить ціль
+        Any damage caused will remove the effect -- Будь-яка шкода скасує ефект
+        Stacks up to X times on a single target -- Накладається до X разів на одній цілі
+        Turns off your attack when used     -- Припиняє вашу атаку при використанні
+        Finishing move                      -- Завершальний рух
+        each tick                           -- на кожному такті
+        1 charge                            -- 1 заряд
+        
+        interrupts spellcasting and prevents any spell in that school from being cast for X sec
+        -- перериває вимову закляття та унеможливлює вимову заклять тієї ж школи протягом X с
+        
+        chance to resist interruption caused by damage while casting
+        -- імовірність уникнути затримки вимови заклять, спричиненої шкодою
+        
+        chance to resist interruption caused by damage while channeling
+        -- імовірність уникнути переривання промовляння заклять, спричиненого шкодою
+        
+        Conjured items disappear if logged out for more than 15 minutes.
+        -- Начакловані предмети зникнуть, якщо вийти з гри більше, ніж на 15 хвилин.
+        
+        Will not work if the target is in another instance or on another continent.
+        -- Не працює, якщо ціль перебуває в іншому ігровимірі або на іншому континенті.
+        
+        Only one form of tracking can be active at a time.
+        -- Одночасно можна вистежувати лише щось одне.
+        
+        ]]--
+        
+        local _, addonTable = ...
+        addonTable.spell = {
+        
+        -- [id] = {
+        --     [ref] = ID (optional),
+        --     [1] = title (optional),
+        --     [2] = description (optional),
+        --     [3] = aura (optional),
+        -- }
+        
+        """)
+
+
+def __spell_to_lua_row(spell: SpellData):
+    name_text = f'"{spell.name_ua.replace('"', '\\"')}"' if spell.name_ua else 'nil'
+
+    description_text = 'nil'
+    rune_refs = []
+    if spell.description_ua:
+        description_text = []
+        for line in spell.description_ua.splitlines():
+            if 'spell#' in line:
+                rune_refs.append(line.split('#')[-1])
             else:
-                output_file.write('[{}] = {{ "{}", {}, {} }}, -- {}\n'.format(spell.id, spell.name_ua, description_text, aura_text, spell.name))
+                description_text.append(line)
+        description_text = '\n'.join(description_text).replace('"', '\\"').replace('\n', '\\n')
+        description_text = f'"{description_text}"'
+
+    aura_text = spell.aura_ua.replace('"', '\\"').replace('\n', '\\n') if spell.aura_ua else None
+    aura_text = f'"{aura_text}"' if aura_text else 'nil'
+
+    rune_text = None
+    if rune_refs:  # We take only first rune_ref. Take whole list if we can handle templates
+        rune_text = rune_refs[0] if len(rune_refs) == 1 else '{' + ', '.join(rune_refs) + '}'
+
+    translations = [name_text, description_text, aura_text]
+
+    while True:
+        if translations and translations[-1] == 'nil':
+            translations = translations[:-1]
+        else:
+            break
+
+    if rune_text:
+        translations.append('rune={}'.format(rune_text))
+
+    if spell.ref:
+        translations.append('ref={}'.format(spell.ref))
+
+    original_name = f'{spell.name} ({spell.spell_md.rank})' if spell.spell_md and spell.spell_md.rank else spell.name
+
+    return '[{}] = {{ {} }}, -- {}\n'.format(spell.id, ', '.join(translations), original_name)
+
+def convert_translations_to_lua(translations: list[SpellData], category: tuple[str, str]):
+    path = f'output/entries/{category[0]}'
+    spells_class = f'_{category[1]}' if category[1] else ''
+    translations = sorted(translations, key=lambda x: x.name) if spells_class != '' else sorted(translations, key=lambda x: x.id) # sort by spell name for spell{_some-class}, and by spell id for spell.lua
+    os.makedirs(path, exist_ok=True)
+    is_classic_spells_lua = category[0] == 'classic' and spells_class == ''
+    with open(f'{path}/spell{spells_class}.lua', 'w', encoding="utf-8") as output_file:
+        if is_classic_spells_lua:
+            output_file.write(__spell_guide_header())
+        else:
+            output_file.write('local _, addonTable = ...\n\n'
+                              + 'local {}spells = '.format(f'{category[1]}_' if category[1] else '')
+                              + '{\n\n-- See /entries/classic/spell.lua for data format details.\n\n')
+
+        previous_name = None
+        for spell in filter(lambda x: x.group is None, translations):
+            if spells_class != '': # Spell is in spell_{some_group}.lua
+                if spell.name != previous_name:
+                    output_file.write(f'-- {spell.name}\n')  # Group
             previous_name = spell.name
+            output_file.write(__spell_to_lua_row(spell))
+
+        groups: dict[str, list[SpellData]] = dict()
+        grouped_spells = filter(lambda x: x.group is not None, translations)
+        for spell in grouped_spells:
+            groups[spell.group] = groups.get(spell.group, list())
+            groups[spell.group].append(spell)
+
+        for group in sorted(groups.keys()):
+            output_file.write(f'\n-- {group}\n')
+            for spell in sorted(groups[group], key=lambda x: x.name) if spells_class != '' else sorted(groups[group], key=lambda x: x.id):
+                output_file.write(__spell_to_lua_row(spell))
+
+        output_file.write('\n}\n')
+        if not is_classic_spells_lua:
+            output_file.write('\nfor k, v in pairs({}spells) do addonTable.spell[k] = v end\n'.format(f'{category[1]}_' if category[1] else ''))
 
 
 def convert_translations_to_entries(translations: dict[int, dict[str, SpellData]]):
@@ -607,21 +814,25 @@ def read_translations_sheet() -> dict[int, dict[str, SpellData]]:
             if not spell_id:
                 print(f'Skipping: {row}')
                 continue
-            name_en = row[1]
-            name_ua = row[2]
+            name_en = row[1] if row[1] != '' else None
+            name_ua = row[2] if row[2] != '' else None
             description_en = row[3] if row[3] != '' else None
             description_ua = row[4] if row[4] != '' else None
             aura_en = row[5] if row[5] != '' else None
             aura_ua = row[6] if row[6] != '' else None  # if len(row) >= 8 else None
-            desc_ref = __try_cast_str_to_int(row[7], 0)
-            aura_ref = __try_cast_str_to_int(row[8], 0)
-            expansion = row[9]
-            category = row[10] if len(row) > 10 and row[10] != '' else None
+            ref = __try_cast_str_to_int(row[7], None)
+            name_ref = __try_cast_str_to_int(row[8], None)
+            desc_ref = __try_cast_str_to_int(row[9], None)
+            aura_ref = __try_cast_str_to_int(row[10], None)
+            expansion = row[11] if len(row) > 11 and row[11] != '' else None
+            category = row[12] if len(row) > 12 and row[12] != '' else None
+            group = row[13] if len(row) > 13 and row[13] != '' else None
             all_translations[spell_id] = all_translations.get(spell_id, dict())
             all_translations[spell_id][expansion] = SpellData(spell_id, expansion, name=name_en,
                                                               description=description_en, aura=aura_en, name_ua=name_ua,
-                                                              description_ua=description_ua, aura_ua=aura_ua,
-                                                              description_ref=desc_ref, aura_ref=aura_ref, category=category)
+                                                              description_ua=description_ua, aura_ua=aura_ua, ref=ref,
+                                                              name_ref=name_ref, description_ref=desc_ref,
+                                                              aura_ref=aura_ref, category=category, group=group)
 
     return all_translations
 
@@ -647,6 +858,7 @@ def read_classicua_translations(spells_root_path: str, spell_data: dict[int, dic
         lua_table = lua_file[lua_file.find(' = {\n') + 2:lua_file.find('\n}\n') + 2]
         decoded_spells = lua.decode(lua_table)
         for spell_id, decoded_spell in decoded_spells.items():
+            ref = None
             if spell_id in all_spells:
                 print(f'Warning! Duplicate for spell#{spell_id}')
             if type(decoded_spell) == dict:
@@ -654,10 +866,7 @@ def read_classicua_translations(spells_root_path: str, spell_data: dict[int, dic
                 description_ua = decoded_spell.get(1)
                 aura_ua = decoded_spell.get(2)
                 runes = decoded_spell.get('rune')
-                if 'ref' in decoded_spell:
-                    # name_ua = name_ua or all_spells[decoded_spell.get('ref')][expansion].name_ua
-                    name_ua = f"ref={decoded_spell.get('ref')}"
-                    description_ua = f"ref={decoded_spell.get('ref')}"
+                ref = decoded_spell.get('ref')
                 if runes and type(runes) == int:
                     description_ua += f'\nspell#{runes}'
                 if runes and type(runes) == list:
@@ -670,14 +879,14 @@ def read_classicua_translations(spells_root_path: str, spell_data: dict[int, dic
             if description_ua:
                 description_ua = description_ua.replace('\\n','\n')
             if aura_ua:
-                aura_ua = aura_ua.replace('\\n','\n')
+                aura_ua = aura_ua.replace('\\n', '\n')
             if spell_id in spell_data and expansion in spell_data[spell_id].keys():
                 original_name = spell_data[spell_id][expansion].name
             else:
                 print(f"Warning! Spell#{spell_id}:{expansion} doesn't exist on Wowhead!")
                 original_name = 'UNKNOWN'
             spell = SpellData(spell_id, expansion, original_name, category=category, name_ua=name_ua,
-                              description_ua=description_ua, aura_ua=aura_ua)
+                              description_ua=description_ua, aura_ua=aura_ua, ref=ref)
             all_spells[spell_id] = all_spells.get(spell_id, dict())
             all_spells[spell_id][expansion] = spell
     return all_spells
@@ -697,15 +906,18 @@ def apply_translations_to_data(spell_data: dict[int, dict[str, SpellData]], tran
             translation = translations[key][expansion]
             if orig_spell.name != translation.name:
                 print(f'Warning! Original name for spell#{key}:{expansion} differs:\n{__diff_fields(translation.name, orig_spell.name)}')
-            if orig_spell.description != translation.description:
+            if translation.description and orig_spell.description != translation.description:
                 print(f'Warning! Original description for spell#{key}:{expansion} differs:\n{__diff_fields(translation.description, orig_spell.description)}')
-            if orig_spell.aura != translation.aura:
+            if translation.aura and orig_spell.aura != translation.aura:
                 print(f'Warning! Original aura for spell#{key}:{expansion} differs:\n{__diff_fields(translation.aura, orig_spell.aura)}')
             orig_spell.name_ua = translation.name_ua
             orig_spell.description_ua = translation.description_ua
             orig_spell.aura_ua = translation.aura_ua
             orig_spell.name_ua = translation.name_ua
             orig_spell.category = translation.category
+            orig_spell.group = translation.group
+            orig_spell.ref = translation.ref
+            translation.spell_md = orig_spell.spell_md
 
 
 def __validate_template(spell_id: int, value: str, translation: str):
@@ -751,18 +963,18 @@ def __validate_newlines(spell: SpellData):
 
 
 def __validate_existence(spell: SpellData):
-    if spell.name_ua or spell.description_ua or spell.aura_ua:
+    if (spell.name_ua or spell.description_ua or spell.aura_ua) and not spell.ref:
         if spell.name and not spell.name_ua:
             print(f"Warning! There's no translation for spell#{spell.id} name")
         if spell.description and not spell.description_ua:
             print(f"Warning! There's no translation for spell#{spell.id} description")
-        if spell.aura and not spell.aura_ua and (spell.description_ua and not spell.description_ua.startswith("ref=")):
+        if spell.aura and not spell.aura_ua:
             print(f"Warning! There's no translation for spell#{spell.id} aura")
 
 
 def __validate_numbers(spell_id: int, value: str, translation: str):
     import re
-    if set(re.findall(r'\d+(\.\d+)?', value)) != set(re.findall(r'\d+(\.\d+)?', translation)):
+    if set(re.findall(r'\d+', value)) != set(re.findall(r'\d+', translation)):
         print(f"Warning! Numbers don't match for spell spell#{spell_id}")
 
 def __validate_spell_numbers(spell: SpellData):
@@ -772,7 +984,7 @@ def __validate_spell_numbers(spell: SpellData):
         __validate_numbers(spell.id, spell.aura, spell.aura_ua)
 
 def validate_translations(spells: dict[int, dict[str, SpellData]]):
-    for key in spells.keys():
+    for key in sorted(spells.keys()):
         for spell in spells[key].values():
             __validate_templates(spell)
             __validate_newlines(spell)
@@ -835,12 +1047,12 @@ if __name__ == '__main__':
 
 # Warning! Template failed for spell#974
 # Warning! Numbers don't match for spell spell#400735
-# Warning! Numbers don't match for spell spell#407632
+#! Warning! Numbers don't match for spell spell#407632
 # Warning! Numbers don't match for spell spell#408255
-# Warning! Numbers don't match for spell spell#424799
-# Warning! Numbers don't match for spell spell#424800
+#! Warning! Numbers don't match for spell spell#424799
+#! Warning! Numbers don't match for spell spell#424800
 # Warning! Newline count doesn't match for spell#424925 description
-# Warning! Numbers don't match for spell spell#425012
+#! Warning! Numbers don't match for spell spell#425012
 # Warning! Template failed for spell#436516
 # Warning! Newline count doesn't match for spell#436516 description
 # Warning! Template failed for spell#436517
