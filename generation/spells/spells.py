@@ -613,7 +613,7 @@ def __spell_guide_header() -> str:
         instance                            -- ігровимір
         to purge                            -- очистити / вичистити / чистити
         to dispel                           -- розсіяти
-        resistance                          -- супротив (вогню, кризі, ...)
+        resistance                          -- опір (вогню, кризі, ...)
         harmful spell                       -- шкідливе закляття
         beneficial spell                    -- сприятливе закляття
         offensive spells                    -- атакуючі закляття
