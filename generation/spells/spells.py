@@ -934,7 +934,7 @@ def __validate_template(spell_id: int, value: str, translation: str):
     templates = translation[template_start + 1:].split('#')
     for template in templates:
         template = template.replace('.', '\\.')
-        pattern = re.sub(r'{\d+}', r'(\\d+|\\d+\.\\d+|\[.+?\]|\(.+?\))', template).replace('\\\\', '\\')
+        pattern = re.sub(r'{\d+}', r'(\\d+|\\d+\.\\d+|\.\\d+|\[.+?\]|\(.+?\))', template).replace('\\\\', '\\')
         matches = re.findall(pattern, value)
         if len(matches) != 1:
             print(f'Warning! Template failed for spell#{spell_id}')
