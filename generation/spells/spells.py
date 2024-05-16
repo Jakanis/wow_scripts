@@ -921,32 +921,34 @@ def apply_translations_to_data(spell_data: dict[int, dict[str, SpellData]], tran
             translation.spell_md = orig_spell.spell_md
 
 
-def __validate_template(spell_id: int, value: str, translation: str):
+def __validate_template(spell_id: int, expansion:str, value: str, translation: str):
     import re
     translation = re.sub(r'\nspell#\d+', '', translation)
     # translation = re.sub(r'(\[.+?]|\(.+?)', '42', value)
     template_start = translation.find('#')
     if template_start == -1:
         if len(re.findall(r'{\d+}', translation)) != 0:
-            print(f"Warning! Template not described for spell#{spell_id}")
+            print(f"Warning! Template not described for spell#{spell_id}:{expansion}")
         return
-    if len(re.findall(r'{\d+}', translation[:template_start])) != len(re.findall(r'{\d+}', translation[template_start + 1:])):
-        print(f"Warning! Count of templates doesn't match for spell#{spell_id}")
+    translation_templates = re.findall(r'{\d+}', translation[:template_start])
+    orig_templates = re.findall(r'{\d+}', translation[template_start + 1:])
+    if set(translation_templates) != set(orig_templates):
+        print(f"Warning! Templates numbers doesn't match for spell#{spell_id}:{expansion}")
     templates = translation[template_start + 1:].split('#')
     for template in templates:
         template = template.replace('.', '\\.')
         pattern = re.sub(r'{\d+}', r'(\\d+|\\d+\.\\d+|\.\\d+|\[.+?\]|\(.+?\))', template).replace('\\\\', '\\')
         matches = re.findall(pattern, value)
         if len(matches) != 1:
-            print(f'Warning! Template failed for spell#{spell_id}')
+            print(f'Warning! Template failed for spell#{spell_id}:{expansion}')
 
 def __validate_templates(spell: SpellData):
     if spell.name_ua:
-        __validate_template(spell.id, spell.name, spell.name_ua)
+        __validate_template(spell.id, spell.expansion, spell.name, spell.name_ua)
     if spell.description_ua and not spell.description_ua.startswith('ref='):
-        __validate_template(spell.id, spell.description, spell.description_ua)
+        __validate_template(spell.id, spell.expansion, spell.description, spell.description_ua)
     if spell.aura_ua:
-        __validate_template(spell.id, spell.aura, spell.aura_ua)
+        __validate_template(spell.id, spell.expansion, spell.aura, spell.aura_ua)
 
 
 def __validate_newlines(spell: SpellData):
@@ -954,23 +956,23 @@ def __validate_newlines(spell: SpellData):
     if spell.description_ua and not spell.description_ua.startswith('ref='):
         if not f'spell#' in spell.description_ua:
             if re.findall("\n\n", spell.description) != re.findall("\n\n", spell.description_ua):
-                print(f"Warning! Newline count doesn't match for spell#{spell.id} description")
+                print(f"Warning! Newline count doesn't match for spell#{spell.id}:{spell.expansion} description")
         # else:
         #     if len(re.findall("spell#", spell.description_ua)) > 1:
         #         print(f"Warning! Check spell#{spell.id} manually")
     if spell.aura_ua and spell.aura:
         if re.findall("\n\n", spell.aura_ua) != re.findall("\n\n", spell.aura):
-            print(f"Warning! Newline count doesn't match for spell#{spell.id} aura")
+            print(f"Warning! Newline count doesn't match for spell#{spell.id}:{spell.expansion} aura")
 
 
 def __validate_existence(spell: SpellData):
     if (spell.name_ua or spell.description_ua or spell.aura_ua) and not spell.ref:
         if spell.name and not spell.name_ua:
-            print(f"Warning! There's no translation for spell#{spell.id} name")
+            print(f"Warning! There's no translation for spell#{spell.id}:{spell.expansion} name")
         if spell.description and not spell.description_ua:
-            print(f"Warning! There's no translation for spell#{spell.id} description")
+            print(f"Warning! There's no translation for spell#{spell.id}:{spell.expansion} description")
         if spell.aura and not spell.aura_ua:
-            print(f"Warning! There's no translation for spell#{spell.id} aura")
+            print(f"Warning! There's no translation for spell#{spell.id}:{spell.expansion} aura")
 
 
 def __validate_numbers(spell_id: int, value: str, translation: str):
@@ -1046,15 +1048,58 @@ if __name__ == '__main__':
     create_translation_sheet(all_spells)
 
 
-# Warning! Template failed for spell#974
+# Warning! Newline count doesn't match for spell#339:cata description
+# Warning! Template failed for spell#467:cata
+# Warning! Newline count doesn't match for spell#467:cata description
+# Warning! Template failed for spell#974:sod
+# Warning! Newline count doesn't match for spell#1079:cata description
+# Warning! Newline count doesn't match for spell#1454:classic description
+# Warning! Template failed for spell#1822:cata
+# Warning! Newline count doesn't match for spell#1822:cata description
+# Warning! Newline count doesn't match for spell#2782:cata description
+# Warning! Numbers don't match for spell spell#2782
+# Warning! Newline count doesn't match for spell#2912:cata description
+# Warning! Templates numbers doesn't match for spell#5176:cata
+# Warning! Template failed for spell#5176:cata
+# Warning! Newline count doesn't match for spell#5176:cata description
+# Warning! Newline count doesn't match for spell#5185:cata description
+# Warning! Newline count doesn't match for spell#6807:cata description
+# Warning! Newline count doesn't match for spell#8936:cata description
+# Warning! Template failed for spell#10138:classic
+# Warning! Newline count doesn't match for spell#10138:classic description
+# Warning! Template failed for spell#10139:classic
+# Warning! Newline count doesn't match for spell#10139:classic description
+# Warning! Newline count doesn't match for spell#15473:classic description
+# Warning! Newline count doesn't match for spell#16864:classic description
+# Warning! Template failed for spell#16914:wrath
+# Warning! Template failed for spell#16914:wrath
+# Warning! Newline count doesn't match for spell#16914:wrath description
+# Warning! Template failed for spell#16914:cata
+# Warning! Template failed for spell#16914:cata
+# Warning! Newline count doesn't match for spell#16914:cata description
+# Warning! Newline count doesn't match for spell#19028:classic description
+# Warning! Template failed for spell#19506:classic
+# Warning! Newline count doesn't match for spell#20484:wrath description
+# Warning! Template failed for spell#22568:cata
+# Warning! Template failed for spell#22568:cata
+# Warning! Newline count doesn't match for spell#22568:cata description
+# Warning! Templates numbers doesn't match for spell#22842:cata
+# Warning! Template not described for spell#22842:cata
+# Warning! Newline count doesn't match for spell#22842:cata description
+# Warning! Numbers don't match for spell spell#22842
+# Warning! Newline count doesn't match for spell#23922:classic description
+# Warning! Newline count doesn't match for spell#24858:classic description
+# Warning! Newline count doesn't match for spell#29166:cata description
+# Warning! Newline count doesn't match for spell#33763:cata description
+# Warning! Template failed for spell#40120:cata
+# Warning! There's no translation for spell#364001:classic aura
 # Warning! Numbers don't match for spell spell#400735
-#! Warning! Numbers don't match for spell spell#407632
+# Warning! Numbers don't match for spell spell#407632
 # Warning! Numbers don't match for spell spell#408255
-#! Warning! Numbers don't match for spell spell#424799
-#! Warning! Numbers don't match for spell spell#424800
-# Warning! Newline count doesn't match for spell#424925 description
-#! Warning! Numbers don't match for spell spell#425012
-# Warning! Template failed for spell#436516
-# Warning! Newline count doesn't match for spell#436516 description
-# Warning! Template failed for spell#436517
-# Warning! Numbers don't match for spell spell#443635
+# Warning! Numbers don't match for spell spell#424799
+# Warning! Numbers don't match for spell spell#424800
+# Warning! Newline count doesn't match for spell#424925:sod description
+# Warning! Numbers don't match for spell spell#425012
+# Warning! Template failed for spell#436516:sod
+# Warning! Newline count doesn't match for spell#436516:sod description
+# Warning! Template failed for spell#436517:sod
