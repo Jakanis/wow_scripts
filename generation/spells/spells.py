@@ -764,7 +764,9 @@ def convert_translations_to_lua(translations: list[SpellData], category: tuple[s
 
         previous_name = None
         for spell in filter(lambda x: x.group is None, translations):
-            if spells_class != '': # Spell is in spell_{some_group}.lua
+            if spell.id == spell.ref: # Manually set to preserve translation from previous expansion
+                continue
+            if spells_class != '':  # Spell is in spell_{some_group}.lua
                 if spell.name != previous_name:
                     output_file.write(f'-- {spell.name}\n')  # Group
             previous_name = spell.name
@@ -773,6 +775,8 @@ def convert_translations_to_lua(translations: list[SpellData], category: tuple[s
         groups: dict[str, list[SpellData]] = dict()
         grouped_spells = filter(lambda x: x.group is not None, translations)
         for spell in grouped_spells:
+            if spell.id == spell.ref:  # Manually set to preserve translation from previous expansion
+                continue
             groups[spell.group] = groups.get(spell.group, list())
             groups[spell.group].append(spell)
 
