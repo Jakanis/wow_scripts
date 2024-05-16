@@ -92,6 +92,7 @@ class SpellMD:
         4: 'hunter',
         8: 'rogue',
         16: 'priest',
+        32: 'deathknight',
         64: 'shaman',
         128: 'mage',
         256: 'warlock',
