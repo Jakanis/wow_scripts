@@ -833,6 +833,8 @@ def read_translations_sheet() -> dict[int, dict[str, SpellData]]:
             category = row[12] if len(row) > 12 and row[12] != '' else None
             group = row[13] if len(row) > 13 and row[13] != '' else None
             all_translations[spell_id] = all_translations.get(spell_id, dict())
+            if expansion in all_translations[spell_id]:
+                print(f'Warning! Duplicate for {spell_id}:{expansion}')
             all_translations[spell_id][expansion] = SpellData(spell_id, expansion, name=name_en,
                                                               description=description_en, aura=aura_en, name_ua=name_ua,
                                                               description_ua=description_ua, aura_ua=aura_ua, ref=ref,
@@ -864,8 +866,8 @@ def read_classicua_translations(spells_root_path: str, spell_data: dict[int, dic
         decoded_spells = lua.decode(lua_table)
         for spell_id, decoded_spell in decoded_spells.items():
             ref = None
-            if spell_id in all_spells:
-                print(f'Warning! Duplicate for spell#{spell_id}')
+            if spell_id in all_spells and expansion in all_spells[spell_id]:
+                print(f'Warning! Duplicate for spell#{spell_id}:{expansion}')
             if type(decoded_spell) == dict:
                 name_ua = decoded_spell.get(0)
                 description_ua = decoded_spell.get(1)
@@ -940,7 +942,7 @@ def __validate_template(spell_id: int, expansion:str, value: str, translation: s
         print(f"Warning! Templates numbers doesn't match for spell#{spell_id}:{expansion}")
     templates = translation[template_start + 1:].split('#')
     for template in templates:
-        template = template.replace('.', '\\.')
+        template = template.replace('.', '\\.').replace('(', r'\(').replace(')', r'\)')
         pattern = re.sub(r'{\d+}', r'(\\d+|\\d+\.\\d+|\.\\d+|\[.+?\]|\(.+?\))', template).replace('\\\\', '\\')
         matches = re.findall(pattern, value)
         if len(matches) != 1:
@@ -1062,17 +1064,23 @@ if __name__ == '__main__':
 # Warning! Newline count doesn't match for spell#1822:cata description
 # Warning! Newline count doesn't match for spell#2782:cata description
 # Warning! Numbers don't match for spell spell#2782
+# Warning! Template failed for spell#2912:cata
 # Warning! Newline count doesn't match for spell#2912:cata description
-# Warning! Templates numbers doesn't match for spell#5176:cata
+# Warning! Newline count doesn't match for spell#5116:cata aura
 # Warning! Template failed for spell#5176:cata
 # Warning! Newline count doesn't match for spell#5176:cata description
+# Warning! Template failed for spell#5185:cata
 # Warning! Newline count doesn't match for spell#5185:cata description
 # Warning! Newline count doesn't match for spell#6807:cata description
+# Warning! Template failed for spell#8921:cata
+# Warning! Template failed for spell#8936:cata
 # Warning! Newline count doesn't match for spell#8936:cata description
 # Warning! Template failed for spell#10138:classic
 # Warning! Newline count doesn't match for spell#10138:classic description
 # Warning! Template failed for spell#10139:classic
 # Warning! Newline count doesn't match for spell#10139:classic description
+# Warning! Template failed for spell#13795:cata
+# Warning! Template failed for spell#13813:cata
 # Warning! Newline count doesn't match for spell#15473:classic description
 # Warning! Newline count doesn't match for spell#16864:classic description
 # Warning! Template failed for spell#16914:wrath
@@ -1081,6 +1089,8 @@ if __name__ == '__main__':
 # Warning! Template failed for spell#16914:cata
 # Warning! Template failed for spell#16914:cata
 # Warning! Newline count doesn't match for spell#16914:cata description
+# Warning! Template failed for spell#18562:cata
+# Warning! Newline count doesn't match for spell#18562:cata description
 # Warning! Newline count doesn't match for spell#19028:classic description
 # Warning! Template failed for spell#19506:classic
 # Warning! Newline count doesn't match for spell#20484:wrath description
@@ -1096,6 +1106,13 @@ if __name__ == '__main__':
 # Warning! Newline count doesn't match for spell#29166:cata description
 # Warning! Newline count doesn't match for spell#33763:cata description
 # Warning! Template failed for spell#40120:cata
+# Warning! Newline count doesn't match for spell#48438:cata description
+# Warning! Template failed for spell#48505:cata
+# Warning! Template failed for spell#50464:cata
+# Warning! Numbers don't match for spell spell#54811
+# Warning! Numbers don't match for spell spell#62970
+# Warning! Template failed for spell#78674:cata
+# Warning! Template failed for spell#82945:cata
 # Warning! There's no translation for spell#364001:classic aura
 # Warning! Numbers don't match for spell spell#400735
 # Warning! Numbers don't match for spell spell#407632
