@@ -1,0 +1,76 @@
+Warning! Spell#16858:tbc doesn't exist in one of translations
+Warning! Spell#16859:tbc doesn't exist in one of translations
+Warning! Spell#22812:cata doesn't exist in one of translations
+Warning! Spell#33872:cata doesn't exist in one of translations
+Warning! Spell#33873:cata doesn't exist in one of translations
+Warning! Spell#34506:cata doesn't exist in one of translations
+Warning! Newline count doesn't match for spell#339:cata description
+Warning! Template failed for spell#467:cata
+Warning! Newline count doesn't match for spell#467:cata description
+Warning! Template failed for spell#974:sod
+Warning! Newline count doesn't match for spell#1079:cata description
+Warning! Newline count doesn't match for spell#1454:classic description
+Warning! Template failed for spell#1822:cata
+Warning! Newline count doesn't match for spell#1822:cata description
+Warning! Newline count doesn't match for spell#2782:cata description
+Warning! Numbers don't match for spell spell#2782
+Warning! Template failed for spell#2912:cata
+Warning! Newline count doesn't match for spell#2912:cata description
+Warning! Newline count doesn't match for spell#5116:cata aura
+Warning! Template failed for spell#5176:cata
+Warning! Newline count doesn't match for spell#5176:cata description
+Warning! Template failed for spell#5185:cata
+Warning! Newline count doesn't match for spell#5185:cata description
+Warning! Newline count doesn't match for spell#6807:cata description
+Warning! Template failed for spell#8921:cata
+Warning! Template failed for spell#8936:cata
+Warning! Newline count doesn't match for spell#8936:cata description
+Warning! Template failed for spell#10138:classic
+Warning! Newline count doesn't match for spell#10138:classic description
+Warning! Template failed for spell#10139:classic
+Warning! Newline count doesn't match for spell#10139:classic description
+Warning! Template failed for spell#13795:cata
+Warning! Template failed for spell#13813:cata
+Warning! Newline count doesn't match for spell#15473:classic description
+Warning! Newline count doesn't match for spell#16864:classic description
+Warning! Template failed for spell#16914:wrath
+Warning! Template failed for spell#16914:wrath
+Warning! Newline count doesn't match for spell#16914:wrath description
+Warning! Template failed for spell#16914:cata
+Warning! Template failed for spell#16914:cata
+Warning! Newline count doesn't match for spell#16914:cata description
+Warning! Template failed for spell#18562:cata
+Warning! Newline count doesn't match for spell#18562:cata description
+Warning! Newline count doesn't match for spell#19028:classic description
+Warning! Template failed for spell#19506:classic
+Warning! Newline count doesn't match for spell#20484:wrath description
+Warning! Template failed for spell#22568:cata
+Warning! Template failed for spell#22568:cata
+Warning! Newline count doesn't match for spell#22568:cata description
+Warning! Templates numbers doesn't match for spell#22842:cata
+Warning! Template not described for spell#22842:cata
+Warning! Newline count doesn't match for spell#22842:cata description
+Warning! Numbers don't match for spell spell#22842
+Warning! Newline count doesn't match for spell#23922:classic description
+Warning! Newline count doesn't match for spell#24858:classic description
+Warning! Newline count doesn't match for spell#29166:cata description
+Warning! Newline count doesn't match for spell#33763:cata description
+Warning! Template failed for spell#40120:cata
+Warning! Newline count doesn't match for spell#48438:cata description
+Warning! Template failed for spell#48505:cata
+Warning! Template failed for spell#50464:cata
+Warning! Numbers don't match for spell spell#54811
+Warning! Numbers don't match for spell spell#62970
+Warning! Template failed for spell#78674:cata
+Warning! Template failed for spell#82945:cata
+Warning! There's no translation for spell#364001:classic aura
+Warning! Numbers don't match for spell spell#400735
+Warning! Numbers don't match for spell spell#407632
+Warning! Numbers don't match for spell spell#408255
+Warning! Numbers don't match for spell spell#424799
+Warning! Numbers don't match for spell spell#424800
+Warning! Newline count doesn't match for spell#424925:sod description
+Warning! Numbers don't match for spell spell#425012
+Warning! Template failed for spell#436516:sod
+Warning! Newline count doesn't match for spell#436516:sod description
+Warning! Template failed for spell#436517:sod

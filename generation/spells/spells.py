@@ -483,9 +483,10 @@ def create_translation_sheet(spells: dict[int, dict[str, SpellData]]):
     with open(f'translate_this.tsv', mode='w', encoding='utf-8') as f:
         f.write('ID\tName(EN)\tName(UA)\tDescription(EN)\tDescription(UA)\tAura(EN)\tAura(UA)\tref\tname_ref\tdesc_ref\taura_ref\texpansion\tcategory\tgroup\n')
         for key in sorted(spells.keys()):
-            for expansion, spell in spells[key].items():
+            for expansion, spell in list(spells[key].items())[-1:]:
                 # if getattr(spell.spell_md, 'chrclass') == 1 and spell.expansion == SOD and spell.name_ua is None:
-                if spell.expansion != SOD and (spell.name_ua or spell.ref):
+                # if spell.expansion != SOD and (spell.name_ua or spell.ref):
+                if spell.id in [82731, 80353, 1459, 413841, 42955, 92315, 133, 2120, 33691, 116, 2948, 2136, 55342, 10, 82676, 30451, 6117, 30482, 49361, 5143, 2139, 45438, 84669, 543, 44614, 84668, 84671, 11417, 53142, 122, 30449, 118, 1463, 43987, 120, 30455, 12051, 7302, 49360, 413843, 71757, 35717, 1449, 11418, 49359, 32267, 475, 61316, 66, 11419, 61305, 88345, 11420, 28271, 33690, 130, 3567, 28272, 61721, 79684, 32271, 1953, 10059, 61780, 35715, 88148, 11416, 82691, 83619, 759, 32272, 88346, 3561, 49358, 53140, 88342, 32266, 3563, 3565, 3566, 88344, 3562]:
                     fields = [spell.id, spell.name, spell.name_ua, spell.description, spell.description_ua, spell.aura,
                               spell.aura_ua, spell.ref, spell.name_ref, spell.description_ref, spell.aura_ref, spell.expansion, spell.category, spell.group]
                     f.write(f'{'\t'.join(map(lambda x: __to_tsv_val(x), fields))}\n')
@@ -993,6 +994,7 @@ def __validate_spell_numbers(spell: SpellData):
         __validate_numbers(spell.id, spell.aura, spell.aura_ua)
 
 def validate_translations(spells: dict[int, dict[str, SpellData]]):
+    print("Validating...")
     for key in sorted(spells.keys()):
         for spell in spells[key].values():
             __validate_templates(spell)
@@ -1005,11 +1007,11 @@ def validate_translations(spells: dict[int, dict[str, SpellData]]):
 
 
 def compare_tsv_and_classicua(tsv_translations, classicua_translations):
-    for key in tsv_translations.keys() - classicua_translations.keys():
+    for key in sorted(tsv_translations.keys() - classicua_translations.keys()):
         print(f"Warning! Spell#{key} doesn't exist in ClassicUA")
-    for key in classicua_translations.keys() - tsv_translations.keys():
+    for key in sorted(classicua_translations.keys() - tsv_translations.keys()):
         print(f"Warning! Spell#{key} doesn't exist in TSV")
-    for key in tsv_translations.keys() & classicua_translations.keys():
+    for key in sorted(tsv_translations.keys() & classicua_translations.keys()):
         for expansion in tsv_translations[key].keys() ^ classicua_translations[key].keys():
             print(f"Warning! Spell#{key}:{expansion} doesn't exist in one of translations")
         for expansion in tsv_translations[key].keys() & classicua_translations[key].keys():
@@ -1052,75 +1054,3 @@ if __name__ == '__main__':
     convert_translations_to_entries(tsv_translations)
 
     create_translation_sheet(all_spells)
-
-
-# Warning! Newline count doesn't match for spell#339:cata description
-# Warning! Template failed for spell#467:cata
-# Warning! Newline count doesn't match for spell#467:cata description
-# Warning! Template failed for spell#974:sod
-# Warning! Newline count doesn't match for spell#1079:cata description
-# Warning! Newline count doesn't match for spell#1454:classic description
-# Warning! Template failed for spell#1822:cata
-# Warning! Newline count doesn't match for spell#1822:cata description
-# Warning! Newline count doesn't match for spell#2782:cata description
-# Warning! Numbers don't match for spell spell#2782
-# Warning! Template failed for spell#2912:cata
-# Warning! Newline count doesn't match for spell#2912:cata description
-# Warning! Newline count doesn't match for spell#5116:cata aura
-# Warning! Template failed for spell#5176:cata
-# Warning! Newline count doesn't match for spell#5176:cata description
-# Warning! Template failed for spell#5185:cata
-# Warning! Newline count doesn't match for spell#5185:cata description
-# Warning! Newline count doesn't match for spell#6807:cata description
-# Warning! Template failed for spell#8921:cata
-# Warning! Template failed for spell#8936:cata
-# Warning! Newline count doesn't match for spell#8936:cata description
-# Warning! Template failed for spell#10138:classic
-# Warning! Newline count doesn't match for spell#10138:classic description
-# Warning! Template failed for spell#10139:classic
-# Warning! Newline count doesn't match for spell#10139:classic description
-# Warning! Template failed for spell#13795:cata
-# Warning! Template failed for spell#13813:cata
-# Warning! Newline count doesn't match for spell#15473:classic description
-# Warning! Newline count doesn't match for spell#16864:classic description
-# Warning! Template failed for spell#16914:wrath
-# Warning! Template failed for spell#16914:wrath
-# Warning! Newline count doesn't match for spell#16914:wrath description
-# Warning! Template failed for spell#16914:cata
-# Warning! Template failed for spell#16914:cata
-# Warning! Newline count doesn't match for spell#16914:cata description
-# Warning! Template failed for spell#18562:cata
-# Warning! Newline count doesn't match for spell#18562:cata description
-# Warning! Newline count doesn't match for spell#19028:classic description
-# Warning! Template failed for spell#19506:classic
-# Warning! Newline count doesn't match for spell#20484:wrath description
-# Warning! Template failed for spell#22568:cata
-# Warning! Template failed for spell#22568:cata
-# Warning! Newline count doesn't match for spell#22568:cata description
-# Warning! Templates numbers doesn't match for spell#22842:cata
-# Warning! Template not described for spell#22842:cata
-# Warning! Newline count doesn't match for spell#22842:cata description
-# Warning! Numbers don't match for spell spell#22842
-# Warning! Newline count doesn't match for spell#23922:classic description
-# Warning! Newline count doesn't match for spell#24858:classic description
-# Warning! Newline count doesn't match for spell#29166:cata description
-# Warning! Newline count doesn't match for spell#33763:cata description
-# Warning! Template failed for spell#40120:cata
-# Warning! Newline count doesn't match for spell#48438:cata description
-# Warning! Template failed for spell#48505:cata
-# Warning! Template failed for spell#50464:cata
-# Warning! Numbers don't match for spell spell#54811
-# Warning! Numbers don't match for spell spell#62970
-# Warning! Template failed for spell#78674:cata
-# Warning! Template failed for spell#82945:cata
-# Warning! There's no translation for spell#364001:classic aura
-# Warning! Numbers don't match for spell spell#400735
-# Warning! Numbers don't match for spell spell#407632
-# Warning! Numbers don't match for spell spell#408255
-# Warning! Numbers don't match for spell spell#424799
-# Warning! Numbers don't match for spell spell#424800
-# Warning! Newline count doesn't match for spell#424925:sod description
-# Warning! Numbers don't match for spell spell#425012
-# Warning! Template failed for spell#436516:sod
-# Warning! Newline count doesn't match for spell#436516:sod description
-# Warning! Template failed for spell#436517:sod
