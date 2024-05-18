@@ -7,6 +7,7 @@ from bs4 import BeautifulSoup
 CLASSIC = 'classic'
 TBC = 'tbc'
 WRATH = 'wrath'
+CATA = 'cata'
 WOWHEAD_URL = 'wowhead_url'
 METADATA_CACHE = 'metadata_cache'
 HTML_CACHE = 'html_cache'
@@ -46,6 +47,14 @@ expansion_data = {
         METADATA_CACHE: 'wowhead_wrath_metadata_cache',
         HTML_CACHE: 'wowhead_wrath_npc_html',
         NPC_CACHE: 'wowhead_wrath_npc_cache',
+        METADATA_FILTERS: ('', '', ''),
+        IGNORES: []
+    },
+    CATA: {
+        WOWHEAD_URL: 'https://www.wowhead.com/cata',
+        METADATA_CACHE: 'wowhead_cata_metadata_cache',
+        HTML_CACHE: 'wowhead_cata_npc_html',
+        NPC_CACHE: 'wowhead_cata_npc_cache',
         METADATA_FILTERS: ('', '', ''),
         IGNORES: []
     }
@@ -313,11 +322,14 @@ def populate_cache_db_with_npc_data():
     wowhead_metadata_sod = get_wowhead_npc_metadata(SOD)
     wowhead_metadata_tbc = get_wowhead_npc_metadata(TBC)
     wowhead_metadata_wrath = get_wowhead_npc_metadata(WRATH)
+    wowhead_metadata_cata = get_wowhead_npc_metadata(CATA)
 
     print('Merging with TBC')
     classic_and_tbc_npcs = merge_expansions({**wowhead_metadata_classic, **wowhead_metadata_sod}, wowhead_metadata_tbc)
     print('Merging with WotLK')
-    all_npcs = merge_expansions(classic_and_tbc_npcs, wowhead_metadata_wrath)
+    classic_tbc_wrath_npcs = merge_expansions(classic_and_tbc_npcs, wowhead_metadata_wrath)
+    print('Merging with Cata')
+    all_npcs = merge_expansions(classic_tbc_wrath_npcs, wowhead_metadata_cata)
 
     fix_npc_data(all_npcs)
 
@@ -326,6 +338,7 @@ def populate_cache_db_with_npc_data():
     translations[SOD] = load_npc_lua('input/entries/sod/npc.lua')
     translations[TBC] = load_npc_lua('input/entries/tbc/npc.lua')
     translations[WRATH] = load_npc_lua('input/entries/wrath/npc.lua')
+    translations[CATA] = load_npc_lua('input/entries/cata/npc.lua')
 
     for key in all_npcs.keys():
         for expansion in all_npcs[key].keys():
