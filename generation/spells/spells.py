@@ -281,7 +281,7 @@ def save_htmls_from_wowhead(expansion, ids: set[int], render: bool, force: set[i
         print(f"There's some redundant IDs: {redundant_ids}")
 
     save_page = save_page_calc if render else save_page_raw
-    threads = THREADS // 2 if render else THREADS * 2
+    threads = THREADS // 4 if render else THREADS * 2
     # for id in ids:
     #     save_page(expansion, id)
     save_func = partial(save_page, expansion)
@@ -971,15 +971,13 @@ def __validate_newlines(spell: SpellData):
         if re.findall("\n\n", spell.aura_ua) != re.findall("\n\n", spell.aura):
             print(f"Warning! Newline count doesn't match for spell#{spell.id}:{spell.expansion} aura")
 
-
-def __validate_existence(spell: SpellData):
-    if (spell.name_ua or spell.description_ua or spell.aura_ua) and not spell.ref:
-        if spell.name and not spell.name_ua:
-            print(f"Warning! There's no translation for spell#{spell.id}:{spell.expansion} name")
-        if spell.description and not spell.description_ua:
-            print(f"Warning! There's no translation for spell#{spell.id}:{spell.expansion} description")
-        if spell.aura and not spell.aura_ua:
-            print(f"Warning! There's no translation for spell#{spell.id}:{spell.expansion} aura")
+def __validate_translation_completion(spell: SpellData):
+    if spell.name and not spell.name_ua:
+        print(f"Warning! There's no translation for spell#{spell.id}:{spell.expansion} name")
+    if spell.description and not spell.description_ua:
+        print(f"Warning! There's no translation for spell#{spell.id}:{spell.expansion} description")
+    if spell.aura and not spell.aura_ua:
+        print(f"Warning! There's no translation for spell#{spell.id}:{spell.expansion} aura")
 
 
 def __validate_numbers(spell_id: int, value: str, translation: str):
@@ -993,17 +991,25 @@ def __validate_spell_numbers(spell: SpellData):
     if spell.aura_ua and spell.aura and not '#' in spell.aura_ua:
         __validate_numbers(spell.id, spell.aura, spell.aura_ua)
 
+def __validate_references(spells: dict[int, dict[str, SpellData]], spell: SpellData):
+    if spell.ref:
+        reffed_spells = spells[spell.ref]
+        if len(reffed_spells) == 0:
+            print(f'Warning! Non-existent ref#{spell.ref} for spell#{spell.id}')
+        __validate_numbers(spell.id, spell.description, spell.description_ua)
+    if spell.aura_ua and spell.aura and not '#' in spell.aura_ua:
+        __validate_numbers(spell.id, spell.aura, spell.aura_ua)
+
 def validate_translations(spells: dict[int, dict[str, SpellData]]):
     print("Validating...")
     for key in sorted(spells.keys()):
         for spell in spells[key].values():
             __validate_templates(spell)
             __validate_newlines(spell)
-            __validate_existence(spell)
+            if not spell.ref:
+                __validate_translation_completion(spell)
             __validate_spell_numbers(spell)
-    # check templates
-    ## warning - No templates for raw values
-    # check references
+            # __validate_references(spells, spell)
 
 
 def compare_tsv_and_classicua(tsv_translations, classicua_translations):
