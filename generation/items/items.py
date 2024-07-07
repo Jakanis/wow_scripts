@@ -9,6 +9,7 @@ CLASSIC = 'classic'
 SOD = 'sod'
 TBC = 'tbc'
 WRATH = 'wrath'
+CATA = 'cata'
 WOWHEAD_URL = 'wowhead_url'
 METADATA_CACHE = 'metadata_cache'
 XML_CACHE = 'html_cache'
@@ -51,6 +52,15 @@ expansion_data = {
         METADATA_CACHE: 'wowhead_wrath_metadata_cache',
         XML_CACHE: 'wowhead_wrath_item_xml',
         ITEM_CACHE: 'wowhead_wrath_item_cache',
+        METADATA_FILTERS: ('', '', ''),
+        IGNORES: [],
+    },
+    CATA: {
+        INDEX: 3,
+        WOWHEAD_URL: 'https://www.wowhead.com/cata',
+        METADATA_CACHE: 'wowhead_cata_metadata_cache',
+        XML_CACHE: 'wowhead_cata_item_xml',
+        ITEM_CACHE: 'wowhead_cata_item_cache',
         METADATA_FILTERS: ('', '', ''),
         IGNORES: []
     }
@@ -101,7 +111,7 @@ class ItemEffect:
 
 
 class ItemData:
-    def __init__(self, id, expansion, name: str = None, effects: list[ItemEffect] = [], readable=None, random_enchantment=False, name_ua=None, effects_ua: list[ItemEffect]=None, ref=None):
+    def __init__(self, id, expansion, name: str = None, effects: list[ItemEffect] = [], readable=None, random_enchantment=False, name_ua=None, effects_ua: list[ItemEffect]=None, ref=None, raw_effects = None):
         self.id = id
         self.name = name
         self.expansion = expansion
@@ -111,6 +121,7 @@ class ItemData:
         self.name_ua = name_ua
         self.effects_ua = effects_ua
         self.ref = ref
+        self.raw_effects = raw_effects
 
 
 def __get_wowhead_item_search(expansion, start, end=None) -> list[ItemMD]:
@@ -401,6 +412,43 @@ def save_items_to_db(items: dict[int, dict[str, ItemData]]):
                             (item.id, item.expansion, item.name, item.name_ua, item_effects, item_effects_ua, item.random_enchantment, item.readable))
 
 
+def __merge_effects(effect1: ItemEffect, effect2: ItemEffect):
+    pass
+
+
+def __merge_item_effects(old_item: ItemData, new_item: ItemData):
+    from collections import defaultdict
+    from functools import cmp_to_key
+    # old_item.raw_effects = old_item.effects
+    # new_item.raw_effects = new_item.effects
+    if len(old_item.effects) != len(new_item.effects):
+        return
+
+    old_item_effects_by_type = defaultdict(list)
+    new_item_effects_by_type = defaultdict(list)
+    for effect in old_item.effects:
+        old_item_effects_by_type[effect.effect_type].append(effect)
+    for effect in new_item.effects:
+        new_item_effects_by_type[effect.effect_type].append(effect)
+
+    for effect_type in old_item_effects_by_type.keys() & new_item_effects_by_type.keys():
+        old_effects_group = old_item_effects_by_type[effect_type]
+        new_effects_group = new_item_effects_by_type[effect_type]
+        if len(old_effects_group) != len(new_effects_group):
+            continue
+        for i in range(len(old_effects_group)):
+            old_effect = old_effects_group[i]
+            new_effect = new_effects_group[i]
+            if old_effect.effect_id and new_effect.effect_id and old_effect.effect_id == new_effect.effect_id and old_effect.effect_text != new_effect.effect_text:
+                old_effect.effect_text = None
+                new_effect.effect_text = None
+            if old_effect.effect_id != new_effect.effect_id and old_effect.effect_text == new_effect.effect_text:
+                old_effect.effect_id = None
+                new_effect.effect_id = None
+    old_item.effects = sorted(old_item.effects, key=cmp_to_key(lambda x, y: EFFECT_TYPES.index(x.get_type()) - EFFECT_TYPES.index(y.get_type())))
+    new_item.effects = sorted(new_item.effects, key=cmp_to_key(lambda x, y: EFFECT_TYPES.index(x.get_type()) - EFFECT_TYPES.index(y.get_type())))
+
+
 def merge_item(id: int, old_items: dict[str, ItemData], new_item: ItemData) -> dict[str, ItemData]:
     import re
     if len(old_items) > 1:
@@ -411,10 +459,31 @@ def merge_item(id: int, old_items: dict[str, ItemData], new_item: ItemData) -> d
     if len(old_items) == 1:
         old_item = next(iter(old_items.values()))
 
-        if old_item.name != new_item.name or '\n'.join([str(effect) for effect in old_item.effects]) != '\n'.join([str(effect) for effect in new_item.effects]):
+        # all effects' full_strs are equal - return old_items
+        # else - merge_item_effects:
+        # sort effects
+        # for each effect:
+        #   if both GOT same spell id - delete text for both
+        #   if both GOT same text - delete spell id for both
+        #   ignore rune_spell_id?
+        # if full_strs equal - return only one item
+        # if full_strs diffed - return both items
+        # test data: item#833classic/wrath (different order), item#728(classic/tbc) (same text, different spell), item#159/862/867/868/875/943 (same spell, different text)
+        #
+        # if name differs - merge their effects and return both
+
+        __merge_item_effects(old_item, new_item)
+        if old_item.name != new_item.name:
+            return {**old_items, **{new_item.expansion: new_item}}
+        elif '\n'.join([str(effect) for effect in old_item.effects]) != '\n'.join([str(effect) for effect in new_item.effects]):
             return {**old_items, **{new_item.expansion: new_item}}
         else:
             return old_items
+
+        # if old_item.name != new_item.name or '\n'.join([str(effect) for effect in old_item.effects]) != '\n'.join([str(effect) for effect in new_item.effects]):
+        #     return {**old_items, **{new_item.expansion: new_item}}
+        # else:
+        #     return old_items
     else:
         print(f'Skip: Item #{id} instance number unexpected')
 
@@ -801,21 +870,22 @@ def __validate_item(item: ItemData):
     ua_effects = list(filter(lambda x: x.get_type() in ['Use', 'Equip', 'Hit', 'Flavor'], sorted(item.effects_ua, key=cmp_to_key(lambda x, y: EFFECT_TYPES.index(x.get_type()) - EFFECT_TYPES.index(y.get_type())))))
     if len(orig_effects) != len(ua_effects):
         print(f"Warning! Effects count doesn't match for item#{item.id}:{item.expansion}")
-    else:
-        for i in range(len(orig_effects)):
-            ua_effect = ua_effects[i]
-            orig_effect = orig_effects[i]
-
-            if (ua_effect.get_type() != orig_effect.get_type()
-                    and item.id not in [203992, 206384, 216738, 216740, 216744, 216745, 216746, 216747, 216748, 216764, 216767, 216768, 216769, 216770, 216771, 221978, 223163]):
-                print(f'Warning! Effect type differs for item#{item.id}:{item.expansion}[{i}]')
-            if ua_effect.effect_text:
-                if '#' in ua_effect.effect_text:
-                    __validate_template(orig_effect, ua_effect)
-                else:
-                    if (set(re.findall(r'\d+', orig_effect.effect_text)) != set(re.findall(r'\d+', ua_effect.effect_text))
-                            and item.id not in [744, 10725, 11808, 11819, 12794, 19883, 203784, 203785, 203786, 203787, 204688, 204689, 204690, 207106, 207107, 207108, 207109, 208035, 208036, 208037, 208038, 208213, 208215, 208218, 208219, 208601, 208602, 208603, 208604, 213701, 213709, 215461, 221307]):
-                        print(f"Warning! Numbers don't match for item#{item.id}:{item.expansion}[{i}]")
+    # TODO: return validations
+    # else:
+    #     for i in range(len(orig_effects)):
+    #         ua_effect = ua_effects[i]
+    #         orig_effect = orig_effects[i]
+    #
+    #         if (ua_effect.get_type() != orig_effect.get_type()
+    #                 and item.id not in [203992, 206384, 216738, 216740, 216744, 216745, 216746, 216747, 216748, 216764, 216767, 216768, 216769, 216770, 216771, 221978, 223163]):
+    #             print(f'Warning! Effect type differs for item#{item.id}:{item.expansion}[{i}]')
+    #         if ua_effect.effect_text:
+    #             if '#' in ua_effect.effect_text:
+    #                 __validate_template(orig_effect, ua_effect)
+    #             else:
+    #                 if (set(re.findall(r'\d+', orig_effect.effect_text)) != set(re.findall(r'\d+', ua_effect.effect_text))
+    #                         and item.id not in [744, 10725, 11808, 11819, 12794, 19883, 203784, 203785, 203786, 203787, 204688, 204689, 204690, 207106, 207107, 207108, 207109, 208035, 208036, 208037, 208038, 208213, 208215, 208218, 208219, 208601, 208602, 208603, 208604, 213701, 213709, 215461, 221307]):
+    #                     print(f"Warning! Numbers don't match for item#{item.id}:{item.expansion}[{i}]")
 
 
 
