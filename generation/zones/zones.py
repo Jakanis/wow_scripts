@@ -708,6 +708,26 @@ def save_translations_to_glossary(translated_zones: dict[str, str], glossary_zon
         out_file.writelines('\n'.join(glossary_import_lines))
 
 
+def generate_translation_csv(merged_zones: dict[str, Zone]):
+    import csv
+
+    feedback_zone_names = set()
+    with open('feedback_zones.tsv', 'r', encoding="utf-8") as input_file:
+        reader = csv.reader(input_file, delimiter="\t")
+        for row in reader:
+            feedback_zone_names.add(row[0])
+
+    result_lines = list()
+    result_lines.append('ID\tName(en)\tName (ua)\tParent zone\texpansion\tcategory\tsource')
+    for zone_name in merged_zones.keys() & feedback_zone_names:
+        zone = merged_zones[zone_name]
+        if zone.translation is None:
+            result_lines.append(f'{zone.id}\t{zone_name}\t{zone.translation}\t{zone.parent_zone}\t{zone.expansion}\t{zone.category}\t{zone.source}')
+
+    with open('translate_this.csv', 'w', encoding="utf-8") as out_file:
+        out_file.writelines('\n'.join(result_lines))
+
+
 if __name__ == '__main__':
     # save_warcraftdb_zone_page(5502)
     # test_zone = parse_warcraftdb_zone_page('5502.html')
@@ -736,4 +756,8 @@ if __name__ == '__main__':
     merged_zones = merge_zones(wowhead_zones, wowdb_zones, classicdb_zones, evowow_zones, warcraftdb_zones, merged_translations)
     save_zones_to_db(merged_zones)
 
+    generate_translation_csv(merged_zones)
+
     save_translations_to_glossary(translated_zones, glossary_zones, merged_zones)
+
+    generate_translation_csv(merged_zones)
