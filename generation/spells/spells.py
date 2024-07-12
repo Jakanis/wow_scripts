@@ -281,7 +281,7 @@ def save_htmls_from_wowhead(expansion, ids: set[int], render: bool, force: set[i
         print(f"There's some redundant IDs: {redundant_ids}")
 
     save_page = save_page_calc if render else save_page_raw
-    threads = THREADS // 4 if render else THREADS * 2
+    threads = THREADS // 2 if render else THREADS * 2
     # for id in ids:
     #     save_page(expansion, id)
     save_func = partial(save_page, expansion)
@@ -908,7 +908,7 @@ def __diff_fields(field1, field2):
     return '\n'.join(diff)
 
 def apply_translations_to_data(spell_data: dict[int, dict[str, SpellData]], translations: dict[int, dict[str, SpellData]]):
-    for key in spell_data.keys() & translations.keys():
+    for key in sorted(spell_data.keys() & translations.keys()):
         for expansion in spell_data[key].keys() & translations[key].keys():
             orig_spell = spell_data[key][expansion]
             translation = translations[key][expansion]
@@ -1006,10 +1006,12 @@ def validate_translations(spells: dict[int, dict[str, SpellData]]):
         for spell in spells[key].values():
             __validate_templates(spell)
             __validate_newlines(spell)
-            if not spell.ref:
+            if (spell.name_ua or spell.description_ua or spell.aura_ua) and not spell.ref:
                 __validate_translation_completion(spell)
             __validate_spell_numbers(spell)
             # __validate_references(spells, spell)
+
+    # check if spell was updated in next expansion but has no translation
 
 
 def compare_tsv_and_classicua(tsv_translations, classicua_translations):
