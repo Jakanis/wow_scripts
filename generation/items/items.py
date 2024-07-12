@@ -94,7 +94,7 @@ class ItemEffect:
         res += f'#{self.effect_id}' if self.effect_id else ''
         if self.effect_type == 'Item':
             return res
-        res += f': {self.effect_text}' if self.effect_text else ':'
+        res += f': {self.effect_text}' if self.effect_text else ''
         res += f'#{self.rune_spell_id}' if self.rune_spell_id else ''
         return res
 
@@ -111,7 +111,7 @@ class ItemEffect:
 
 
 class ItemData:
-    def __init__(self, id, expansion, name: str = None, effects: list[ItemEffect] = [], readable=None, random_enchantment=False, name_ua=None, effects_ua: list[ItemEffect]=None, ref=None, raw_effects = None):
+    def __init__(self, id, expansion, name: str = None, effects: list[ItemEffect] = [], readable=None, random_enchantment=False, name_ua=None, effects_ua: list[ItemEffect]=None, ref=None, raw_effects=None):
         self.id = id
         self.name = name
         self.expansion = expansion
@@ -390,7 +390,8 @@ def save_items_to_db(items: dict[int, dict[str, ItemData]]):
                         effects TEXT,
                         effects_ua TEXT,
                         random_enchantment BOOL,
-                        readable BOOL
+                        readable BOOL,
+                        raw_effects TEXT
                 )''')
     conn.commit()
     with (conn):
@@ -402,34 +403,33 @@ def save_items_to_db(items: dict[int, dict[str, ItemData]]):
                     '(old)' in item.name or
                     '(old2)' in item.name or
                     'QATest' in item.name or
+                    'DEBUG' in item.name or
+                    '(DND)' in item.name or
+                    'QAEnchant' in item.name or
                     key in expansion_data[item.expansion][IGNORES]):
                         continue
                 item_effects = '\n'.join(map(lambda x: str(x), item.effects)) if item.effects else None
                 item_effects_ua = '\n'.join(map(lambda x: str(x), item.effects_ua)) if item.effects_ua else None
                 if item_effects_ua is None and item.ref:
                     item_effects_ua = f"ref={item.ref}"
-                conn.execute('INSERT INTO items(id, expansion, name, name_ua, effects, effects_ua, random_enchantment, readable) VALUES(?, ?, ?, ?, ?, ?, ?, ?)',
-                            (item.id, item.expansion, item.name, item.name_ua, item_effects, item_effects_ua, item.random_enchantment, item.readable))
-
-
-def __merge_effects(effect1: ItemEffect, effect2: ItemEffect):
-    pass
+                conn.execute('INSERT INTO items(id, expansion, name, name_ua, effects, effects_ua, random_enchantment, readable, raw_effects) VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?)',
+                            (item.id, item.expansion, item.name, item.name_ua, item_effects, item_effects_ua, item.random_enchantment, item.readable, item.raw_effects))
 
 
 def __merge_item_effects(old_item: ItemData, new_item: ItemData):
     from collections import defaultdict
     from functools import cmp_to_key
-    # old_item.raw_effects = old_item.effects
-    # new_item.raw_effects = new_item.effects
+    old_item.raw_effects = '\n'.join(map(lambda x: str(x), sorted(old_item.effects, key=cmp_to_key(lambda x, y: EFFECT_TYPES.index(x.get_type()) - EFFECT_TYPES.index(y.get_type()))))) if old_item.raw_effects is None else old_item.raw_effects
+    new_item.raw_effects = '\n'.join(map(lambda x: str(x), sorted(new_item.effects, key=cmp_to_key(lambda x, y: EFFECT_TYPES.index(x.get_type()) - EFFECT_TYPES.index(y.get_type()))))) if new_item.raw_effects is None else new_item.raw_effects
     if len(old_item.effects) != len(new_item.effects):
         return
 
     old_item_effects_by_type = defaultdict(list)
     new_item_effects_by_type = defaultdict(list)
     for effect in old_item.effects:
-        old_item_effects_by_type[effect.effect_type].append(effect)
+        old_item_effects_by_type[effect.get_type()].append(effect)
     for effect in new_item.effects:
-        new_item_effects_by_type[effect.effect_type].append(effect)
+        new_item_effects_by_type[effect.get_type()].append(effect)
 
     for effect_type in old_item_effects_by_type.keys() & new_item_effects_by_type.keys():
         old_effects_group = old_item_effects_by_type[effect_type]
@@ -896,6 +896,7 @@ def validate_translations(items: dict[int, dict[str, ItemData]]):
     # check templates
     ## warning - No templates for raw values
     # check references
+    # check if item was updated in next expansion but has no translation
 
 
 if __name__ == '__main__':
