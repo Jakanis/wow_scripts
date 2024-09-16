@@ -3,6 +3,7 @@ import os
 
 import requests
 from bs4 import BeautifulSoup, CData
+from generation.spells.spells import load_spells_from_db
 
 THREADS = 16
 CLASSIC = 'classic'
@@ -95,7 +96,7 @@ class ItemEffect:
         if self.effect_type == 'Item':
             return res
         res += f': {self.effect_text}' if self.effect_text else ''
-        res += f'#{self.rune_spell_id}' if self.rune_spell_id else ''
+        res += f':#{self.rune_spell_id}' if self.rune_spell_id else ''
         return res
 
     def short_str(self):
@@ -106,7 +107,7 @@ class ItemEffect:
             return res + f'#{self.effect_id}'
         res += f'#{self.effect_id}' if self.effect_text is None and self.effect_id else ''
         res += f': {self.effect_text}' if self.effect_text else ''
-        res += f'#{self.rune_spell_id}' if self.rune_spell_id else ''
+        res += f':#{self.rune_spell_id}' if self.rune_spell_id else ''
         return res
 
 
@@ -406,6 +407,9 @@ def save_items_to_db(items: dict[int, dict[str, ItemData]]):
                     'DEBUG' in item.name or
                     '(DND)' in item.name or
                     'QAEnchant' in item.name or
+                    'TEST' in item.name or
+                    'UNUSED' in item.name or
+                    item.name.startswith('Monster - ') or
                     key in expansion_data[item.expansion][IGNORES]):
                         continue
                 item_effects = '\n'.join(map(lambda x: str(x), item.effects)) if item.effects else None
@@ -664,7 +668,7 @@ def create_translation_sheet(items: dict[int, dict[str, ItemData]]):
         f.write('ID\tName(EN)\tName(UA)\tDescription(EN)\tDescription(UA)\tNote\texpansion\n')
         for key in sorted(items.keys()):
             for expansion, item in sorted(items[key].items()):
-                if item.expansion == 'classic' and item.name_ua is None and item.id >= 13000 and item.id < 15000:
+                if item.expansion == 'sod' and item.name_ua is None and (item.effects_ua is None or len(item.effects_ua) == 0) and item.id >= 20000:
                     effects_text = '\n'.join(map(lambda x: str(x), item.effects)).replace('"', '""') if item.effects else ''
                     effects_ua_text = '\n'.join(map(lambda x: str(x), item.effects_ua)).replace('"', '""') if item.effects_ua else ''
                     f.write(f'{item.id}\t{item.name}\t{item.name_ua if item.name_ua else ''}\t"{effects_text}"\t"{effects_ua_text}"\t\t{item.expansion}\n')
@@ -918,3 +922,6 @@ if __name__ == '__main__':
     create_translation_sheet(parsed_items)
 
     convert_translations_to_entries(tsv_translations)
+
+    spells = load_spells_from_db('../spells/cache/spells.db')
+    print(len(spells))

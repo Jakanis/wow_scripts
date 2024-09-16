@@ -1785,6 +1785,7 @@ def update_on_crowdin(diffs: list):
         return
     token = os.getenv('CROWDIN_TOKEN')
     client = CrowdinClient(token=token)
+    print('Getting Crowdin files...')
     crowdin_files = __get_crowdin_files(client)
     for diff in diffs:
         file_path = '/' + pathlib.Path(*pathlib.Path(diff).parts[1:]).as_posix()

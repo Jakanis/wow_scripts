@@ -226,7 +226,7 @@ def save_page_calc(expansion, id):
     xml_file_path = f'cache/{expansion_data[expansion][HTML_CACHE]}_rendered/{id}.html'
     if os.path.exists(xml_file_path):
         print(f'Warning! Trying to download existing HTML for #{id}')
-        return
+        # return
     headers = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/86.0.4240.75 Safari/537.36'}
     r = session.get(url, headers=headers)
     if not r.ok:
@@ -272,8 +272,8 @@ def save_htmls_from_wowhead(expansion, ids: set[int], render: bool, force: set[i
 
     save_ids = ids - existing_ids
     if force:
-        print(f'Force saving HTMLs({html_type}) for {len(force)} spells from Wowhead({expansion}).')
-        save_ids += force
+        print(f'Force saving HTMLs({html_type}) for {len(force)} spells from Wowhead({expansion}): {force}.')
+        save_ids = save_ids | force
     print(f'Saving HTMLs({html_type}) for {len(save_ids)} of {len(ids)} spells from Wowhead({expansion}).')
 
     redundant_ids = existing_ids - ids
@@ -402,6 +402,8 @@ def save_spells_to_db(spells: dict[int, dict[str, SpellData]]):
                 if ('[DNT]' in spell.name.upper() or
                         'DND' in spell.name or
                         '(DND)' in spell.name.upper() or
+                        '(DNT)' in spell.name.upper() or
+                        '[DNT]' in spell.name.upper() or
                         '(OLD)' in spell.name.upper() or
                         '(TEST)' in spell.name.upper() or
                         '(NYI)' in spell.name.upper() or
@@ -418,6 +420,32 @@ def save_spells_to_db(spells: dict[int, dict[str, SpellData]]):
                      spell.spell_md.rank, spell.spell_md.cat, spell.spell_md.level, spell.spell_md.schools,
                      spell.spell_md.get_class(), md_skill,
                      spell.ref, spell.name_ref, spell.description_ref, spell.aura_ref))
+
+
+def load_spells_from_db(db_path = 'cache/spells.db') -> dict[int, dict[str, SpellData]]:
+    import sqlite3
+    print('Saving spells to DB')
+    conn = sqlite3.connect(db_path)
+    spells: dict[int, dict[str, SpellData]] = dict()
+    with (conn):
+        cursor = conn.cursor()
+        sql = f'SELECT * FROM spells'
+        res = cursor.execute(sql)
+        spell_rows = res.fetchall()
+        for row in spell_rows:
+            spell_id = row[0]
+            expansion = row[1]
+            name = row[2]
+            name_ua = row[3]
+            description = row[4]
+            description_ua = row[5]
+            aura = row[6]
+            aura_ua = row[7]
+            spell = SpellData(spell_id, expansion, name, description, aura, name_ua=name_ua, description_ua=description_ua, aura_ua=aura_ua)
+            spells[spell_id] = spells.get(spell_id, dict())
+            spells[spell_id][expansion] = spell
+
+    return spells
 
 
 def populate_similarity(spells: dict[int, dict[str, SpellData]]):
@@ -484,11 +512,24 @@ def create_translation_sheet(spells: dict[int, dict[str, SpellData]]):
         f.write('ID\tName(EN)\tName(UA)\tDescription(EN)\tDescription(UA)\tAura(EN)\tAura(UA)\tref\tname_ref\tdesc_ref\taura_ref\texpansion\tcategory\tgroup\n')
         for key in sorted(spells.keys()):
             for expansion, spell in list(spells[key].items())[-1:]:
-                # if getattr(spell.spell_md, 'chrclass') == 1 and spell.expansion == SOD and spell.name_ua is None:
+                if ('[DNT]' in spell.name.upper() or
+                        'DND' in spell.name or
+                        '(DND)' in spell.name.upper() or
+                        '(DNT)' in spell.name.upper() or
+                        '[DNT]' in spell.name.upper() or
+                        '(OLD)' in spell.name.upper() or
+                        '(TEST)' in spell.name.upper() or
+                        '(NYI)' in spell.name.upper() or
+                        '(DNC)' in spell.name.upper() or
+                        '(PT)' in spell.name.upper() or
+                        '[PH]' in spell.name.upper() or
+                        key in expansion_data[spell.expansion][IGNORES]):
+                    continue
+                if getattr(spell.spell_md, 'chrclass') in SpellMD._classes.keys() and spell.expansion == SOD and spell.name_ua is None and spell.description_ua is None and spell.aura is None and spell.ref is None:
                 # if spell.expansion != SOD and (spell.name_ua or spell.ref):
-                if spell.id in [51052, 49016, 63560, 49206, 49039, 49184, 55090, 55233, 49028, 49572, 50029, 49222, 81328, 53138, 33917, 51271, 81229, 55050, 49143, 81132, 51099, 49391, 52284, 51160, 49203, 55610, 51462, 81135, 54637, 81136, 49501, 49018, 50040, 48979, 50034, 48982, 49483, 49188, 49194, 51473, 59057, 49488, 51128, 55666, 55667, 56835, 49137, 49568, 49628, 49027, 51123, 51986, 50365, 50887, 51472, 51746, 66192, 49657, 53137, 81131, 94555, 49455, 49530, 49538, 49589, 81164, 81339, 91319, 50041, 48965, 49004, 49226, 50115, 50371, 52143, 55061, 65661, 94553, 48978, 49219, 49500, 49567, 55062, 81163, 81334, 85794, 48985, 49182, 49562, 49571, 50385, 51127, 81138, 85793, 96270, 48962, 50138, 81327, 49542, 49564, 49787, 81333, 91323, 48963, 49149, 49390, 49489, 49508, 49565, 62905, 62908, 81338, 91145, 49024, 49042, 49224, 51468, 81330, 91316, 49036, 49509, 49588, 49610, 49611, 49627, 81125, 96269, 49529, 50147, 50391, 50392, 51745, 56822, 81127, 49393, 51459, 66191, 81332, 49786, 50137, 50384]:
-                    fields = [spell.id, spell.name, spell.name_ua, spell.description, spell.description_ua, spell.aura,
-                              spell.aura_ua, spell.ref, spell.name_ref, spell.description_ref, spell.aura_ref, spell.expansion, spell.category, spell.group]
+                # if spell.id in [51052, 49016, 63560, 49206, 49039, 49184, 55090, 55233, 49028, 49572, 50029, 49222, 81328, 53138, 33917, 51271, 81229, 55050, 49143, 81132, 51099, 49391, 52284, 51160, 49203, 55610, 51462, 81135, 54637, 81136, 49501, 49018, 50040, 48979, 50034, 48982, 49483, 49188, 49194, 51473, 59057, 49488, 51128, 55666, 55667, 56835, 49137, 49568, 49628, 49027, 51123, 51986, 50365, 50887, 51472, 51746, 66192, 49657, 53137, 81131, 94555, 49455, 49530, 49538, 49589, 81164, 81339, 91319, 50041, 48965, 49004, 49226, 50115, 50371, 52143, 55061, 65661, 94553, 48978, 49219, 49500, 49567, 55062, 81163, 81334, 85794, 48985, 49182, 49562, 49571, 50385, 51127, 81138, 85793, 96270, 48962, 50138, 81327, 49542, 49564, 49787, 81333, 91323, 48963, 49149, 49390, 49489, 49508, 49565, 62905, 62908, 81338, 91145, 49024, 49042, 49224, 51468, 81330, 91316, 49036, 49509, 49588, 49610, 49611, 49627, 81125, 96269, 49529, 50147, 50391, 50392, 51745, 56822, 81127, 49393, 51459, 66191, 81332, 49786, 50137, 50384]:
+                #     fields = [spell.id, spell.name, spell.name_ua, spell.description, spell.description_ua, spell.aura, spell.aura_ua, spell.ref, spell.name_ref, spell.description_ref, spell.aura_ref, spell.expansion, spell.category, spell.group]
+                    fields = [spell.id, spell.name, spell.name_ua, spell.description, spell.description_ua, spell.aura, spell.aura_ua, spell.ref, spell.name_ref, spell.description_ref, spell.aura_ref, spell.expansion, SpellMD._classes[getattr(spell.spell_md, 'chrclass')], spell.group]
                     f.write(f'{'\t'.join(map(lambda x: __to_tsv_val(x), fields))}\n')
 
 
@@ -992,13 +1033,18 @@ def __validate_spell_numbers(spell: SpellData):
         __validate_numbers(spell.id, spell.aura, spell.aura_ua)
 
 def __validate_references(spells: dict[int, dict[str, SpellData]], spell: SpellData):
+    if spell.ref == spell.id:
+        return
     if spell.ref:
-        reffed_spells = spells[spell.ref]
-        if len(reffed_spells) == 0:
+        if not spell.ref in spells.keys() or len(spells[spell.ref]) == 0:
             print(f'Warning! Non-existent ref#{spell.ref} for spell#{spell.id}')
-        __validate_numbers(spell.id, spell.description, spell.description_ua)
-    if spell.aura_ua and spell.aura and not '#' in spell.aura_ua:
-        __validate_numbers(spell.id, spell.aura, spell.aura_ua)
+        else:
+            reffed_spells = spells[spell.ref]
+            for expansion, ref_spell in reffed_spells.items():
+                if ref_spell.ref:
+                    print(f'Warning! Double ref in ref_spell#{ref_spell.id}:{ref_spell.expansion} from spell#{spell.id}:{spell.expansion}')
+                if (ref_spell.name_ua or ref_spell.description_ua or ref_spell.aura_ua):
+                    __validate_translation_completion(ref_spell)
 
 def validate_translations(spells: dict[int, dict[str, SpellData]]):
     print("Validating...")
@@ -1044,6 +1090,8 @@ if __name__ == '__main__':
     # print(spell1)
     # print(spell2)
     # print(spell3)
+
+    # load_spells_from_db()
 
     all_spells = retrieve_spell_data()
     populate_similarity(all_spells)

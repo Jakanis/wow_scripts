@@ -1,9 +1,3 @@
-Warning! Spell#16858:tbc doesn't exist in one of translations
-Warning! Spell#16859:tbc doesn't exist in one of translations
-Warning! Spell#22812:cata doesn't exist in one of translations
-Warning! Spell#33872:cata doesn't exist in one of translations
-Warning! Spell#33873:cata doesn't exist in one of translations
-Warning! Spell#34506:cata doesn't exist in one of translations
 Warning! Newline count doesn't match for spell#17:cata description
 Warning! Newline count doesn't match for spell#66:cata description
 Warning! Newline count doesn't match for spell#100:cata description
@@ -271,10 +265,11 @@ Warning! There's no translation for spell#364001:classic aura
 Warning! Numbers don't match for spell spell#400735
 Warning! Numbers don't match for spell spell#407632
 Warning! Numbers don't match for spell spell#408255
+Warning! Template failed for spell#417145:sod
 Warning! Numbers don't match for spell spell#424799
 Warning! Numbers don't match for spell spell#424800
 Warning! Newline count doesn't match for spell#424925:sod description
-Warning! Numbers don't match for spell spell#425012
 Warning! Template failed for spell#436516:sod
 Warning! Newline count doesn't match for spell#436516:sod description
 Warning! Template failed for spell#436517:sod
+Warning! Template failed for spell#440672:sod
