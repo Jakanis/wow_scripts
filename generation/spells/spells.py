@@ -214,28 +214,37 @@ def save_page_raw(expansion, id):
         return
     r = requests.get(url)
     if not r.ok:
-        raise Exception(f'Wowhead({expansion}) returned {r.status_code} for spell #{id}')
-    with open(xml_file_path, 'w', encoding="utf-8") as output_file:
-        output_file.write(r.text)
+        # raise Exception(f'Wowhead({expansion}) returned {r.status_code} for spell #{id}')
+        print(f'Error! Wowhead({expansion}) returned {r.status_code} for spell #{id}:{expansion}')
+    else:
+        with open(xml_file_path, 'w', encoding="utf-8") as output_file:
+            output_file.write(r.text)
 
 
 def save_page_calc(expansion, id):
+    import time
     from requests_html import HTMLSession
-    session = HTMLSession()
-    url = expansion_data[expansion][WOWHEAD_URL] + f'/spell={id}'
-    xml_file_path = f'cache/{expansion_data[expansion][HTML_CACHE]}_rendered/{id}.html'
-    if os.path.exists(xml_file_path):
-        print(f'Warning! Trying to download existing HTML for #{id}')
-        # return
-    headers = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/86.0.4240.75 Safari/537.36'}
-    r = session.get(url, headers=headers)
-    if not r.ok:
-        raise Exception(f'Wowhead({expansion}) returned {r.status_code} for spell #{id}')
-    r.html.render()
-    result = r.html.html
-    session.close()
-    with open(xml_file_path, 'w', encoding="utf-8") as output_file:
-        output_file.write(result)
+    try:
+        session = HTMLSession()
+        url = expansion_data[expansion][WOWHEAD_URL] + f'/spell={id}'
+        xml_file_path = f'cache/{expansion_data[expansion][HTML_CACHE]}_rendered/{id}.html'
+        if os.path.exists(xml_file_path):
+            print(f'Warning! Trying to download existing HTML for #{id}')
+            # return
+        headers = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/86.0.4240.75 Safari/537.36'}
+        r = session.get(url, headers=headers)
+        if not r.ok:
+            # raise Exception(f'Wowhead({expansion}) returned {r.status_code} for spell #{id}')
+            print(f'Error! Wowhead({expansion}) returned {r.status_code} for spell #{id}')
+        r.html.render()
+        result = r.html.html
+        session.close()
+        with open(xml_file_path, 'w', encoding="utf-8") as output_file:
+            output_file.write(result)
+    except Exception as e:
+        print(f'Error! Got exception({e}) for spell #{id}:{expansion}. Retrying...')
+        time.sleep(5)
+        save_page_calc(expansion, id)
 
 
 def save_pages_async(expansion, ids):
@@ -266,7 +275,7 @@ def save_htmls_from_wowhead(expansion, ids: set[int], render: bool, force: set[i
     existing_files = os.listdir(cache_dir)
     existing_ids = set(int(file_name.split('.')[0]) for file_name in existing_files)
 
-    if os.path.exists(cache_dir) and existing_ids == ids:
+    if os.path.exists(cache_dir) and existing_ids == ids and not force:
         print(f'HTML({html_type}) cache for all Wowhead({expansion}) spells ({len(ids)}) exists and seems legit. Skipping.')
         return
 
@@ -282,7 +291,7 @@ def save_htmls_from_wowhead(expansion, ids: set[int], render: bool, force: set[i
 
     save_page = save_page_calc if render else save_page_raw
     threads = THREADS // 2 if render else THREADS * 2
-    # for id in ids:
+    # for id in save_ids:
     #     save_page(expansion, id)
     save_func = partial(save_page, expansion)
     with multiprocessing.Pool(threads) as p:
@@ -602,13 +611,13 @@ def retrieve_spell_data() -> dict[int, dict[str, SpellData]]:
         wowhead_md = get_wowhead_spell_metadata(expansion)
 
         save_htmls_from_wowhead(expansion, set(wowhead_md.keys()), render=False)
-        wowhead_spells_raw = parse_wowhead_pages(expansion, wowhead_md, render=False)
+        wowhead_spells_raw = parse_wowhead_pages(expansion, wowhead_md, render=False) # First, store raw spells (delete 'wowhead_<expansion>_spell_html.raw' to do that)
 
-        changed_spells = compare_stored_raw_spells(expansion, wowhead_spells_raw)
-        save_htmls_from_wowhead(expansion, set(wowhead_md.keys()), render=True, force=changed_spells)
+        changed_spells = compare_stored_raw_spells(expansion, wowhead_spells_raw) # Then, compare downloaded raw pages with stored in 'tmp/wowhead_<expansion>_spell_cache_raw_stored'
+        save_htmls_from_wowhead(expansion, set(wowhead_md.keys()), render=True, force=changed_spells) # Download absent rendered pages and force-download changed pages from 'changed_spells'
         wowhead_spells_rendered = parse_wowhead_pages(expansion, wowhead_md, render=True)
 
-        store_raw_spells(expansion, wowhead_spells_raw)
+        store_raw_spells(expansion, wowhead_spells_raw) # Store current raw pages as 'tmp/wowhead_<expansion>_spell_cache_raw_stored'
 
         print(f'Merging with {expansion}')
         all_spells = merge_expansions(all_spells, wowhead_spells_rendered)

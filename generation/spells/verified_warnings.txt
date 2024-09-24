@@ -269,6 +269,8 @@ Warning! Template failed for spell#417145:sod
 Warning! Numbers don't match for spell spell#424799
 Warning! Numbers don't match for spell spell#424800
 Warning! Newline count doesn't match for spell#424925:sod description
+Warning! Template failed for spell#425600:sod
+Warning! Newline count doesn't match for spell#425600:sod description
 Warning! Template failed for spell#436516:sod
 Warning! Newline count doesn't match for spell#436516:sod description
 Warning! Template failed for spell#436517:sod
