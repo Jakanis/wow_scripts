@@ -3,7 +3,7 @@ import os
 
 import requests
 from bs4 import BeautifulSoup, CData
-from generation.spells.spells import load_spells_from_db
+from generation.spells.spells import load_spells_from_db, SpellData
 
 THREADS = 16
 CLASSIC = 'classic'
@@ -903,6 +903,26 @@ def validate_translations(items: dict[int, dict[str, ItemData]]):
     # check if item was updated in next expansion but has no translation
 
 
+
+def validate_spell_references(items: dict[int, dict[str, ItemData]], spells: dict[int, dict[str, SpellData]]):
+    used_spell_references = set()
+    for key in sorted(items.keys()):
+        for item in items[key].values():
+            if item.effects_ua:
+                for item_effect in item.effects_ua:
+                    if item_effect.effect_type not in ['Item', 'Ref'] and item_effect.effect_id:
+                        used_spell_references.add(item_effect.effect_id)
+
+    translated_spell_ids = set()
+    for key in sorted(spells.keys()):
+        for spell in spells[key].values():
+            if spell.name_ua or spell.description_ua or spell.aura_ua or spell.ref:
+                translated_spell_ids.add(spell.id)
+
+    print(f'Used references ({len(translated_spell_ids & used_spell_references)}): {sorted(translated_spell_ids & used_spell_references)}')
+    print(f'Missing references ({len(used_spell_references - translated_spell_ids)}): {sorted(used_spell_references - translated_spell_ids)}')
+
+
 if __name__ == '__main__':
     # parse_wowhead_item_page(CLASSIC, 9328)
 
@@ -919,9 +939,10 @@ if __name__ == '__main__':
 
     validate_translations(parsed_items)
 
+    spells = load_spells_from_db('../spells/cache/spells.db')
+    # print(len(spells))
+    validate_spell_references(parsed_items, spells)
+
     create_translation_sheet(parsed_items)
 
     convert_translations_to_entries(tsv_translations)
-
-    spells = load_spells_from_db('../spells/cache/spells.db')
-    print(len(spells))
