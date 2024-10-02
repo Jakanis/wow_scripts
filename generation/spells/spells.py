@@ -450,7 +450,8 @@ def load_spells_from_db(db_path = 'cache/spells.db') -> dict[int, dict[str, Spel
             description_ua = row[5]
             aura = row[6]
             aura_ua = row[7]
-            spell = SpellData(spell_id, expansion, name, description, aura, name_ua=name_ua, description_ua=description_ua, aura_ua=aura_ua)
+            ref = row[14]
+            spell = SpellData(spell_id, expansion, name, description, aura, name_ua=name_ua, description_ua=description_ua, aura_ua=aura_ua, ref=ref)
             spells[spell_id] = spells.get(spell_id, dict())
             spells[spell_id][expansion] = spell
 
@@ -520,7 +521,8 @@ def create_translation_sheet(spells: dict[int, dict[str, SpellData]]):
     with open(f'translate_this.tsv', mode='w', encoding='utf-8') as f:
         f.write('ID\tName(EN)\tName(UA)\tDescription(EN)\tDescription(UA)\tAura(EN)\tAura(UA)\tref\tname_ref\tdesc_ref\taura_ref\texpansion\tcategory\tgroup\n')
         for key in sorted(spells.keys()):
-            for expansion, spell in list(spells[key].items())[-1:]:
+            # for expansion, spell in list(spells[key].items())[-1:]:
+            for spell in sorted(set([list(spells[key].values())[0], list(spells[key].values())[-1]]), key=lambda x: expansion_data[x.expansion][INDEX]):
                 if ('[DNT]' in spell.name.upper() or
                         'DND' in spell.name or
                         '(DND)' in spell.name.upper() or
@@ -534,11 +536,16 @@ def create_translation_sheet(spells: dict[int, dict[str, SpellData]]):
                         '[PH]' in spell.name.upper() or
                         key in expansion_data[spell.expansion][IGNORES]):
                     continue
-                if getattr(spell.spell_md, 'chrclass') in SpellMD._classes.keys() and spell.expansion == SOD and spell.name_ua is None and spell.description_ua is None and spell.aura is None and spell.ref is None:
+                # if getattr(spell.spell_md, 'chrclass') in SpellMD._classes.keys() and spell.expansion == SOD and spell.name_ua is None and spell.description_ua is None and spell.aura_ua is None and spell.ref is None:
                 # if spell.expansion != SOD and (spell.name_ua or spell.ref):
-                # if spell.id in [51052, 49016, 63560, 49206, 49039, 49184, 55090, 55233, 49028, 49572, 50029, 49222, 81328, 53138, 33917, 51271, 81229, 55050, 49143, 81132, 51099, 49391, 52284, 51160, 49203, 55610, 51462, 81135, 54637, 81136, 49501, 49018, 50040, 48979, 50034, 48982, 49483, 49188, 49194, 51473, 59057, 49488, 51128, 55666, 55667, 56835, 49137, 49568, 49628, 49027, 51123, 51986, 50365, 50887, 51472, 51746, 66192, 49657, 53137, 81131, 94555, 49455, 49530, 49538, 49589, 81164, 81339, 91319, 50041, 48965, 49004, 49226, 50115, 50371, 52143, 55061, 65661, 94553, 48978, 49219, 49500, 49567, 55062, 81163, 81334, 85794, 48985, 49182, 49562, 49571, 50385, 51127, 81138, 85793, 96270, 48962, 50138, 81327, 49542, 49564, 49787, 81333, 91323, 48963, 49149, 49390, 49489, 49508, 49565, 62905, 62908, 81338, 91145, 49024, 49042, 49224, 51468, 81330, 91316, 49036, 49509, 49588, 49610, 49611, 49627, 81125, 96269, 49529, 50147, 50391, 50392, 51745, 56822, 81127, 49393, 51459, 66191, 81332, 49786, 50137, 50384]:
+                if spell.expansion in [CLASSIC, SOD] and spell.name_ua is None and spell.description_ua is None and spell.aura_ua is None and spell.ref is None and spell.id in [21170, 21919, 21951, 21955, 21956, 21978, 22563, 22564, 22639, 22641, 22725, 22756, 22778, 22801, 22836, 22849, 22850, 22999, 23004, 23037, 23043, 23046, 23049, 23064, 23097, 23131, 23132, 23157, 23236, 23271, 23273, 23274, 23276, 23277, 23300, 23428, 23429, 23430, 23431, 23432, 23530, 23531, 23540, 23541, 23542, 23560, 23567, 23568, 23569, 23595, 23605, 23692, 23698, 23719, 23720, 23721, 23723, 23724, 23725, 23726, 23733, 23734, 23780, 23930, 23990, 23991, 24005, 24090, 24149, 24160, 24161, 24162, 24163, 24164, 24165, 24167, 24168, 24197, 24198, 24254, 24268, 24291, 24292, 24325, 24347, 24352, 24354, 24355, 24382, 24383, 24384, 24388, 24389, 24409, 24410, 24411, 24412, 24413, 24414, 24417, 24420, 24421, 24422, 24426, 24427, 24433, 24498, 24499, 24531, 24532, 24542, 24543, 24544, 24546, 24571, 24574, 24576, 24585, 24610, 24658, 24661, 24707, 24800, 24833, 24865, 24869, 24884, 24988, 24993, 24998, 25037, 25112, 25660, 25690, 25691, 25692, 25693, 25746, 25747, 25750, 25804, 25851, 25901, 25975, 26108, 26166, 26168, 26208, 26263, 26283, 26400, 26415, 26463, 26467, 26480, 26656, 26693, 27037, 27518, 27522, 27539, 27561, 27652, 27653, 27675, 27720, 27721, 27722, 27723, 27846, 27848, 27850, 27851, 27853, 28142, 28143, 28144, 28145, 28155, 28163, 28200, 28273, 28347, 28486, 28488, 28539, 28760, 28773, 28778, 28779, 28780, 28799, 28806, 28851, 28853, 28854, 28855, 28862, 28869, 28876, 29029, 29041, 29055, 29112, 29113, 29162, 29332, 29333, 29334, 29335, 29348, 29443, 29467, 29475, 29480, 29483, 29506, 29602, 29626, 29633, 30088, 30089, 30090, 30174, 30226, 30298, 30845, 30847, 30848, 32235, 32600, 33035, 33253, 37736, 41973, 42120, 42122, 42127, 348459, 370831, 370832, 430949, 430950, 430951, 430952, 432639, 434839, 435169, 436041, 436239, 439651, 446092, 446327, 446715, 446727, 448324, 459217, 459596, 459613, 460230, 460332, 460335, 461120, 461164, 461224, 461226, 461227, 461235, 461317, 461318, 461632, 461680, 461681, 461694, 461953, 461985, 462149, 462178, 462229, 462636, 462746, 463448, 463564, 468767]:
+                # if spell.name_ua is None and spell.description_ua is None and spell.aura_ua is None and spell.ref is None and spell.aura_ref == 458 and spell.expansion in [CLASSIC, SOD]:
                 #     fields = [spell.id, spell.name, spell.name_ua, spell.description, spell.description_ua, spell.aura, spell.aura_ua, spell.ref, spell.name_ref, spell.description_ref, spell.aura_ref, spell.expansion, spell.category, spell.group]
-                    fields = [spell.id, spell.name, spell.name_ua, spell.description, spell.description_ua, spell.aura, spell.aura_ua, spell.ref, spell.name_ref, spell.description_ref, spell.aura_ref, spell.expansion, SpellMD._classes[getattr(spell.spell_md, 'chrclass')], spell.group]
+                    class_name = SpellMD._classes[getattr(spell.spell_md, 'chrclass')] if getattr(spell.spell_md, 'chrclass') in SpellMD._classes else ''
+                    spell_description = spell.description
+                    if spell_description and spell_description.startswith('+'):  # In case of '+123 Attack Power' etc
+                        spell_description = "'" + spell_description
+                    fields = [spell.id, spell.name, spell.name_ua, spell_description, spell.description_ua, spell.aura, spell.aura_ua, spell.ref, spell.name_ref, spell.description_ref, spell.aura_ref, spell.expansion, class_name , spell.group]
                     f.write(f'{'\t'.join(map(lambda x: __to_tsv_val(x), fields))}\n')
 
 
@@ -993,7 +1000,7 @@ def __validate_template(spell_id: int, expansion:str, value: str, translation: s
         print(f"Warning! Templates numbers doesn't match for spell#{spell_id}:{expansion}")
     templates = translation[template_start + 1:].split('#')
     for template in templates:
-        template = template.replace('.', '\\.').replace('(', r'\(').replace(')', r'\)')
+        template = template.replace('.', '\\.').replace('(', r'\(').replace(')', r'\)').replace('+', r'\+')
         pattern = re.sub(r'{\d+}', r'(\\d+|\\d+\.\\d+|\.\\d+|\[.+?\]|\(.+?\))', template).replace('\\\\', '\\')
         matches = re.findall(pattern, value)
         if len(matches) != 1:

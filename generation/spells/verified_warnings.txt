@@ -1,6 +1,8 @@
+Validating...
 Warning! Newline count doesn't match for spell#17:cata description
 Warning! Newline count doesn't match for spell#66:cata description
 Warning! Newline count doesn't match for spell#100:cata description
+Warning! Template failed for spell#116:classic
 Warning! Template failed for spell#116:cata
 Warning! Newline count doesn't match for spell#118:cata description
 Warning! Template failed for spell#120:cata
@@ -58,6 +60,7 @@ Warning! Template failed for spell#2136:cata
 Warning! Newline count doesn't match for spell#2782:cata description
 Warning! Numbers don't match for spell spell#2782
 Warning! Newline count doesn't match for spell#2812:cata description
+Warning! Template failed for spell#2823:wrath
 Warning! Template failed for spell#2912:cata
 Warning! Newline count doesn't match for spell#2912:cata description
 Warning! Template failed for spell#2948:cata
