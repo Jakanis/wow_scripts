@@ -230,6 +230,7 @@ def save_npcs_to_db(all_npcs: dict[int, dict[str, NPC_MD]]):
                 if ('TEST' in npc.name or
                         '[PH]' in npc.name or
                         'DND' in npc.name or
+                        'DNT' in npc.name or
                         'UNUSED' in npc.name or
                         '<TXT>' in npc.name or
                         key in expansion_data[npc.expansion][IGNORES]):
@@ -240,7 +241,34 @@ def save_npcs_to_db(all_npcs: dict[int, dict[str, NPC_MD]]):
                             (npc.id, expansion, npc.name, npc_tag, npc.__dict__.get('name_ua'), npc.__dict__.get('tag_ua'), npc.type, npc.boss, npc.classification, npc_location, str(npc.names), str(npc.react)))
 
 
+def load_npcs_from_db(db_path = 'cache/npcs.db') -> dict[int, dict[str, NPC_MD]]:
+    import sqlite3
+    conn = sqlite3.connect(db_path)
+    npcs: dict[int, dict[str, NPC_MD]] = dict()
+    with (conn):
+        cursor = conn.cursor()
+        sql = f'SELECT * FROM npcs'
+        res = cursor.execute(sql)
+        npc_rows = res.fetchall()
+        for row in npc_rows:
+            npc_id = row[0]
+            expansion = row[1]
+            name = row[2]
+            tag = row[3]
+            name_ua = row[4]
+            tag_ua = row[5]
+            type = row[6]
+            boss = row[7]
+            classification = row[8]
+            location = row[9]
+            names = row[10]
+            react = row[11]
+            npc = NPC_MD(npc_id, name, expansion=expansion, tag=tag, name_ua=name_ua, tag_ua=tag_ua, type=type, boss=boss,
+                         classification=classification, location=location, names=names, react=react)
+            npcs[npc_id] = npcs.get(npc_id, dict())
+            npcs[npc_id][expansion] = npc
 
+    return npcs
 
 def get_zone_page(zone_id):
     import json
@@ -416,6 +444,31 @@ def load_merged_translations() -> dict[int, dict[str, NPC_MD]]:
     return merged_translations
 
 
+def check_feedback_npcs(all_npcs: dict[int, dict[str, NPC_MD]]):
+    import csv
+    feedback = dict()
+    with open('input/missing_npcs.tsv', 'r', encoding='utf-8') as input_file:
+        reader = csv.reader(input_file, delimiter="\t")
+        for row in reader:
+            feedback[int(row[0])] = row[1]
+
+    missed_npcs = set()
+    for feedback_id, feedback_name in feedback.items():
+        if feedback_id not in all_npcs:
+            print(f'Warning! Feedback NPC#{feedback_id} "{feedback_name}" does not exist in DB!')
+            missed_npcs.add(feedback_id)
+        else:
+            translated = False
+            for npc in all_npcs[feedback_id].values():
+                if npc.name_ua:
+                    translated = True
+            if not translated:
+                print(f'Warning! Feedback NPC#{feedback_id} "{feedback_name}" is not translated!')
+                missed_npcs.add(feedback_id)
+
+    print(f'Missed IDs: {sorted(missed_npcs)}')
+
+
 def compare_npc(tsv_npc: NPC_MD, lua_npc: NPC_MD):
     if tsv_npc.name != lua_npc.name:
         print(f'Warning! NPC#{tsv_npc.id}:{tsv_npc.expansion} name differs:\n{tsv_npc.name}<->{lua_npc.name}')
@@ -444,10 +497,10 @@ def create_translation_sheet(npcs: dict[int, dict[str, NPC_MD]]):
         f.write('ID\tName(EN)\tDescription(EN)\tName(UA)\tDescription(UA)\tраса\tстать\tNote\texpansion\n')
         for key in sorted(npcs.keys()):
             for expansion, npc in npcs[key].items():
-                if (npc.name_ua is None
-                        and (npc.react != [None, None] or npc.location != [])
-                        and npc.expansion in [CLASSIC, SOD]):
-                    f.write(f'{npc.id}\t"{npc.name}"\t"{npc.tag}"\t\t\t\t\t\t{npc.expansion}\n')
+                # if (npc.name_ua is None and (npc.react != [None, None] or npc.location != []) and npc.expansion in [CLASSIC, SOD]):
+                if npc.name_ua is None and npc.expansion in [CLASSIC, SOD]:
+                # if npc.expansion in [CLASSIC, SOD] and npc.id in [14465, 14466, 229001, 232335, 202387, 202390, 222231, 202392, 202391, 14751, 222240, 205733, 230695, 7863, 8376, 212157, 11200, 213450, 229452, 222293, 7383, 232921, 2671, 2673, 2674, 228596, 11637, 7543, 7545, 223739]:
+                    f.write(f'{npc.id}\t"{npc.name}"\t"{f"<{npc.tag}>" if npc.tag else ""}"\t\t\t\t\t\t{npc.expansion}\n')
 
 
 if __name__ == '__main__':
@@ -455,6 +508,8 @@ if __name__ == '__main__':
 
     check_existing_translations(all_npcs)  # Check if original data changes since previous translation and difference between ClassicUA and translation sheet
     # update_questie_translation(all_npcs)  # Update translations for Questie
+
+    check_feedback_npcs(all_npcs)
 
     create_translation_sheet(all_npcs)
 
