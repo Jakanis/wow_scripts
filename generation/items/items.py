@@ -36,7 +36,7 @@ expansion_data = {
         XML_CACHE: 'wowhead_sod_item_xml',
         ITEM_CACHE: 'wowhead_sod_item_cache',
         METADATA_FILTERS: ('82:', '2:', '11500:'),
-        IGNORES: []
+        IGNORES: [759, 9232, 202256, 202316, 215235, 215394, 215405, 215406, 215410, 215412, 215450, 231752]
     },
     TBC: {
         INDEX: 1,
@@ -380,7 +380,7 @@ def load_questie_item_lua_ids() -> set[int]:
 
 def save_items_to_db(items: dict[int, dict[str, ItemData]]):
     import sqlite3
-    print('Saving objects to DB')
+    print('Saving items to DB')
     conn = sqlite3.connect('cache/items.db')
     conn.execute('DROP TABLE IF EXISTS items')
     conn.execute('''CREATE TABLE items (
@@ -668,7 +668,21 @@ def create_translation_sheet(items: dict[int, dict[str, ItemData]]):
         f.write('ID\tName(EN)\tName(UA)\tDescription(EN)\tDescription(UA)\tNote\texpansion\n')
         for key in sorted(items.keys()):
             for expansion, item in sorted(items[key].items()):
-                if item.expansion == 'sod' and item.name_ua is None and (item.effects_ua is None or len(item.effects_ua) == 0) and item.id >= 20000:
+                if ('OLD' in item.name or
+                    'DEP' in item.name or
+                    '[PH]' in item.name or
+                    '(old)' in item.name or
+                    '(old2)' in item.name or
+                    'QATest' in item.name or
+                    'DEBUG' in item.name or
+                    '(DND)' in item.name or
+                    'QAEnchant' in item.name or
+                    'TEST' in item.name or
+                    'UNUSED' in item.name or
+                    item.name.startswith('Monster - ') or
+                    key in expansion_data[item.expansion][IGNORES]):
+                        continue
+                if item.expansion == 'sod' and item.name_ua is None:
                     effects_text = '\n'.join(map(lambda x: str(x), item.effects)).replace('"', '""') if item.effects else ''
                     effects_ua_text = '\n'.join(map(lambda x: str(x), item.effects_ua)).replace('"', '""') if item.effects_ua else ''
                     f.write(f'{item.id}\t{item.name}\t{item.name_ua if item.name_ua else ''}\t"{effects_text}"\t"{effects_ua_text}"\t\t{item.expansion}\n')
@@ -919,8 +933,33 @@ def validate_spell_references(items: dict[int, dict[str, ItemData]], spells: dic
             if spell.name_ua or spell.description_ua or spell.aura_ua or spell.ref:
                 translated_spell_ids.add(spell.id)
 
-    print(f'Used references ({len(translated_spell_ids & used_spell_references)}): {sorted(translated_spell_ids & used_spell_references)}')
-    print(f'Missing references ({len(used_spell_references - translated_spell_ids)}): {sorted(used_spell_references - translated_spell_ids)}')
+    # print(f'Used spell references ({len(translated_spell_ids & used_spell_references)}): {sorted(translated_spell_ids & used_spell_references)}')
+    print(f'Missing spell references ({len(used_spell_references - translated_spell_ids)}): {sorted(used_spell_references - translated_spell_ids)}')
+
+
+def check_feedback_items(all_items: dict[int, dict[str, ItemData]]):
+    import csv
+    feedback = dict()
+    with open('input/missing_items.tsv', 'r', encoding='utf-8') as input_file:
+        reader = csv.reader(input_file, delimiter="\t")
+        for row in reader:
+            feedback[int(row[0])] = row[1]
+
+    missed_items = set()
+    for feedback_id, feedback_name in feedback.items():
+        if feedback_id not in all_items:
+            print(f'Warning! Feedback Item#{feedback_id} "{feedback_name}" does not exist in DB!')
+            missed_items.add(feedback_id)
+        else:
+            translated = False
+            for item in all_items[feedback_id].values():
+                if item.name_ua:
+                    translated = True
+            if not translated:
+                print(f'Warning! Feedback Item#{feedback_id} "{feedback_name}" is not translated!')
+                missed_items.add(feedback_id)
+
+    print(f'Missed IDs: {missed_items}')
 
 
 if __name__ == '__main__':
@@ -938,6 +977,8 @@ if __name__ == '__main__':
     save_items_to_db(parsed_items)
 
     validate_translations(parsed_items)
+
+    check_feedback_items(parsed_items)
 
     spells = load_spells_from_db('../spells/cache/spells.db')
     # print(len(spells))
