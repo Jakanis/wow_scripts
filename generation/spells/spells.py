@@ -373,8 +373,8 @@ def parse_wowhead_pages(expansion, metadata: dict[int, SpellMD], render: bool) -
         with open(cache_path, 'wb') as f:
             pickle.dump(wowhead_spells, f)
 
-    for spell_id, spell in wowhead_spells.items():
-        spell.spell_md = metadata[spell_id]
+    for spell_id in metadata.keys() & wowhead_spells.keys():
+        wowhead_spells[spell_id].spell_md = metadata[spell_id]
 
     return wowhead_spells
 
@@ -415,10 +415,12 @@ def save_spells_to_db(spells: dict[int, dict[str, SpellData]]):
                         '[DNT]' in spell.name.upper() or
                         '(OLD)' in spell.name.upper() or
                         '(TEST)' in spell.name.upper() or
+                        'TEST' in spell.name or
                         '(NYI)' in spell.name.upper() or
                         '(DNC)' in spell.name.upper() or
                         '(PT)' in spell.name.upper() or
                         '[PH]' in spell.name.upper() or
+                        spell.name.startswith('QA') or
                         key in expansion_data[spell.expansion][IGNORES]):
                     continue
                 md_skill = str(spell.spell_md.skill) if spell.spell_md.skill else None
@@ -433,7 +435,6 @@ def save_spells_to_db(spells: dict[int, dict[str, SpellData]]):
 
 def load_spells_from_db(db_path = 'cache/spells.db') -> dict[int, dict[str, SpellData]]:
     import sqlite3
-    print('Saving spells to DB')
     conn = sqlite3.connect(db_path)
     spells: dict[int, dict[str, SpellData]] = dict()
     with (conn):
@@ -530,15 +531,18 @@ def create_translation_sheet(spells: dict[int, dict[str, SpellData]]):
                         '[DNT]' in spell.name.upper() or
                         '(OLD)' in spell.name.upper() or
                         '(TEST)' in spell.name.upper() or
+                        'TEST' in spell.name or
                         '(NYI)' in spell.name.upper() or
                         '(DNC)' in spell.name.upper() or
                         '(PT)' in spell.name.upper() or
                         '[PH]' in spell.name.upper() or
+                        spell.name.startswith('QA') or
                         key in expansion_data[spell.expansion][IGNORES]):
                     continue
                 # if getattr(spell.spell_md, 'chrclass') in SpellMD._classes.keys() and spell.expansion == SOD and spell.name_ua is None and spell.description_ua is None and spell.aura_ua is None and spell.ref is None:
                 # if spell.expansion != SOD and (spell.name_ua or spell.ref):
-                if spell.expansion in [CLASSIC, SOD] and spell.name_ua is None and spell.description_ua is None and spell.aura_ua is None and spell.ref is None and spell.id in [21170, 21919, 21951, 21955, 21956, 21978, 22563, 22564, 22639, 22641, 22725, 22756, 22778, 22801, 22836, 22849, 22850, 22999, 23004, 23037, 23043, 23046, 23049, 23064, 23097, 23131, 23132, 23157, 23236, 23271, 23273, 23274, 23276, 23277, 23300, 23428, 23429, 23430, 23431, 23432, 23530, 23531, 23540, 23541, 23542, 23560, 23567, 23568, 23569, 23595, 23605, 23692, 23698, 23719, 23720, 23721, 23723, 23724, 23725, 23726, 23733, 23734, 23780, 23930, 23990, 23991, 24005, 24090, 24149, 24160, 24161, 24162, 24163, 24164, 24165, 24167, 24168, 24197, 24198, 24254, 24268, 24291, 24292, 24325, 24347, 24352, 24354, 24355, 24382, 24383, 24384, 24388, 24389, 24409, 24410, 24411, 24412, 24413, 24414, 24417, 24420, 24421, 24422, 24426, 24427, 24433, 24498, 24499, 24531, 24532, 24542, 24543, 24544, 24546, 24571, 24574, 24576, 24585, 24610, 24658, 24661, 24707, 24800, 24833, 24865, 24869, 24884, 24988, 24993, 24998, 25037, 25112, 25660, 25690, 25691, 25692, 25693, 25746, 25747, 25750, 25804, 25851, 25901, 25975, 26108, 26166, 26168, 26208, 26263, 26283, 26400, 26415, 26463, 26467, 26480, 26656, 26693, 27037, 27518, 27522, 27539, 27561, 27652, 27653, 27675, 27720, 27721, 27722, 27723, 27846, 27848, 27850, 27851, 27853, 28142, 28143, 28144, 28145, 28155, 28163, 28200, 28273, 28347, 28486, 28488, 28539, 28760, 28773, 28778, 28779, 28780, 28799, 28806, 28851, 28853, 28854, 28855, 28862, 28869, 28876, 29029, 29041, 29055, 29112, 29113, 29162, 29332, 29333, 29334, 29335, 29348, 29443, 29467, 29475, 29480, 29483, 29506, 29602, 29626, 29633, 30088, 30089, 30090, 30174, 30226, 30298, 30845, 30847, 30848, 32235, 32600, 33035, 33253, 37736, 41973, 42120, 42122, 42127, 348459, 370831, 370832, 430949, 430950, 430951, 430952, 432639, 434839, 435169, 436041, 436239, 439651, 446092, 446327, 446715, 446727, 448324, 459217, 459596, 459613, 460230, 460332, 460335, 461120, 461164, 461224, 461226, 461227, 461235, 461317, 461318, 461632, 461680, 461681, 461694, 461953, 461985, 462149, 462178, 462229, 462636, 462746, 463448, 463564, 468767]:
+                # if spell.expansion in [CLASSIC, SOD] and spell.name_ua is None and spell.description_ua is None and spell.aura_ua is None and spell.ref is None and spell.id in [28273, 28486, 28488, 29348, 30226, 30298, 30845, 30847, 30848, 32235, 32600, 33035, 33253, 37736, 41973, 42120, 42122, 42127, 348459]:
+                if spell.name_ua is None and spell.description_ua is None and spell.aura_ua is None and spell.ref is None and spell.id in [459601, 459602, 463864, 465412, 465414, 467141, 467142, 467143, 467144, 467166, 467318, 467330, 467332, 467430, 467437, 467443, 467446, 467459, 467467, 467499, 467511, 467522, 467523, 467525, 467549, 467550, 467647, 467651, 467738, 467754, 467828, 467830, 468164, 468224, 468387, 468388, 468458, 468460, 468461, 468462, 468512, 468531, 468540, 468590, 468592, 468621, 468688, 468714, 468764, 468768, 468769, 468785, 469138, 469148, 469191, 469348, 469414, 469481, 469493, 469673, 469828]:
                 # if spell.name_ua is None and spell.description_ua is None and spell.aura_ua is None and spell.ref is None and spell.aura_ref == 458 and spell.expansion in [CLASSIC, SOD]:
                 #     fields = [spell.id, spell.name, spell.name_ua, spell.description, spell.description_ua, spell.aura, spell.aura_ua, spell.ref, spell.name_ref, spell.description_ref, spell.aura_ref, spell.expansion, spell.category, spell.group]
                     class_name = SpellMD._classes[getattr(spell.spell_md, 'chrclass')] if getattr(spell.spell_md, 'chrclass') in SpellMD._classes else ''
@@ -560,8 +564,12 @@ def merge_spell(id: int, old_spells: dict[str, SpellData], new_spell: SpellData)
         old_spell = next(iter(old_spells.values()))
 
         if (old_spell.name != new_spell.name
-                or (old_spell.description and new_spell.description and re.sub(r'\d+(\.\d+)?', '{d}', old_spell.description) != re.sub(r'\d+(\.\d+)?', '{d}', new_spell.description))
-                or (old_spell.aura and new_spell.aura and re.sub(r'\d+(\.\d+)?', '{d}', old_spell.aura) != re.sub(r'\d+(\.\d+)?', '{d}', new_spell.aura))):
+                or old_spell.description != new_spell.description
+                or old_spell.aura != new_spell.aura):
+                # or (not old_spell.description and new_spell.description) or (old_spell.description and not new_spell.description)
+                # or (not old_spell.aura and new_spell.aura) or (old_spell.aura and not new_spell.aura)
+                # or (old_spell.description and new_spell.description and re.sub(r'\d+(\.\d+)?', '{d}', old_spell.description) != re.sub(r'\d+(\.\d+)?', '{d}', new_spell.description))
+                # or (old_spell.aura and new_spell.aura and re.sub(r'\d+(\.\d+)?', '{d}', old_spell.aura) != re.sub(r'\d+(\.\d+)?', '{d}', new_spell.aura))):
             return {**old_spells, **{new_spell.expansion: new_spell}}
         else:
             return old_spells
@@ -1082,8 +1090,12 @@ def compare_tsv_and_classicua(tsv_translations, classicua_translations):
     for key in sorted(classicua_translations.keys() - tsv_translations.keys()):
         print(f"Warning! Spell#{key} doesn't exist in TSV")
     for key in sorted(tsv_translations.keys() & classicua_translations.keys()):
-        for expansion in tsv_translations[key].keys() ^ classicua_translations[key].keys():
-            print(f"Warning! Spell#{key}:{expansion} doesn't exist in one of translations")
+        for expansion in tsv_translations[key].keys() - classicua_translations[key].keys():
+            spell = tsv_translations[key][expansion]
+            if (not spell.id == spell.ref): # Intentional skipping by setting ref to id
+                print(f"Warning! Spell#{key}:{expansion} doesn't exist in ClassicUA")
+        for expansion in classicua_translations[key].keys() - tsv_translations[key].keys():
+            print(f"Warning! Spell#{key}:{expansion} doesn't exist in data")
         for expansion in tsv_translations[key].keys() & classicua_translations[key].keys():
             tsv_translation = tsv_translations[key][expansion]
             classicua_translation = classicua_translations[key][expansion]
@@ -1093,6 +1105,33 @@ def compare_tsv_and_classicua(tsv_translations, classicua_translations):
                 print(f'Warning! Description translation differs for spell#{key}:{expansion}:\n{__diff_fields(tsv_translation.description_ua, classicua_translation.description_ua)}')
             if tsv_translation.aura_ua != classicua_translation.aura_ua:
                 print(f'Warning! Aura translation differs for spell#{key}:{expansion}:\n{__diff_fields(tsv_translation.aura_ua, classicua_translation.aura_ua)}')
+
+
+def check_feedback_spells(spells: dict[int, dict[str, SpellData]]) -> list[int]:
+    import csv
+    feedback = dict()
+    with open('input/missing_spells.tsv', 'r', encoding='utf-8') as input_file:
+        reader = csv.reader(input_file, delimiter="\t")
+        for row in reader:
+            feedback[int(row[0])] = row[1]
+
+    missed_spells = set()
+    for feedback_id, feedback_name in feedback.items():
+        if feedback_id not in spells:
+            print(f'Warning! Feedback spell#{feedback_id} "{feedback_name}" does not exist in DB!')
+            missed_spells.add(feedback_id)
+        else:
+            translated = False
+            for spell in spells[feedback_id].values():
+                if spell.name_ua or spell.ref:
+                    translated = True
+            if not translated:
+                # print(f'Warning! Feedback spell#{feedback_id} "{feedback_name}" is not translated!')
+                missed_spells.add(feedback_id)
+
+    print(f'Missed IDs({len(missed_spells)}): {sorted(missed_spells)}')
+
+    return sorted(missed_spells)
 
 
 if __name__ == '__main__':
@@ -1122,6 +1161,8 @@ if __name__ == '__main__':
 
     compare_tsv_and_classicua(tsv_translations, classicua_translations)
     validate_translations(all_spells)
+
+    missing_spells = check_feedback_spells(all_spells)
 
     convert_translations_to_entries(tsv_translations)
 

@@ -187,6 +187,7 @@ Warning! Template failed for spell#31661:cata
 Warning! Newline count doesn't match for spell#31801:cata description
 Warning! Template failed for spell#31935:cata
 Warning! Newline count doesn't match for spell#31935:cata description
+Warning! Template failed for spell#32235:cata
 Warning! Template failed for spell#32546:cata
 Warning! Newline count doesn't match for spell#33763:cata description
 Warning! Template failed for spell#34428:cata
@@ -263,6 +264,7 @@ Warning! Newline count doesn't match for spell#86150:cata description
 Warning! Newline count doesn't match for spell#86346:cata description
 Warning! Template failed for spell#88625:cata
 Warning! Template failed for spell#88751:cata
+Warning! Template failed for spell#348459:wrath
 Warning! Numbers don't match for spell spell#348704
 Warning! There's no translation for spell#364001:classic aura
 Warning! Numbers don't match for spell spell#400735
