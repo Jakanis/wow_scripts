@@ -7,6 +7,7 @@ import multiprocessing
 from bs4 import BeautifulSoup
 import sqlite3
 import difflib
+from generation.utils.utils import compare_directories
 
 THREADS = 32
 
@@ -41,9 +42,9 @@ expansion_data = {
     },
     SOD: {
         WOWHEAD_URL: 'https://www.wowhead.com/classic',
-        METADATA_CACHE: 'wowhead_sod_classic_metadata_cache',
-        HTML_CACHE: 'wowhead_sod_classic_quests_html',
-        QUESTS_CACHE: 'wowhead_sod_classic_quest_cache',
+        METADATA_CACHE: 'wowhead_sod_metadata_cache',
+        HTML_CACHE: 'wowhead_sod_quests_html',
+        QUESTS_CACHE: 'wowhead_sod_quest_cache',
         METADATA_FILTERS: ('8:', '2:', '11500:'),
         IGNORES: [
             2000, 63769
@@ -691,7 +692,7 @@ def parse_wowhead_pages(expansion, metadata: dict[int, QuestMD]) -> dict[int, di
             wowhead_quests = pickle.load(f)
     else:
         print(f'Parsing Wowhead({expansion}) quest pages')
-        # wowhead_quests = {id: parse_wowhead_quest_page(expansion, id) for id in ids}
+        # wowhead_quests = {id: parse_wowhead_quest_page(expansion, id) for id in metadata.keys()}
         with multiprocessing.Pool(THREADS) as p:
             quests = p.map(parse_func, metadata.keys())
         wowhead_quests = {quest.id: quest for quest in quests}
@@ -1554,7 +1555,7 @@ def fix_expansion(classic_quests: dict[int, dict[str, QuestEntity]], sod_quests:
     pass
 
 
-def populate_cache_db_with_quest_data():
+def populate_cache_db_with_quest_data() -> dict[int, dict[str, QuestEntity]]:
     wowhead_metadata = get_wowhead_quests_metadata(CLASSIC)
     wowhead_metadata_sod = get_wowhead_quests_metadata(SOD)
     wowhead_metadata_tbc = get_wowhead_quests_metadata(TBC)
@@ -1602,6 +1603,8 @@ def populate_cache_db_with_quest_data():
 
     save_quests_to_cache_db(all_quests)
 
+    return all_quests
+
 
 
 def compare_databases(cache_db, main_db):
@@ -1632,51 +1635,51 @@ def compare_databases(cache_db, main_db):
         #     __update_quest_type_and_lvls(cache_metadata, db_conn)
 
 
-def compare_directories(dir1, dir2) -> list:
-    import filecmp, difflib
-    # print('-'*100)
-    # print('-'*100)
-    # print(f'Comparing {dir1} and {dir2}')
-    dcmp = filecmp.dircmp(dir1, dir2)
-
-    # List of files that are only in the first directory
-    only_in_dir1 = dcmp.left_only
-
-    # List of files that are only in the second directory
-    only_in_dir2 = dcmp.right_only
-
-    # Print the results for the current directory
-    if len(only_in_dir1) > 0:
-        print("Files only in", dir1, ":", only_in_dir1)
-    if len(only_in_dir2) > 0:
-        print("Files only in", dir2, ":", only_in_dir2)
-
-    diffed_files = list()
-
-    for common_file in dcmp.common_files:
-        file1 = os.path.join(dir1, common_file)
-        file2 = os.path.join(dir2, common_file)
-
-        with open(file1, 'r') as f1, open(file2, 'r') as f2:
-            # Read the files as binary and remove line ending differences
-            content1 = f1.read().replace('\r\n', '\n')
-            content2 = f2.read().replace('\r\n', '\n')
-            if content1 != content2:
-                print('-'*100)
-                print(f'Diffing in {dir1} and {dir2}')
-                print("Diffing file:", common_file)
-                differ = difflib.Differ()
-                lines1 = content1.splitlines()
-                lines2 = content2.splitlines()
-                diff = differ.compare(lines1, lines2)
-                print('\n'.join(diff))
-                diffed_files.append(file2)
-
-    # Recursively compare subdirectories
-    for subdir in dcmp.common_dirs:
-        diffed_files.extend(compare_directories(os.path.join(dir1, subdir), os.path.join(dir2, subdir)))
-
-    return diffed_files
+# def compare_directories(dir1, dir2) -> list:
+#     import filecmp, difflib
+#     # print('-'*100)
+#     # print('-'*100)
+#     # print(f'Comparing {dir1} and {dir2}')
+#     dcmp = filecmp.dircmp(dir1, dir2)
+#
+#     # List of files that are only in the first directory
+#     only_in_dir1 = dcmp.left_only
+#
+#     # List of files that are only in the second directory
+#     only_in_dir2 = dcmp.right_only
+#
+#     # Print the results for the current directory
+#     if len(only_in_dir1) > 0:
+#         print("Files only in", dir1, ":", only_in_dir1)
+#     if len(only_in_dir2) > 0:
+#         print("Files only in", dir2, ":", only_in_dir2)
+#
+#     diffed_files = list()
+#
+#     for common_file in dcmp.common_files:
+#         file1 = os.path.join(dir1, common_file)
+#         file2 = os.path.join(dir2, common_file)
+#
+#         with open(file1, 'r') as f1, open(file2, 'r') as f2:
+#             # Read the files as binary and remove line ending differences
+#             content1 = f1.read().replace('\r\n', '\n')
+#             content2 = f2.read().replace('\r\n', '\n')
+#             if content1 != content2:
+#                 print('-'*100)
+#                 print(f'Diffing in {dir1} and {dir2}')
+#                 print("Diffing file:", common_file)
+#                 differ = difflib.Differ()
+#                 lines1 = content1.splitlines()
+#                 lines2 = content2.splitlines()
+#                 diff = differ.compare(lines1, lines2)
+#                 print('\n'.join(diff))
+#                 diffed_files.append(file2)
+#
+#     # Recursively compare subdirectories
+#     for subdir in dcmp.common_dirs:
+#         diffed_files.extend(compare_directories(os.path.join(dir1, subdir), os.path.join(dir2, subdir)))
+#
+#     return diffed_files
 
 def check_categories():
     from utils import known_categories
@@ -1715,7 +1718,7 @@ def check_categories():
 def generate_sources():
     from pathlib import Path
     import shutil
-    import classicua_utils
+    from generation.utils.utils import get_quest_filename, write_xml_quest_file
 
     print('Generating sources...')
     if os.path.exists('./source_for_crowdin'):
@@ -1737,10 +1740,10 @@ def generate_sources():
             path = f'source_for_crowdin/quests{suffix}/{quest_entity.cat}'
             Path(path).mkdir(parents=True, exist_ok=True)
 
-            filename = classicua_utils.get_quest_filename(quest_entity.id, quest_entity.name)
+            filename = get_quest_filename(quest_entity.id, quest_entity.name)
             # print(id, title)
 
-            classicua_utils.write_xml_quest_file(
+            write_xml_quest_file(
                 f'{path}/{filename}.xml',
                 quest_entity.name,
                 quest_entity.objective,
@@ -1800,16 +1803,35 @@ def update_on_crowdin(diffs: list):
             print(f'File path "{file_path}" not found')
 
 
+def check_feedback_quests(all_quests: dict[int, dict[str, QuestEntity]]):
+    import csv
+    feedback_ids = set()
+    with open('input/missing_quests.tsv', 'r', encoding='utf-8') as input_file:
+        reader = csv.reader(input_file, delimiter="\t")
+        for row in reader:
+            feedback_ids.add(int(row[0]))
+
+    missed_quests = set()
+    for feedback_id in feedback_ids:
+        if feedback_id not in all_quests:
+            print(f'Warning! Feedback quest#{feedback_id} does not exist in DB!')
+            missed_quests.add(feedback_id)
+
+    print(f'Missed IDs: {missed_quests}')
+
+
 if __name__ == '__main__':
     # check_categories() # Check categories and update known_categories in utils if needed
 
-    populate_cache_db_with_quest_data()  # Generate cache/quests.db
+    all_quests = populate_cache_db_with_quest_data()  # Generate cache/quests.db
 
     # compare_databases('cache/quests.db', 'classicua.db') # compare cache/quests.db with ./classicua.db (the one we overwrite)
 
     generate_sources()
 
     diffs = compare_directories('source_from_crowdin', 'source_for_crowdin')
+
+    check_feedback_quests(all_quests)
 
     update_on_crowdin(diffs)
 
