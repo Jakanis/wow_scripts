@@ -506,17 +506,21 @@ def save_temp_zones_to_cache_db(wowhead: dict[int, WowheadZone], wowdb: dict[int
                         (key, wowhead_name, wowdb_name, classicdb_name, classicdb_parent, evowow_name, evowow_parent, warcraftdb_name, warcraftdb_parent))
 
 
-def read_new_translations() -> dict[str, str]:
+def read_new_translations() -> dict[str, Zone]:
     import csv
     all_zones = dict()
-    with open('new_translations.tsv', 'r', encoding="utf-8") as input_file:
+    with open('input/new_translations.tsv', 'r', encoding="utf-8") as input_file:
         reader = csv.reader(input_file, delimiter="\t")
         for row in reader:
-            if (len(row) != 2):
-                print(f'check {row}')
+            if (len(row) < 2):
+                print(f'Skipping {row}')
+                continue
             zone_name = row[0]
             name_ua = row[1]
-            all_zones[zone_name] = name_ua
+            parent_zone = None
+            if len(row) > 2:
+                parent_zone = row[2]
+            all_zones[zone_name] = Zone(None, zone_name, translation=name_ua, parent_zone=parent_zone)
     return all_zones
 
 
@@ -543,7 +547,7 @@ def __cleanup_name(name: str) -> str:
     result = result.replace('UNUSED', '')
     return result.strip()
 
-def merge_zones(wowhead: dict[int, WowheadZone], wowdb: dict[int, str], classicdb: dict[int, str], evowow: dict[int, str], warcraftdb: dict[int, str], translated: dict[str, str]) -> dict[str, Zone]:
+def merge_zones(wowhead: dict[int, WowheadZone], wowdb: dict[int, str], classicdb: dict[int, str], evowow: dict[int, str], warcraftdb: dict[int, str], translated: dict[str, Zone]) -> dict[str, Zone]:
     added_names = set()
     merged_zones = dict()
 
@@ -607,16 +611,16 @@ def merge_zones(wowhead: dict[int, WowheadZone], wowdb: dict[int, str], classicd
             if warcraftdb_zone and zone_name == __cleanup_name(warcraftdb_zone[0]):
                 sources.append('warcraftdb')
 
-            translated_name = None
+            translated_zone = None
             if translated.get(zone_name):
-                translated_name = translated.get(zone_name)
+                translated_zone = translated.get(zone_name)
             elif translated.get('The ' + zone_name):
-                translated_name = translated.get('The ' + zone_name)
+                translated_zone = translated.get('The ' + zone_name)
             elif translated.get(zone_name.replace('The ', '')):
-                translated_name = translated.get(zone_name.replace('The ', ''))
+                translated_zone = translated.get(zone_name.replace('The ', ''))
 
             merged_zones[zone_name] = Zone(zone_id, zone_name, parent_name,
-                                           translated_name,
+                                           translated_zone.translation if translated_zone else None,
                                            wowhead[zone_id].get_expansion() if wowhead.get(zone_id) else None,
                                            wowhead[zone_id].get_category() if wowhead.get(zone_id) else None,
                                            ', '.join(sources))
@@ -655,10 +659,10 @@ def save_zones_to_db(zones: dict[str, Zone]):
                         (zone.id, zone.parent_zone, zone.name, zone.translation, zone.expansion, zone.category, zone.source))
 
 
-def read_zones_from_glossary() -> dict[str, str]:
+def read_zones_from_glossary() -> dict[str, Zone]:
     import csv
     all_zones = dict()
-    with open('glossary.csv', 'r', encoding="utf-8") as input_file:
+    with open('input/glossary.csv', 'r', encoding="utf-8") as input_file:
         reader = csv.reader(input_file)
         for row in reader:
             if row[0] == 'Term [uk]':
@@ -668,18 +672,20 @@ def read_zones_from_glossary() -> dict[str, str]:
                 name = row[0]
                 if name in all_zones:
                     print(f'Zone "{id}" duplicated')
-                all_zones[name] = translation
+                all_zones[name] = Zone(None, name, translation=translation)
     return all_zones
 
 
-def generate_glossary_row(zone_key: str, zones: dict[str, Zone]) -> str:
-    if not zones.get(zone_key):
-        print(f'! No zone for {zone_key}')
-        return zone_key
-    zone = zones[zone_key]
+def generate_glossary_row(translation: Zone, zones: dict[str, Zone]) -> str:
+    zone = zones.get(translation.name) or translation
     zone_description = 'локація'
-    if zone.parent_zone:
+    if zone.parent_zone and zone.parent_zone in zones and zones[zone.parent_zone].translation:
         zone_description += f', {zones[zone.parent_zone].translation}'
+    elif translation.parent_zone and translation.parent_zone in zones and zones[translation.parent_zone].translation:
+        zone_description += f', {zones[translation.parent_zone].translation}'
+    else:
+        print(f'Warning! No translation for parent zone "{translation.parent_zone}" from {zone.name}')
+        zone_description += f', {translation.parent_zone}'
     if zone.category:
         if zones.get(zone.category):
             zone_description += f', {zones[zone.category].translation}'
@@ -696,15 +702,15 @@ def generate_glossary_row(zone_key: str, zones: dict[str, Zone]) -> str:
     return row
 
 
-def save_translations_to_glossary(translated_zones: dict[str, str], glossary_zones: dict[str, str], merged_zones: dict[str, Zone]):
+def save_translations_to_glossary(translated_zones: dict[str, Zone], glossary_zones: dict[str, Zone], merged_zones: dict[str, Zone]):
     glossary_import_lines = list()
     glossary_import_lines.append('"Term [uk]","Term [en]","Description [en]"')
     for zone_name in glossary_zones.keys() & translated_zones.keys():
         print(f'! Zone {zone_name} already exists.')
     for zone_name in translated_zones.keys() - glossary_zones.keys():
-        glossary_import_lines.append(generate_glossary_row(zone_name, merged_zones))
+        glossary_import_lines.append(generate_glossary_row(translated_zones[zone_name], merged_zones))
 
-    with open('new_zones_dictionary.csv', 'w', encoding="utf-8") as out_file:
+    with open('input/new_zones_dictionary.csv', 'w', encoding="utf-8") as out_file:
         out_file.writelines('\n'.join(glossary_import_lines))
 
 
@@ -712,7 +718,7 @@ def generate_translation_csv(merged_zones: dict[str, Zone]):
     import csv
 
     feedback_zone_names = set()
-    with open('feedback_zones.tsv', 'r', encoding="utf-8") as input_file:
+    with open('input/missing_zones.tsv', 'r', encoding="utf-8") as input_file:
         reader = csv.reader(input_file, delimiter="\t")
         for row in reader:
             feedback_zone_names.add(row[0])
@@ -724,7 +730,7 @@ def generate_translation_csv(merged_zones: dict[str, Zone]):
         if zone.translation is None:
             result_lines.append(f'{zone.id}\t{zone_name}\t{zone.translation}\t{zone.parent_zone}\t{zone.expansion}\t{zone.category}\t{zone.source}')
 
-    with open('translate_this.csv', 'w', encoding="utf-8") as out_file:
+    with open('output/translate_this.csv', 'w', encoding="utf-8") as out_file:
         out_file.writelines('\n'.join(result_lines))
 
 
@@ -755,8 +761,6 @@ if __name__ == '__main__':
 
     merged_zones = merge_zones(wowhead_zones, wowdb_zones, classicdb_zones, evowow_zones, warcraftdb_zones, merged_translations)
     save_zones_to_db(merged_zones)
-
-    generate_translation_csv(merged_zones)
 
     save_translations_to_glossary(translated_zones, glossary_zones, merged_zones)
 
