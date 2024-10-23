@@ -20,7 +20,7 @@ def add_translations_to_objects_lua():
         decoded_objects = lua.decode(lua_file)
         for original, translation in decoded_objects.items():
             if original in translations and translation != translations[original]:
-                print(f'Duplicate for {row[0]}: {translations[original]} and {translation}')
+                print(f'Duplicate for {original}: {translations[original]} and {translation}')
             translations[original] = translation
 
     with open(f'output/object.lua', 'w', encoding="utf-8") as output_file:
