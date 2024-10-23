@@ -81,6 +81,9 @@ quest_categories_correction = {
     11696: (9, -369),  # Ahune is Here! -> World Events/Midsummer
     # 11972: (9, -369),  # Shards of Ahune -> World Events/Midsummer (actually correct in Wrath, in case it won't be overwritten)
 
+    12782: (8, -284), # Desperate Research -> Outland/Special (uncategorized in Cata - cat==-2)
+    12786: (8, -284), # Thunder Bluff -> Outland/Special (uncategorized in Cata - cat==-2)
+
 }
 
 # 236 wotlk
