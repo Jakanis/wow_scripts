@@ -110,12 +110,12 @@ def parse_npcs_lua():
         all_npcs[id] = npc
     return all_npcs
 
-def parse_pending_npcs_csv() -> dict[NPC_TR]:
+def parse_pending_npcs_tsv() -> dict[NPC_TR]:
     import csv
     npc_names = set()
     all_npcs = dict()
-    with open('pending_npcs.csv', 'r', encoding="utf-8") as input_file:
-        reader = csv.reader(input_file)
+    with open('pending_npcs.tsv', 'r', encoding="utf-8") as input_file:
+        reader = csv.reader(input_file, delimiter="\t", quoting=csv.QUOTE_NONE)
         for row in reader:
             if (row[0] == 'Id'):
                 continue
@@ -179,12 +179,12 @@ def combine_existing_and_pending_npcs_to_tsv():
     with open('npcs_from_wowhead.pkl', 'rb') as f:
         npcs_from_wowhead = pickle.load(f)
     npcs_from_lua = parse_npcs_lua()
-    pending_npcs = parse_pending_npcs_csv()
+    pending_npcs = parse_pending_npcs_tsv()
     combine_all_npcs(npcs_from_wowhead, npcs_from_lua, pending_npcs)
 
 def pending_npcs_to_crowdin_dictionary_csv():
     existing_npcs = read_npc_names_from_glossary()
-    pending_npcs = parse_pending_npcs_csv()
+    pending_npcs = parse_pending_npcs_tsv()
     dictionary_lines = list()
     dictionary_lines.append('"Term [uk]","Term [en]","Description [en]"\n')
     for id, pending_npc in pending_npcs.items():
