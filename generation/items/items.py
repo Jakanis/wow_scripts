@@ -194,7 +194,7 @@ def save_page(expansion, id):
         # You download over 90000 pages in one hour - you'll fail
         # You do it async - you fail
         # Have a tea break (or change IP, lol)
-        raise Exception(f'Wowhead({expansion}) returned {r.status_code} for quest #{id}')
+        raise Exception(f'Wowhead({expansion}) returned {r.status_code} for item #{id}')
     if (f"<error>Item not found!</error>" in r.text):
         return
     with open(xml_file_path, 'w', encoding="utf-8") as output_file:
@@ -477,7 +477,7 @@ def merge_item(id: int, old_items: dict[str, ItemData], new_item: ItemData) -> d
         # if name differs - merge their effects and return both
 
         __merge_item_effects(old_item, new_item)
-        if old_item.name != new_item.name:
+        if old_item.name.lower() != new_item.name.lower():
             return {**old_items, **{new_item.expansion: new_item}}
         elif '\n'.join([str(effect) for effect in old_item.effects]) != '\n'.join([str(effect) for effect in new_item.effects]):
             return {**old_items, **{new_item.expansion: new_item}}
