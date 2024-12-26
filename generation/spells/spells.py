@@ -542,7 +542,7 @@ def create_translation_sheet(spells: dict[int, dict[str, SpellData]]):
                 # if getattr(spell.spell_md, 'chrclass') in SpellMD._classes.keys() and spell.expansion == SOD and spell.name_ua is None and spell.description_ua is None and spell.aura_ua is None and spell.ref is None:
                 # if spell.expansion != SOD and (spell.name_ua or spell.ref):
                 # if spell.expansion in [CLASSIC, SOD] and spell.name_ua is None and spell.description_ua is None and spell.aura_ua is None and spell.ref is None and spell.id in [28273, 28486, 28488, 29348, 30226, 30298, 30845, 30847, 30848, 32235, 32600, 33035, 33253, 37736, 41973, 42120, 42122, 42127, 348459]:
-                if spell.name_ua is None and spell.description_ua is None and spell.aura_ua is None and spell.ref is None and spell.id in [459601, 459602, 463864, 465412, 465414, 467141, 467142, 467143, 467144, 467166, 467318, 467330, 467332, 467430, 467437, 467443, 467446, 467459, 467467, 467499, 467511, 467522, 467523, 467525, 467549, 467550, 467647, 467651, 467738, 467754, 467828, 467830, 468164, 468224, 468387, 468388, 468458, 468460, 468461, 468462, 468512, 468531, 468540, 468590, 468592, 468621, 468688, 468714, 468764, 468768, 468769, 468785, 469138, 469148, 469191, 469348, 469414, 469481, 469493, 469673, 469828]:
+                if spell.name_ua is None and spell.description_ua is None and spell.aura_ua is None and spell.ref is None and spell.id in [33124, 438273, 468268, 470345, 470362, 470369, 471698, 473384, 473482, 473544, 473847, 473856, 473862, 473872, 473881, 473900, 474116, 474236, 474386, 474727, 1213145, 1213147, 1213232, 1213234, 1213288, 1213289, 1213297, 1213335, 1213355, 1213366, 1213375, 1213390, 1213398, 1213405, 1213407, 1213411, 1213417, 1213419, 1213421, 1213813, 1213816, 1213829, 1213833, 1213862, 1213874, 1213886, 1213892, 1213897, 1213901, 1213904, 1213914, 1213917, 1213922, 1213924, 1213946, 1213971, 1213972, 1214001, 1214125, 1214143, 1214155, 1214171, 1214179, 1214204, 1214205, 1214208, 1214233, 1214263, 1214272, 1214276, 1214281, 1214283, 1214284, 1214376, 1214379, 1214399, 1214400, 1214402, 1214403, 1214405, 1214406, 1214422, 1214432, 1214917, 1214927, 1214955, 1215198, 1215377, 1215378, 1215380, 1215404, 1215506, 1215508, 1216968, 1216971, 1216997, 1217141, 1217145, 1217149, 1217153, 1217206, 1217297, 1218071, 1218072, 1218073, 1218074, 1218075, 1218121]:
                 # if spell.name_ua is None and spell.description_ua is None and spell.aura_ua is None and spell.ref is None and spell.aura_ref == 458 and spell.expansion in [CLASSIC, SOD]:
                 #     fields = [spell.id, spell.name, spell.name_ua, spell.description, spell.description_ua, spell.aura, spell.aura_ua, spell.ref, spell.name_ref, spell.description_ref, spell.aura_ref, spell.expansion, spell.category, spell.group]
                     class_name = SpellMD._classes[getattr(spell.spell_md, 'chrclass')] if getattr(spell.spell_md, 'chrclass') in SpellMD._classes else ''
@@ -782,7 +782,7 @@ def __spell_to_lua_row(spell: SpellData):
     if spell.description_ua:
         description_text = []
         for line in spell.description_ua.splitlines():
-            if 'spell#' in line:
+            if line.startswith('spell#'):
                 rune_refs.append(line.split('#')[-1])
             else:
                 description_text.append(line)

@@ -30,6 +30,9 @@ Warning! Template failed for spell#596:cata
 Warning! Newline count doesn't match for spell#596:cata description
 Warning! Newline count doesn't match for spell#633:cata description
 Warning! Template failed for spell#635:cata
+Warning! Newline count doesn't match for spell#642:classic description
+Warning! Newline count doesn't match for spell#642:classic aura
+Warning! Numbers don't match for spell spell#642
 Warning! Template failed for spell#686:cata
 Warning! Newline count doesn't match for spell#845:cata description
 Warning! Newline count doesn't match for spell#879:cata description
@@ -112,8 +115,11 @@ Warning! Template failed for spell#10138:classic
 Warning! Newline count doesn't match for spell#10138:classic description
 Warning! Template failed for spell#10139:classic
 Warning! Newline count doesn't match for spell#10139:classic description
+Warning! Template failed for spell#10140:classic
+Warning! Newline count doesn't match for spell#10140:classic description
 Warning! Template failed for spell#11113:cata
 Warning! Template failed for spell#11129:cata
+Warning! Newline count doesn't match for spell#11237:classic description
 Warning! Newline count doesn't match for spell#12042:cata description
 Warning! Newline count doesn't match for spell#12051:cata description
 Warning! Template failed for spell#12321:classic
@@ -129,8 +135,11 @@ Warning! Template failed for spell#15237:cata
 Warning! Template failed for spell#15237:cata
 Warning! Newline count doesn't match for spell#15473:classic description
 Warning! Newline count doesn't match for spell#16166:cata description
+Warning! Newline count doesn't match for spell#16178:classic description
 Warning! Newline count doesn't match for spell#16511:cata description
 Warning! Newline count doesn't match for spell#16864:classic description
+Warning! Template failed for spell#16896:classic
+Warning! Newline count doesn't match for spell#16896:classic description
 Warning! Template failed for spell#16902:classic
 Warning! Newline count doesn't match for spell#16902:classic description
 Warning! Template failed for spell#16914:wrath
@@ -150,6 +159,7 @@ Warning! Newline count doesn't match for spell#19028:cata description
 Warning! Newline count doesn't match for spell#19416:classic description
 Warning! Newline count doesn't match for spell#19485:classic description
 Warning! Template failed for spell#19750:cata
+Warning! Newline count doesn't match for spell#20049:classic description
 Warning! Template failed for spell#20138:cata
 Warning! Newline count doesn't match for spell#20154:cata description
 Warning! Template failed for spell#20473:cata
