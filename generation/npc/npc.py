@@ -4,6 +4,7 @@ import os
 import requests
 from bs4 import BeautifulSoup
 
+THREADS = 16
 CLASSIC = 'classic'
 TBC = 'tbc'
 WRATH = 'wrath'
@@ -79,7 +80,6 @@ class NPC_MD:
         self.names = names
         self.react = react
         self.expansion = expansion
-
         def get_classification(self):
             if self.classification == 0:
                 return 'normal'
@@ -107,6 +107,15 @@ class NPC_Short:
         self.id = id
         self.name = name
         self.tag = tag
+
+
+class NPC_Data:
+    def __init__(self, id, expansion, name: str = None, quotes: list[str] = [], name_ua: str = None):
+        self.id = id
+        self.expansion = expansion
+        self.name = name
+        self.name_ua = name_ua
+        self.quotes = quotes
 
 
 def __get_wowhead_npc_search(expansion, start, end=None) -> list[NPC_MD]:
@@ -345,7 +354,7 @@ def fix_npc_data(all_npcs: dict[int, dict[str, NPC_MD]]):
     del all_npcs[185336][SOD]
 
 
-def populate_cache_db_with_npc_data():
+def populate_cache_db_with_npc_data() -> dict[int, dict[str, NPC_MD]]:
     wowhead_metadata_classic = get_wowhead_npc_metadata(CLASSIC)
     wowhead_metadata_sod = get_wowhead_npc_metadata(SOD)
     wowhead_metadata_tbc = get_wowhead_npc_metadata(TBC)
@@ -503,13 +512,129 @@ def create_translation_sheet(npcs: dict[int, dict[str, NPC_MD]]):
                     f.write(f'{npc.id}\t"{npc.name}"\t"{f"<{npc.tag}>" if npc.tag else ""}"\t\t\t\t\t\t{npc.expansion}\n')
 
 
-if __name__ == '__main__':
-    all_npcs = populate_cache_db_with_npc_data()  # Generate cache/npcs.db
+def save_page(expansion, id):
+    url = expansion_data[expansion][WOWHEAD_URL] + f'/npc={id}'
+    html_file_path = f'cache/{expansion_data[expansion][HTML_CACHE]}/{id}.html'
+    if os.path.exists(html_file_path):
+        print(f'Warning! Trying to download existing HTML for #{id}')
+        return
+    r = requests.get(url)
+    if not r.ok:
+        # You download over 90000 pages in one hour - you'll fail
+        # You do it async - you fail
+        # Have a tea break (or change IP, lol)
+        raise Exception(f'Wowhead({expansion}) returned {r.status_code} for NPC #{id}')
+    if (f"<error>Item not found!</error>" in r.text):
+        return
+    with open(html_file_path, 'w', encoding="utf-8") as output_file:
+        output_file.write(r.text)
 
-    check_existing_translations(all_npcs)  # Check if original data changes since previous translation and difference between ClassicUA and translation sheet
+
+def save_htmls_from_wowhead(expansion, ids: set[int]):
+    from functools import partial
+    import multiprocessing
+    cache_dir = f'cache/{expansion_data[expansion][HTML_CACHE]}'
+
+    os.makedirs(cache_dir, exist_ok=True)
+    existing_files = os.listdir(cache_dir)
+    existing_ids = set(int(file_name.split('.')[0]) for file_name in existing_files)
+
+    if os.path.exists(cache_dir) and existing_ids == ids:
+        print(f'HTML cache for all Wowhead({expansion}) NPCs ({len(ids)}) exists and seems legit. Skipping.')
+        return
+
+    save_ids = ids - existing_ids
+    print(f'Saving HTMLs for {len(save_ids)} of {len(ids)} NPCs from Wowhead({expansion}).')
+
+    redundant_ids = existing_ids - ids
+    if len(redundant_ids) > 0:
+        print(f"There's some redundant IDs: {redundant_ids}")
+
+    save_func = partial(save_page, expansion)
+    # for id in ids:
+    #     save_page(expansion, save_ids)
+    with multiprocessing.Pool(THREADS) as p:
+        p.map(save_func, save_ids)
+
+
+def parse_wowhead_npc_page(expansion, id) -> NPC_Data:
+    import re
+    html_path = f'cache/{expansion_data[expansion][HTML_CACHE]}/{id}.html'
+    with open(html_path, 'r', encoding="utf-8") as file:
+        html = file.read()
+    soup = BeautifulSoup(html, 'html5lib')
+
+    npc_name = soup.find('h1').text
+    npc_name = npc_name[:npc_name.find(' <')] if ' <' in npc_name else npc_name
+    npc_quotes_header = soup.find('h2', {'class': 'heading-size-3'}, string=re.compile('Quotes'))
+
+    npc_quotes = list()
+    if npc_quotes_header:
+        npc_quotes_list = npc_quotes_header.find_next('ul').find_all('li')
+        for list_element in npc_quotes_list:
+            npc_quote = list_element.text[list_element.text.find(':') + 2:]
+            npc_quotes.append(npc_quote)
+
+    return NPC_Data(id, expansion, name=npc_name, quotes=npc_quotes)
+
+
+def parse_wowhead_pages(expansion, metadata: dict[int, dict[str, NPC_MD]]) -> dict[int, NPC_Data]:
+    import pickle
+    import multiprocessing
+    from functools import partial
+    cache_path = f'cache/tmp/{expansion_data[expansion][NPC_CACHE]}.pkl'
+
+    if os.path.exists(cache_path):
+        print(f'Loading cached Wowhead({expansion}) NPCs')
+        with open(cache_path, 'rb') as f:
+            wowhead_npcs = pickle.load(f)
+    else:
+        print(f'Parsing Wowhead({expansion}) NPC pages')
+        # wowhead_npcs = {id: parse_wowhead_npc_page(expansion, id) for id in metadata.keys()}
+        parse_func = partial(parse_wowhead_npc_page, expansion)
+        with multiprocessing.Pool(THREADS) as p:
+            wowhead_npcs = p.map(parse_func, metadata.keys())
+        wowhead_npcs = {npc.id: npc for npc in wowhead_npcs}
+
+        os.makedirs('cache/tmp', exist_ok=True)
+        with open(cache_path, 'wb') as f:
+            pickle.dump(wowhead_npcs, f)
+
+    # wowhead_item_data = merge_quests_and_metadata(wowhead_items, metadata)
+
+    # return wowhead_quest_entities
+    return wowhead_npcs
+
+
+def store_npc_quotes(npc_metadata: dict[int, dict[str, NPC_MD]]):
+    import pickle
+    wowhead_md = dict()
+    wowhead_npcs = dict()
+    all_npcs = dict()
+    # download_npc_pages(npc_metadata)
+    # wowhead_metadata_classic = get_wowhead_npc_metadata(CLASSIC)
+    # wowhead_metadata_sod = get_wowhead_npc_metadata(SOD)
+
+    for expansion in list(expansion_data.keys())[:2]:
+        wowhead_md[expansion] = get_wowhead_npc_metadata(expansion)
+        save_htmls_from_wowhead(expansion, set(wowhead_md[expansion].keys()))
+        wowhead_npcs[expansion] = parse_wowhead_pages(expansion, wowhead_md[expansion])
+        # print(f'Merging with {expansion}')
+        # all_items = merge_expansions(all_npcs, wowhead_npcs[expansion])
+
+    with open('output/all_npcs.pkl', 'wb') as f:
+        pickle.dump(wowhead_npcs, f)
+    print('Done')
+
+if __name__ == '__main__':
+    all_npcs_md = populate_cache_db_with_npc_data()  # Generate cache/npcs.db
+
+    check_existing_translations(all_npcs_md)  # Check if original data changes since previous translation and difference between ClassicUA and translation sheet
     # update_questie_translation(all_npcs)  # Update translations for Questie
 
-    check_feedback_npcs(all_npcs)
+    check_feedback_npcs(all_npcs_md)
 
-    create_translation_sheet(all_npcs)
+    create_translation_sheet(all_npcs_md)
+
+    store_npc_quotes(all_npcs_md)
 
