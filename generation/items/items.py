@@ -595,11 +595,10 @@ def read_translations_sheet() -> dict[int, dict[str, ItemData]]:
             name_en = row[1] if row[1] else None
             name_ua = row[2] if row[2] else None
             effects = str_effects_to_effects(row[3], ignore_desc=True) if row[3] else []
-            ref = effects_ua = None
-            if row[4].startswith('ref='):
-                ref = row[4][4:]
-            else:
-                effects_ua = str_effects_to_effects(row[4]) if row[4] else []
+            ref = None
+            effects_ua = str_effects_to_effects(row[4]) if row[4] else []
+            if effects_ua and effects_ua[0].effect_type == 'Ref':
+                ref = effects_ua[0].effect_id
             expansion = row[6]
             all_translations[item_id] = all_translations.get(item_id, dict())
             if expansion in all_translations[item_id].keys():
@@ -737,7 +736,8 @@ def compare_tsv_and_classicua(tsv_translations: dict[int, dict[str, ItemData]], 
         print(f"Warning! Item#{key} doesn't exist in sheet")
     for key in tsv_translations.keys() & classicua_translations.keys():
         for expansion in tsv_translations[key].keys() - classicua_translations[key].keys():
-            print(f"Warning! Item#{key}:{expansion} doesn't exist in ClassicUA")
+            if tsv_translations[key][expansion].ref != key:
+                print(f"Warning! Item#{key}:{expansion} doesn't exist in ClassicUA")
         for expansion in classicua_translations[key].keys() - tsv_translations[key].keys():
             print(f"Warning! Item#{key}:{expansion} doesn't exist in sheet")
         for expansion in tsv_translations[key].keys() & classicua_translations[key].keys():
@@ -761,7 +761,6 @@ def __build_value(value: ItemEffect) -> str:
         return f"{effect_value}"
     if type(effect_value) == str:
         return f'"{__prepare_lua_str(effect_value)}"'
-    print('FUCK')
 
 
 def __build_values(values: list[ItemEffect]) -> str:
@@ -835,6 +834,9 @@ def convert_translations_to_lua(translations: list[ItemData], expansion: str):
                     if ref is not None:
                         print(f"Warning! Double ref for item#{item.id}:{item.expansion}")
                     ref = effect.effect_id
+
+            if item.id == ref:  # Manually set to preserve translation from previous expansion
+                continue
 
             translation_strs = list()
             if item.name_ua:
