@@ -16,6 +16,7 @@ METADATA_CACHE = 'metadata_cache'
 XML_CACHE = 'html_cache'
 ITEM_CACHE = 'item_cache'
 IGNORES = 'ignores'
+FORCE_DOWNLOAD = 'force_download'
 INDEX = 'index'
 METADATA_FILTERS = 'metadata_filters'
 
@@ -27,7 +28,8 @@ expansion_data = {
         XML_CACHE: 'wowhead_classic_item_xml',
         ITEM_CACHE: 'wowhead_classic_item_cache',
         METADATA_FILTERS: ('82:', '5:', '11500:'),
-        IGNORES: []
+        IGNORES: [],
+        FORCE_DOWNLOAD: [13503, 17782]
     },
     SOD: {
         INDEX: 0,
@@ -36,7 +38,8 @@ expansion_data = {
         XML_CACHE: 'wowhead_sod_item_xml',
         ITEM_CACHE: 'wowhead_sod_item_cache',
         METADATA_FILTERS: ('82:', '2:', '11500:'),
-        IGNORES: [759, 9232, 202256, 202316, 215235, 215394, 215405, 215406, 215410, 215412, 215450, 231752]
+        IGNORES: [759, 9232, 202256, 202316, 215235, 215394, 215405, 215406, 215410, 215412, 215450, 231752, 235583],
+        FORCE_DOWNLOAD: []
     },
     TBC: {
         INDEX: 1,
@@ -45,7 +48,8 @@ expansion_data = {
         XML_CACHE: 'wowhead_tbc_item_xml',
         ITEM_CACHE: 'wowhead_tbc_item_cache',
         METADATA_FILTERS: ('', '', ''),
-        IGNORES: []
+        IGNORES: [],
+        FORCE_DOWNLOAD: []
     },
     WRATH: {
         INDEX: 2,
@@ -55,6 +59,7 @@ expansion_data = {
         ITEM_CACHE: 'wowhead_wrath_item_cache',
         METADATA_FILTERS: ('', '', ''),
         IGNORES: [],
+        FORCE_DOWNLOAD: []
     },
     CATA: {
         INDEX: 3,
@@ -63,7 +68,8 @@ expansion_data = {
         XML_CACHE: 'wowhead_cata_item_xml',
         ITEM_CACHE: 'wowhead_cata_item_cache',
         METADATA_FILTERS: ('', '', ''),
-        IGNORES: []
+        IGNORES: [],
+        FORCE_DOWNLOAD: []
     }
 }
 
@@ -514,6 +520,8 @@ def retrieve_item_data():
 
     for expansion, expansion_properties in expansion_data.items():
         wowhead_md[expansion] = get_wowhead_items_metadata(expansion)
+        for force_id in expansion_properties[FORCE_DOWNLOAD]:
+            wowhead_md[expansion][force_id] = ItemMD(force_id, "FORCE LOAD", expansion)
         save_xmls_from_wowhead(expansion, set(wowhead_md[expansion].keys()))
         wowhead_items[expansion] = parse_wowhead_pages(expansion, wowhead_md[expansion])
         print(f'Merging with {expansion}')
@@ -945,11 +953,11 @@ def check_feedback_items(all_items: dict[int, dict[str, ItemData]]):
         for row in reader:
             feedback[int(row[0])] = row[1]
 
-    missed_items = set()
+    missed_items = list()
     for feedback_id, feedback_name in feedback.items():
         if feedback_id not in all_items:
             print(f'Warning! Feedback Item#{feedback_id} "{feedback_name}" does not exist in DB!')
-            missed_items.add(feedback_id)
+            missed_items.append(feedback_id)
         else:
             translated = False
             for item in all_items[feedback_id].values():
@@ -957,9 +965,9 @@ def check_feedback_items(all_items: dict[int, dict[str, ItemData]]):
                     translated = True
             if not translated:
                 print(f'Warning! Feedback Item#{feedback_id} "{feedback_name}" is not translated!')
-                missed_items.add(feedback_id)
+                missed_items.append(feedback_id)
 
-    print(f'Missed IDs: {missed_items}')
+    print(f'Missed IDs: {sorted(missed_items)}')
 
 
 if __name__ == '__main__':
