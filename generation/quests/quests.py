@@ -1805,19 +1805,19 @@ def update_on_crowdin(diffs: list):
 
 def check_feedback_quests(all_quests: dict[int, dict[str, QuestEntity]]):
     import csv
-    feedback_ids = set()
+    feedback_ids = list()
     with open('input/missing_quests.tsv', 'r', encoding='utf-8') as input_file:
         reader = csv.reader(input_file, delimiter="\t")
         for row in reader:
-            feedback_ids.add(int(row[0]))
+            feedback_ids.append(int(row[0]))
 
-    missed_quests = set()
+    missed_quests = list()
     for feedback_id in feedback_ids:
         if feedback_id not in all_quests:
             print(f'Warning! Feedback quest#{feedback_id} does not exist in DB!')
-            missed_quests.add(feedback_id)
+            missed_quests.append(int(feedback_id))
 
-    print(f'Missed IDs: {missed_quests}')
+    print(f'Missed IDs: {sorted(missed_quests)}')
 
 
 if __name__ == '__main__':
