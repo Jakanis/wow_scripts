@@ -17,6 +17,7 @@ IGNORES = 'ignores'
 INDEX = 'index'
 METADATA_FILTERS = 'metadata_filters'
 SOD = 'sod'
+FORCE_DOWNLOAD = 'force_download'
 
 expansion_data = {
     CLASSIC: {
@@ -25,7 +26,8 @@ expansion_data = {
         HTML_CACHE: 'wowhead_classic_npc_html',
         NPC_CACHE: 'wowhead_classic_npc_cache',
         METADATA_FILTERS: ('13:', '5:', '11500:'),
-        IGNORES: []
+        IGNORES: [],
+        FORCE_DOWNLOAD: []
     },
     SOD: {
         WOWHEAD_URL: 'https://www.wowhead.com/classic',
@@ -33,7 +35,8 @@ expansion_data = {
         HTML_CACHE: 'wowhead_sod_npc_html',
         NPC_CACHE: 'wowhead_sod_npc_cache',
         METADATA_FILTERS: ('13:', '2:', '11500:'),
-        IGNORES: []
+        IGNORES: [],
+        FORCE_DOWNLOAD: [207795, 212157, 222231, 222240, 223739]
     },
     TBC: {
         WOWHEAD_URL: 'https://www.wowhead.com/tbc',
@@ -41,7 +44,8 @@ expansion_data = {
         HTML_CACHE: 'wowhead_tbc_npc_html',
         NPC_CACHE: 'wowhead_tbc_npc_cache',
         METADATA_FILTERS: ('', '', ''),
-        IGNORES: []
+        IGNORES: [],
+        FORCE_DOWNLOAD: []
     },
     WRATH: {
         WOWHEAD_URL: 'https://www.wowhead.com/wotlk',
@@ -49,7 +53,8 @@ expansion_data = {
         HTML_CACHE: 'wowhead_wrath_npc_html',
         NPC_CACHE: 'wowhead_wrath_npc_cache',
         METADATA_FILTERS: ('', '', ''),
-        IGNORES: []
+        IGNORES: [],
+        FORCE_DOWNLOAD: []
     },
     CATA: {
         WOWHEAD_URL: 'https://www.wowhead.com/cata',
@@ -57,7 +62,8 @@ expansion_data = {
         HTML_CACHE: 'wowhead_cata_npc_html',
         NPC_CACHE: 'wowhead_cata_npc_cache',
         METADATA_FILTERS: ('', '', ''),
-        IGNORES: []
+        IGNORES: [],
+        FORCE_DOWNLOAD: []
     }
 }
 
@@ -173,6 +179,9 @@ def get_wowhead_npc_metadata(expansion) -> dict[int, dict[str, NPC_MD]]:
         os.makedirs('cache/tmp', exist_ok=True)
         with open(f'cache/tmp/{cache_file_name}.pkl', 'wb') as f:
             pickle.dump(wowhead_metadata, f)
+
+    for force_id in expansion_data[expansion][FORCE_DOWNLOAD]:
+        wowhead_metadata[force_id] = NPC_MD(force_id, "FORCE LOAD", expansion=expansion)
 
     wowhead_npcs = dict()
     for key, value in wowhead_metadata.items():
@@ -352,6 +361,11 @@ def merge_expansions(old_expansion: dict[int, dict[str, NPC_MD]], new_expansion:
 def fix_npc_data(all_npcs: dict[int, dict[str, NPC_MD]]):
     all_npcs[185336][CLASSIC] = all_npcs[185336][SOD]
     del all_npcs[185336][SOD]
+    all_npcs[207795][SOD].name = "Galvanic Icon"
+    all_npcs[212157][SOD].name = "Decoy Totem"
+    all_npcs[222231][SOD].name = "Serpent Totem"
+    all_npcs[222240][SOD].name = "Serpent Totem"
+    all_npcs[223739][SOD].name = "Atal'ai Totem"
 
 
 def populate_cache_db_with_npc_data() -> dict[int, dict[str, NPC_MD]]:
@@ -427,7 +441,7 @@ def __try_cast_str_to_int(value: str, default=None):
 def load_merged_translations() -> dict[int, dict[str, NPC_MD]]:
     import csv
     merged_translations = dict()
-    with open(f'input/merged_translations.tsv', 'r', encoding="utf-8") as input_file:
+    with open(f'input/translations.tsv', 'r', encoding="utf-8") as input_file:
         reader = csv.reader(input_file, delimiter="\t", quoting=csv.QUOTE_NONE)
         for row in reader:
             npc_id = __try_cast_str_to_int(row[0])
@@ -453,7 +467,7 @@ def load_merged_translations() -> dict[int, dict[str, NPC_MD]]:
     return merged_translations
 
 
-def check_feedback_npcs(all_npcs: dict[int, dict[str, NPC_MD]]):
+def check_feedback_npcs(all_npcs: dict[int, dict[str, NPC_MD]]) -> set[int]:
     import csv
     feedback = dict()
     with open('input/missing_npcs.tsv', 'r', encoding='utf-8') as input_file:
@@ -475,7 +489,8 @@ def check_feedback_npcs(all_npcs: dict[int, dict[str, NPC_MD]]):
                 print(f'Warning! Feedback NPC#{feedback_id} "{feedback_name}" is not translated!')
                 missed_npcs.add(feedback_id)
 
-    print(f'Missed IDs: {sorted(missed_npcs)}')
+    print(f'Missed IDs({len(missed_npcs)}): {sorted(missed_npcs)}')
+    return missed_npcs
 
 
 def compare_npc(tsv_npc: NPC_MD, lua_npc: NPC_MD):
@@ -501,15 +516,19 @@ def check_existing_translations(all_npcs: dict[int, dict[str, NPC_MD]]):
             compare_npc(merged_translations[key][expansion], all_npcs[key][expansion])
 
 
-def create_translation_sheet(npcs: dict[int, dict[str, NPC_MD]]):
+def create_translation_sheet(npcs: dict[int, dict[str, NPC_MD]], missed_npcs: set[int] = None):
     with (open(f'translate_this.tsv', mode='w', encoding='utf-8') as f):
         f.write('ID\tName(EN)\tDescription(EN)\tName(UA)\tDescription(UA)\tраса\tстать\tNote\texpansion\n')
+        count = 0
         for key in sorted(npcs.keys()):
             for expansion, npc in npcs[key].items():
-                # if (npc.name_ua is None and (npc.react != [None, None] or npc.location != []) and npc.expansion in [CLASSIC, SOD]):
-                if npc.name_ua is None and npc.expansion in [CLASSIC, SOD]:
+                if (npc.name_ua is None and (npc.react != [None, None] or npc.location != [] or key in missed_npcs) and npc.expansion in [CLASSIC, SOD]):
+                # if npc.name_ua is None and npc.expansion in [CLASSIC, SOD]:
                 # if npc.expansion in [CLASSIC, SOD] and npc.id in [14465, 14466, 229001, 232335, 202387, 202390, 222231, 202392, 202391, 14751, 222240, 205733, 230695, 7863, 8376, 212157, 11200, 213450, 229452, 222293, 7383, 232921, 2671, 2673, 2674, 228596, 11637, 7543, 7545, 223739]:
                     f.write(f'{npc.id}\t"{npc.name}"\t"{f"<{npc.tag}>" if npc.tag else ""}"\t\t\t\t\t\t{npc.expansion}\n')
+                    count += 1
+        if count > 0:
+            print(f"Added {count} NPCs for translation")
 
 
 def save_page(expansion, id):
@@ -550,11 +569,12 @@ def save_htmls_from_wowhead(expansion, ids: set[int]):
     if len(redundant_ids) > 0:
         print(f"There's some redundant IDs: {redundant_ids}")
 
-    save_func = partial(save_page, expansion)
-    # for id in ids:
-    #     save_page(expansion, save_ids)
-    with multiprocessing.Pool(THREADS) as p:
-        p.map(save_func, save_ids)
+    for id in save_ids:
+        print(f"Saving NPC #{id}")
+        save_page(expansion, id)
+    # save_func = partial(save_page, expansion)
+    # with multiprocessing.Pool(THREADS) as p:
+    #     p.map(save_func, save_ids)
 
 
 def parse_wowhead_npc_page(expansion, id) -> NPC_Data:
@@ -632,9 +652,10 @@ if __name__ == '__main__':
     check_existing_translations(all_npcs_md)  # Check if original data changes since previous translation and difference between ClassicUA and translation sheet
     # update_questie_translation(all_npcs)  # Update translations for Questie
 
-    check_feedback_npcs(all_npcs_md)
+    missed_npcs = check_feedback_npcs(all_npcs_md)
 
-    create_translation_sheet(all_npcs_md)
+    # create_translation_sheet(all_npcs_md)
+    create_translation_sheet(all_npcs_md, missed_npcs)
 
     store_npc_quotes(all_npcs_md)
 
