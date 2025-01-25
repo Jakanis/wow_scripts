@@ -1,4 +1,6 @@
-from generation.npc.npc import load_npcs_from_db, NPC_MD
+import re
+
+from generation.npc.npc import load_npcs_from_db, NPC_MD, NPC_Data
 from generation.utils.utils import compare_directories
 
 
@@ -30,6 +32,20 @@ def load_missing_chats() -> list[Chat]:
     return chats
 
 
+def load_pickled_chats() -> list[Chat]:
+    import pickle
+    chats = list()
+    with open('input/all_npcs.pkl', 'rb') as f:
+        pickled_chats = pickle.load(f)
+        for expansion in pickled_chats.keys():
+            for npc_id, npc in pickled_chats[expansion].items():
+                for quote in npc.quotes:
+                    chat = Chat(npc.name, quote, chat_key='wowhead', expansion=expansion, npc_id=npc_id)
+                    chats.append(chat)
+
+    return chats
+
+
 def populate_npcs(chats: list[Chat], npcs: dict[int, dict[str, NPC_MD]]):
     npc_by_name: [str, NPC_MD] = dict()
     for npc_id in sorted(npcs.keys()):
@@ -45,6 +61,7 @@ def populate_npcs(chats: list[Chat], npcs: dict[int, dict[str, NPC_MD]]):
             missing_npcs.add(chat.npc_name)
             continue
         chat.npc_id = npc_by_name[chat.npc_name].id
+        chat.expansion = npc_by_name[chat.npc_name].expansion
         if npc_by_name[chat.npc_name].name_ua is None:
             missing_npc_translations.add(chat.npc_id)
             # print(f'Warning! NPC#{chat.npc_id} have no translation!')
@@ -100,13 +117,49 @@ def __chat_filename(chat: Chat) -> str:
     return ''.join(c for c in chat.npc_name if c in valid_chars) + '_' + str(chat.npc_id)
 
 
-def write_xml_quest_file(path: str, chats: list[Chat]):
+def write_xml_chat_file(path: str, chats: list[Chat]):
     with open(path, mode='w', encoding='utf-8', newline='\n') as f:
         f.write('<?xml version="1.0" encoding="utf-8"?>\n')
         f.write('<resources>\n')
         for chat in chats:
             f.write(f'  <string><![CDATA[{chat.text}]]></string>\n')
         f.write('</resources>\n')
+
+
+def esc(value: str) -> str:
+    return (value.replace('\\', r'\\')
+            .replace('?', r'\?')
+            .replace('(', r'\(')
+            .replace(')', r'\)')
+            .replace('[', r'\[')
+            .replace(']', r'\]')
+            .replace('*', r'\*')
+            .replace('+', r'\+')
+            .replace('-', r'\-')
+            .replace('.', r'\.'))
+
+
+def is_value_regex_in_set(chat: Chat, collection: set[str], result: list[Chat] = None):
+    if not collection:
+        return False
+    if chat.text in collection:
+        return True
+    for key in collection:
+        re_template = r'.+?'
+        if "<" in key:
+            key_pattern = '^' + re.sub('<.+?>', re_template, re.escape(key)) + '$'
+            if re.match(key_pattern, chat.text):
+                return True
+        if "<" in chat.text:
+            chat_pattern = '^' + re.sub('<.+?>', re_template, re.escape(chat.text)) + '$'
+            if re.match(chat_pattern, key):
+                collection.remove(key)
+                if result and chat in result:
+                    result.remove(chat)
+                collection.add(key)
+                return False
+
+    return False
 
 
 def generate_sources(chats: list[Chat]):
@@ -130,14 +183,14 @@ def generate_sources(chats: list[Chat]):
         if chat.npc_id == 0:
             path = f'output/source_for_crowdin/chats{suffix}/{chat.npc_name}.xml'
         else:
-            path = f'output/source_for_crowdin/chats{suffix}/{chat.npc_name.capitalize()[:1]}/{__chat_filename(chat)}.xml'
+            path = f'output/source_for_crowdin/chats{suffix}/{__chat_filename(chat).capitalize()[:1]}/{__chat_filename(chat)}.xml'
 
         chats_by_path[path] = chats_by_path.get(path, list())
         chats_by_path[path].append(chat)
 
     for path, chats_on_path in chats_by_path.items():
         Path(*Path(path).parts[:-1]).mkdir(parents=True, exist_ok=True)
-        write_xml_quest_file(path, chats_on_path)
+        write_xml_chat_file(path, chats_on_path)
 
         count += 1
     print(f'Generated {count} chats.')
@@ -146,7 +199,8 @@ def generate_sources(chats: list[Chat]):
 def cleanup_chats(chats: list[Chat]):
     existing_chats = set()
     existing_common_texts = set()
-    existing_texts: dict[str, int] = dict()
+    existing_texts: dict[str, int] = dict()  # Just to count if we have something missed for common
+    existing_texts_by_npc: dict[str, set[str]] = dict()
 
     filtered_chats = list()
     for chat in chats:
@@ -156,18 +210,19 @@ def cleanup_chats(chats: list[Chat]):
             continue
         if chat in existing_chats:
             continue
-        if chat.text in existing_texts:
-            print(f'Chat text "{chat.text}" already exist.')
+        if is_value_regex_in_set(chat, existing_common_texts):
+            continue
+        if chat.npc_name in existing_texts_by_npc and is_value_regex_in_set(chat, existing_texts_by_npc[chat.npc_name], filtered_chats):
+            continue
         if chat.npc_name == 'common':
             existing_common_texts.add(chat.text)
+        existing_texts[chat.text] = existing_texts.get(chat.text, 0) + 1  # look existing_texts dict
         existing_chats.add(chat)
-        if chat.text in existing_texts:
-            existing_texts[chat.text] += 1
-        else:
-            existing_texts[chat.text] = 0
+        existing_texts_by_npc[chat.npc_name] = existing_texts_by_npc.get(chat.npc_name, set())
+        existing_texts_by_npc[chat.npc_name].add(chat.text)
         filtered_chats.append(chat)
 
-    text_repeatance = list(sorted(existing_texts.items(), key=lambda item: item[1], reverse=True))
+    text_repeatance = list(sorted(existing_texts.items(), key=lambda item: item[1], reverse=True))  # look existing_texts dict
 
     return filtered_chats
 
@@ -207,19 +262,32 @@ def filter_imp_texts(chats: list[Chat]):
     return imp_texts_2
 
 
+def verify_npcs(chats: list[Chat]):
+    npc_to_ids: dict[str, str] = dict()
+    for chat in chats:
+        if chat.npc_name in npc_to_ids and npc_to_ids[chat.npc_name] != chat.npc_id:
+            print(f'Warning! ID differs for NPC "{chat.npc_name}": {npc_to_ids[chat.npc_name]} and {chat.npc_id}')
+        else:
+            npc_to_ids[chat.npc_name] = chat.npc_id
+
+
+
 if __name__ == '__main__':
     crowdin_chats = load_from_db('crowdin_chats.db')
     missing_chats = load_missing_chats()
+    pickled_chats = load_pickled_chats()
     npcs = load_npcs_from_db('input/npcs.db')
     missing_chats = populate_npcs(missing_chats, npcs)
 
-    combined_chats = cleanup_chats([*crowdin_chats, *missing_chats])
+    combined_chats = cleanup_chats([*crowdin_chats, *pickled_chats, *missing_chats])
 
-    save_to_db(missing_chats, 'raw_chats.db')
+    save_to_db([*crowdin_chats, *missing_chats, *pickled_chats], 'raw_chats.db')
     save_to_db(combined_chats, 'chats.db')
+    save_to_db(pickled_chats, 'pickled_chats.db')
 
-    chats = load_from_db('chats.db')
+    # chats = load_from_db('chats.db')
 
+    verify_npcs(crowdin_chats)
     generate_sources(crowdin_chats)
 
     # imp_texts = filter_imp_texts(missing_chats) # Temp

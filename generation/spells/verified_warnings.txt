@@ -185,7 +185,7 @@ Warning! Template failed for spell#44614:cata
 Warning! Newline count doesn't match for spell#44614:cata description
 Warning! Template failed for spell#45234:cata
 Warning! Newline count doesn't match for spell#45524:cata description
-Warning! Numbers don't match for spell spell#46924
+Warning!! Numbers don't match for spell spell#46924
 Warning! Template failed for spell#47540:cata
 Warning! Template failed for spell#47540:cata
 Warning! Newline count doesn't match for spell#47541:cata description
@@ -206,9 +206,9 @@ Warning! Newline count doesn't match for spell#54428:cata description
 Warning! Template failed for spell#55233:cata
 Warning! Newline count doesn't match for spell#55233:cata description
 Warning! Newline count doesn't match for spell#57755:cata description
-Warning! Numbers don't match for spell spell#61882
+Warning!! Numbers don't match for spell spell#61882
 Warning! Newline count doesn't match for spell#62618:cata description
-Warning! Numbers don't match for spell spell#62970
+Warning!! Numbers don't match for spell spell#62970
 Warning! Template failed for spell#69820:cata
 Warning! Template failed for spell#69826:cata
 Warning! Template failed for spell#71521:cata
@@ -243,14 +243,17 @@ Warning! Newline count doesn't match for spell#86346:cata description
 Warning! Template failed for spell#88625:cata
 Warning! Template failed for spell#88751:cata
 Warning! Template failed for spell#348459:wrath
-Warning! Numbers don't match for spell spell#348704
+Warning!! Numbers don't match for spell spell#348704
 Warning! Newline count doesn't match for spell#349981:classic aura
-Warning! Numbers don't match for spell spell#407632
+Warning!! Numbers don't match for spell spell#407632
 Warning! Template failed for spell#417145:sod
-Warning! Numbers don't match for spell spell#424799
-Warning! Numbers don't match for spell spell#424800
+Warning!! Numbers don't match for spell spell#424799
+Warning!! Numbers don't match for spell spell#424800
 Warning! Newline count doesn't match for spell#424925:sod description
 Warning! Template failed for spell#425600:sod
 Warning! Newline count doesn't match for spell#425600:sod description
 Warning! Newline count doesn't match for spell#436516:sod description
 Warning! Template failed for spell#440672:sod
+Warning! Template failed for spell#444165:sod
+Warning!! Numbers don't match for spell spell#1214156
+Warning! Template failed for spell#1220853:sod
