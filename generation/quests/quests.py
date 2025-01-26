@@ -47,7 +47,7 @@ expansion_data = {
         QUESTS_CACHE: 'wowhead_sod_quest_cache',
         METADATA_FILTERS: ('8:', '2:', '11500:'),
         IGNORES: [
-            2000, 63769
+            2000, 63769, 81977, 81979, 81980, 81982, 81983
         ]
     },
     TBC: {
