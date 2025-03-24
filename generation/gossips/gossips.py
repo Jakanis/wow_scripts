@@ -1,11 +1,11 @@
 from generation.npc.npc import load_npcs_from_db, NPC_MD
 from generation.utils.utils import compare_directories
 
-
 class Gossip:
-    def __init__(self, npc_id, text: str, gossip_key: str = None, npc_name: str = None, expansion: str = None):
+    def __init__(self, npc_id, text: str, gossip_type = None, gossip_key: str = None, npc_name: str = None, expansion: str = None):
         self.npc_id = npc_id
         self.text = text
+        self.gossip_type = gossip_type
         self.gossip_key = gossip_key
         self.npc_name = npc_name
         self.expansion = expansion
@@ -27,7 +27,15 @@ def load_missing_gossips() -> list[Gossip]:
     with open('input/missing_gossips.pkl', 'rb') as f:
         missing_gossips = pickle.load(f)
         for npc_id, npc_gossips in missing_gossips.items():
-            for gossip_key, gossip_text in npc_gossips.items():
+            for gossip_key, gossip_object in npc_gossips.items():
+                gossip_text = None
+                if type(gossip_object) == str:
+                    gossip_text = gossip_object
+                elif type(gossip_object) == dict:
+                    gossip_text = gossip_object[0]
+                else:
+                    print(f"Warning! Unknown gossip_object type: {type(gossip_object)}")
+                    continue
                 gossip = Gossip(npc_id, __clean_newlines(gossip_text), gossip_key=gossip_key)
                 gossips.append(gossip)
     return gossips
@@ -85,14 +93,15 @@ def save_to_db(gossips: list[Gossip], db_path: str):
                         npc_id INTEGER NOT NULL,
                         npc_name TEXT,
                         text TEXT,
+                        gossip_type TEXT,
                         gossip_key TEXT,
                         expansion TEXT
                     )''')
     conn.commit()
     with conn:
         for gossip in gossips:
-            conn.execute('INSERT INTO gossips(npc_id, npc_name, text, gossip_key, expansion) VALUES(?, ?, ?, ?, ?)',
-                        (gossip.npc_id, gossip.npc_name, gossip.text, gossip.gossip_key, gossip.expansion))
+            conn.execute('INSERT INTO gossips(npc_id, npc_name, text, gossip_type, gossip_key, expansion) VALUES(?, ?, ?, ?, ?, ?)',
+                        (gossip.npc_id, gossip.npc_name, gossip.text, gossip.gossip_type, gossip.gossip_key, gossip.expansion))
 
     conn.commit()
 
@@ -110,8 +119,10 @@ def load_from_db(db_path: str) -> list[Gossip]:
             npc_name = row[1]
             text = row[2]
             gossip_key = row[3]
+            # gossip_type = row[4]
+            gossip_type = ''
             expansion = row[4]
-            gossip = Gossip(npc_id, __clean_newlines(text), npc_name=npc_name, gossip_key=gossip_key, expansion=expansion)
+            gossip = Gossip(npc_id, __clean_newlines(text), npc_name=npc_name, gossip_type=gossip_type, gossip_key=gossip_key, expansion=expansion)
             gossips.append(gossip)
     return gossips
 
@@ -121,11 +132,92 @@ def __gossip_filename(gossip: Gossip) -> str:
     return ''.join(c for c in gossip.npc_name if c in valid_chars) + '_' + str(gossip.npc_id)
 
 
+def __get_text_code(text):
+    # [!] Any changes made to this func must be kept in sync with ClassicUA impl
+    import re
+    get_text_code_replace_seq = (
+        '<race>',
+        'human',
+        'dwarf',
+        'night elf',
+        'gnome',
+        'orc',
+        'troll',
+        'undead',
+        'tauren',
+        'draenei',
+        'blood elf',
+        'worgen',
+        'goblin',
+
+        # player classes (keep in sync with entries/class.lua)
+        '<class>',
+        'warrior',
+        'paladin',
+        'hunter',
+        'rogue',
+        'priest',
+        'shaman',
+        'mage',
+        'warlock',
+        'druid',
+        'death knight',
+
+        # player name
+        '<name>',
+    )
+    # text = 'Do not turn your back on the Light, warrior, it may be the one thing that saves you some day.'
+    # text = 'Hello, Death Knight. Every hunter of our tribe worships shamanistic duty.'
+    # text = 'I was wondering when I'd see you again, <name>.'
+    # text = 'Hail, <class>!'
+    # print('TEXT1', text)
+
+    result = [ '_', '_', '_', '_', '_', '_', '_', '_', '_', '_', '_', '_' ]
+    result_len = len(result)
+    text = text.lower()
+    # print('TEXT2', text)
+
+    for p in get_text_code_replace_seq:
+        text = text.replace(p, '')
+    # print('TEXT3', text)
+
+    result_fill_idx = 0
+    for word in re.findall(r'(\w+)', text):
+        if len(word) > 0:
+            if result_fill_idx >= result_len:
+                break
+
+            for i in range(len(word)):
+                result[result_fill_idx] = word[i]
+                # print(result_fill_idx, ''.join(result))
+                result_fill_idx += 1
+                if result_fill_idx >= result_len:
+                    break
+
+    result_idx = 0
+    result_rewind = 0
+    for word in re.findall(r'(\w+)', text):
+        if len(word) > 0:
+            result[result_idx] = word[0]
+            # print(result_idx, ''.join(result))
+            result_idx += 1
+            if result_idx >= result_len:
+                result_rewind = result_rewind + 1 if result_rewind < result_len - 1 else result_len - 4
+                result_idx = result_rewind
+
+    # print('CODE', ''.join(result))
+    return ''.join(result)
+
+
 def write_xml_gossip_file(path: str, gossips: list[Gossip]):
     with open(path, mode='w', encoding='utf-8', newline='\n') as f:
         f.write('<?xml version="1.0" encoding="utf-8"?>\n')
         f.write('<resources>\n')
         for gossip in gossips:
+            # gossip_key = __get_text_code(gossip.text)
+            # if gossip.gossip_key and gossip_key != gossip.gossip_key:
+            #     print(f"Warning! Gossip keys don't match: {gossip_key}<>{gossip.gossip_key}")
+            # f.write(f'  <string name="{gossip_key}"><![CDATA[{gossip.text}]]></string>\n')
             f.write(f'  <string><![CDATA[{gossip.text}]]></string>\n')
         f.write('</resources>\n')
 
@@ -162,7 +254,6 @@ def generate_sources(gossips: list[Gossip]):
 
         count += 1
     print(f'Generated {count} gossips.')
-
 
 
 if __name__ == '__main__':
