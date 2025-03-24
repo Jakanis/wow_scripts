@@ -95,7 +95,6 @@ quest_categories_correction = {
 # 5844 collector's edition
 # 5847 collector's edition
 # 9249 tbc
-
 known_categories = {
     0: {
         'Name': 'Eastern Kingdoms',
@@ -147,6 +146,7 @@ known_categories = {
         5287: 'The Cape Of Stranglethorn',
         4922: 'Twilight Highlands',
         5146: 'Vashjir',
+        3357: 'Yojamba Isle',  # Added in SoD
     },
     1: {
         'Name': 'Kalimdor',
@@ -176,7 +176,6 @@ known_categories = {
         1216: 'Timbermaw Hold',
         490: 'Un\'Goro Crater',
         618: 'Winterspring',
-        442: 'Auberdine', # Added in SoD
         1939: 'Abyssal Sands',
         393: 'Darkspear Strand',
         368: 'Echo Isles',
@@ -185,6 +184,9 @@ known_categories = {
         4709: 'Southern Barrens',
         4707: 'The Lost Isles',
         5034: 'Uldum',
+        442: 'Auberdine',  # Added in SoD
+        392: 'Ratchet',  # Added in SoD
+        439: 'The Shimmering Flats',  # Added in SoD
     },
     2: {
         'Name': 'Dungeons',
@@ -212,6 +214,7 @@ known_categories = {
         491: 'Razorfen Kraul',
         796: 'Scarlet Monastery',
         2057: 'Scholomance',
+        6066: 'Scholomance',
         3789: 'Shadow Labyrinth',
         209: 'Shadowfang Keep',
         2017: 'Stratholme',
@@ -246,7 +249,14 @@ known_categories = {
         5088: 'The Stonecore',
         5035: 'The Vortex Pinnacle',
         5004: 'Throne Of The Tides',
-        4723: 'Trial Of The Champion'
+        4723: 'Trial Of The Champion',
+        2366: 'Caverns of Time',
+        2367: 'Caverns of Time',
+        5788: 'Well of Eternity',
+        5789: 'End Time',
+        5844: 'Hour of Twilight',
+        16114: 'Deadwind Pass',  # Added in SoD
+        16074: 'Karazhan Crypts',  # Added in SoD
     },
     3: {
         'Name': 'Raids',
@@ -382,3 +392,4 @@ known_categories = {
          5095: 'Tol Barad',
          5389: 'Tol Barad Peninsula'}
 }
+

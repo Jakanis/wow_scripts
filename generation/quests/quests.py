@@ -47,7 +47,7 @@ expansion_data = {
         QUESTS_CACHE: 'wowhead_sod_quest_cache',
         METADATA_FILTERS: ('8:', '2:', '11500:'),
         IGNORES: [
-            2000, 63769, 81977, 81979, 81980, 81982, 81983
+            2000, 7797, 63769, 81977, 81979, 81980, 81982, 81983
         ]
     },
     TBC: {
@@ -614,7 +614,7 @@ def get_category(metadata: QuestMD) -> str:
     if metadata.category in known_categories and metadata.subcategory in known_categories[metadata.category]:
         category = f"{known_categories[metadata.category]['Name']}/{known_categories[metadata.category][metadata.subcategory]}"
     else:
-        # print(f'Quest #{metadata.id}:{metadata.name} UNCATEGORIZED for {metadata.category}.{metadata.subcategory}!')  # debug
+        print(f'Quest #{metadata.id}:{metadata.name} UNCATEGORIZED for {metadata.category}.{metadata.subcategory}!')  # debug
         category = 'Miscellaneous/Uncategorized'
 
     return category
@@ -928,7 +928,7 @@ def merge_with_db(wowhead_quests: dict[int, dict[str, QuestEntity]], classicua_q
 def merge_quest(id: int, old_quests: dict[str, QuestEntity], new_quests: dict[str, QuestEntity]) -> dict[str, QuestEntity]:
     # Check "Warning"s manually, you may need to add fixes to fix_<expansion>_quests method. "WARNING!"s are especially dangerous
     if len(old_quests) > 1 and len(new_quests) == 1:
-        print(f'Merging more than one instance from previous expansion for Quest #{id}')
+        # print(f'Merging more than one instance from previous expansion for Quest #{id}')
         last_old_quest_key = list(old_quests.keys())[-1]
         result = merge_quest(id, {last_old_quest_key: old_quests[last_old_quest_key]}, new_quests)
         del old_quests[last_old_quest_key]
@@ -942,9 +942,9 @@ def merge_quest(id: int, old_quests: dict[str, QuestEntity], new_quests: dict[st
         old_quest.merge_metadata(new_quest)
 
         if old_quest.name != new_quest.name:
-            print('-' * 100)
-            print(f'Warning0: Quest #{id}:{old_expansion}/{new_expansion} name was changed: "{old_quest.name}" -> "{new_quest.name}"')
-            print('\n'.join(old_quest.diff(new_quest)))
+            # print('-' * 100)
+            # print(f'Warning0: Quest #{id}:{old_expansion}/{new_expansion} name was changed: "{old_quest.name}" -> "{new_quest.name}"')
+            # print('\n'.join(old_quest.diff(new_quest)))
             return {**old_quests, **new_quests}
 
         changes = old_quest.diff_updates(new_quest)
@@ -958,9 +958,9 @@ def merge_quest(id: int, old_quests: dict[str, QuestEntity], new_quests: dict[st
             return {**old_quests, **new_quests}
 
         if len(changes) > 0 and len(additions) > 0:
-            print('-' * 100)
-            print(f'Warning2: Quest #{old_quest.id}:{old_expansion}/{new_expansion} "{old_quest.name}" text has changes and additions:')
-            print('\n'.join(old_quest.diff(new_quest)))
+            # print('-' * 100)
+            # print(f'Warning2: Quest #{old_quest.id}:{old_expansion}/{new_expansion} "{old_quest.name}" text has changes and additions:')
+            # print('\n'.join(old_quest.diff(new_quest)))
             old_quest.accept_text_additions(new_quest)
             return {**old_quests, **new_quests}
 
@@ -977,22 +977,22 @@ def merge_quest(id: int, old_quests: dict[str, QuestEntity], new_quests: dict[st
             return {**old_quests, **new_quests}
 
         if len(changes) > 0:  # Check (546)
-            print('-' * 100)
-            print(f'Warning5: Quest #{old_quest.id}:{old_expansion}/{new_expansion} "{old_quest.name}" text was changed:')
-            print('\n'.join(changes))
+            # print('-' * 100)
+            # print(f'Warning5: Quest #{old_quest.id}:{old_expansion}/{new_expansion} "{old_quest.name}" text was changed:')
+            # print('\n'.join(changes))
             return {**old_quests, **new_quests}
 
         if len(additions) > 0:  # Usually no problems (55)
-            print('-' * 100)
-            print(f'Warning6: Quest #{old_quest.id}:{old_expansion}/{new_expansion} "{old_quest.name}" text has additions:')
-            print('\n'.join(additions))
+            # print('-' * 100)
+            # print(f'Warning6: Quest #{old_quest.id}:{old_expansion}/{new_expansion} "{old_quest.name}" text has additions:')
+            # print('\n'.join(additions))
             old_quest.accept_text_additions(new_quest)
             return old_quests
 
         if len(deletions) > 0:  # Maybe Wowhead haven't parsed some strings (usually PROGRESS) for next expansions
-            print('-' * 100)
-            print(f'Warning7: Quest #{old_quest.id}:{old_expansion}/{new_expansion} "{old_quest.name}" text has deletions:')
-            print('\n'.join(deletions))
+            # print('-' * 100)
+            # print(f'Warning7: Quest #{old_quest.id}:{old_expansion}/{new_expansion} "{old_quest.name}" text has deletions:')
+            # print('\n'.join(deletions))
             return old_quests
 
         old_quest.cat = new_quest.cat  # Just to have quests in the same folder for all expansions
@@ -1030,6 +1030,9 @@ def merge_expansions(old_expansion: dict[int, dict[str, QuestEntity]], new_expan
 
 
 def fix_classic_quests(classic_quests: dict[int, dict[str, QuestEntity]]):
+    # Temp fix for Wowhead discrepancy with next expansions
+    classic_quests[8249][CLASSIC].progress = classic_quests[8249][CLASSIC].progress.replace("even a <class> in training", "even a rogue in training")
+
     # Fixes from TBC
     classic_quests[123][CLASSIC].objective += '.'
     classic_quests[279][CLASSIC].description = classic_quests[279][CLASSIC].description.replace(' Murloc', ' murloc').replace(' Bluegill', ' bluegill')
@@ -1548,10 +1551,17 @@ def fix_expansion(classic_quests: dict[int, dict[str, QuestEntity]], sod_quests:
     classic_quests[6221] = dict()
     classic_quests[6221][CLASSIC] = sod_quests[6221][SOD]
     classic_quests[6221][CLASSIC].expansion = CLASSIC
+    del sod_quests[6221]
+
+    # classic_quests[7797] = dict()
+    # classic_quests[7797][CLASSIC] = sod_quests[7797][SOD]
+    # classic_quests[7797][CLASSIC].expansion = CLASSIC
+    # del sod_quests[7797]
 
     classic_quests[66294] = dict()
     classic_quests[66294][CLASSIC] = sod_quests[66294][SOD]
     classic_quests[66294][CLASSIC].expansion = CLASSIC
+    del sod_quests[66294]
     pass
 
 
@@ -1715,7 +1725,7 @@ def check_categories():
     print("Changed Values in Inner Dictionaries:", changed_values)
 
 
-def generate_sources():
+def generate_sources(quests):
     from pathlib import Path
     import shutil
     from generation.utils.utils import get_quest_filename, write_xml_quest_file
@@ -1724,7 +1734,6 @@ def generate_sources():
     if os.path.exists('./source_for_crowdin'):
         shutil.rmtree('./source_for_crowdin')
     count = 0
-    quests = get_all_quests_from_db('cache/quests.db')
 
     for quest_id, quest_expansions in quests.items():
         for expansion, quest_entity in quest_expansions.items():
@@ -1827,7 +1836,7 @@ if __name__ == '__main__':
 
     # compare_databases('cache/quests.db', 'classicua.db') # compare cache/quests.db with ./classicua.db (the one we overwrite)
 
-    generate_sources()
+    generate_sources(all_quests)
 
     diffs = compare_directories('source_from_crowdin', 'source_for_crowdin')
 
