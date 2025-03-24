@@ -3,7 +3,7 @@ import os
 
 import requests
 from bs4 import BeautifulSoup, CData
-from generation.spells.spells import load_spells_from_db, SpellData
+from generation.spells.spells import SpellData, load_spells_from_db, is_spell_translated
 
 THREADS = 16
 CLASSIC = 'classic'
@@ -116,6 +116,13 @@ class ItemEffect:
         res += f':#{self.rune_spell_id}' if self.rune_spell_id else ''
         return res
 
+    def spell_ref_str(self):
+        res = f"{self.effect_type.replace('Chance on hit', 'Hit')}" if self.effect_type else ''
+        # if self.effect_type == 'Item' or self.effect_type == 'Rune':
+        #     return 'ERROR'
+        res += f'#{self.effect_id}'
+        return res
+
 
 class ItemData:
     def __init__(self, id, expansion, name: str = None, effects: list[ItemEffect] = [], readable=None, random_enchantment=False, name_ua=None, effects_ua: list[ItemEffect]=None, ref=None, raw_effects=None):
@@ -129,6 +136,11 @@ class ItemData:
         self.effects_ua = effects_ua
         self.ref = ref
         self.raw_effects = raw_effects
+
+    def is_translated(self) -> bool:
+        if self.name_ua or self.effects_ua:
+            return True
+        return False
 
 
 def __get_wowhead_item_search(expansion, start, end=None) -> list[ItemMD]:
@@ -670,9 +682,23 @@ def read_classicua_translations(items_root_path: str, item_data: dict[int, dict[
     return all_items
 
 
-def create_translation_sheet(items: dict[int, dict[str, ItemData]]):
+def build_name_pretranslation_map(items: dict[int, dict[str, ItemData]]) -> dict[str, str]:
+    name_translations = dict()
+    for key in items.keys():
+        for expansion, item in sorted(items[key].items()):
+            if item.name_ua:
+                if item.name in name_translations and name_translations[item.name] != item.name_ua:
+                    print(f'Warning! Name translation for {item.name} differs: {name_translations[item.name]} <> {item.name_ua}')
+                else:
+                    name_translations[item.name] = item.name_ua
+    return name_translations
+
+def create_translation_sheet(items: dict[int, dict[str, ItemData]], spells: dict[int, dict[str, SpellData]]):
+    name_pretranslation_map = build_name_pretranslation_map(items)
     with open(f'output/translate_this.tsv', mode='w', encoding='utf-8') as f:
         f.write('ID\tName(EN)\tName(UA)\tDescription(EN)\tDescription(UA)\tNote\texpansion\n')
+        count = 0
+        missing_spell_ids = set()
         for key in sorted(items.keys()):
             for expansion, item in sorted(items[key].items()):
                 if ('OLD' in item.name or
@@ -687,12 +713,37 @@ def create_translation_sheet(items: dict[int, dict[str, ItemData]]):
                     'TEST' in item.name or
                     'UNUSED' in item.name or
                     item.name.startswith('Monster - ') or
-                    key in expansion_data[item.expansion][IGNORES]):
+                    item.id in expansion_data[item.expansion][IGNORES]):
                         continue
-                if item.expansion == 'sod' and item.name_ua is None:
+                # if item.expansion == 'sod' and not item.is_translated():
+                if not item.is_translated():
+                    item_name_ua = item.name_ua if item.name_ua else ''
+                    if item_name_ua == '' and item.name in name_pretranslation_map.keys():
+                        item_name_ua = name_pretranslation_map[item.name] + ' ???'
+                    effects_ua_text = list()
+                    # pretranslation = False
+                    for original_effect in item.effects:
+                        effect_id = int(original_effect.effect_id) if original_effect.effect_id and not original_effect.effect_type == "Item" else None
+                        if effect_id and is_spell_translated(spells[effect_id]):
+                            effects_ua_text.append(original_effect.spell_ref_str())
+                            # pretranslation = True
+                        else:
+                            effect_text_ua = original_effect.effect_type
+                            if original_effect.effect_id:
+                                effect_text_ua = effect_text_ua + "#" + original_effect.effect_id
+                            if original_effect.effect_text and not original_effect.effect_type == "Item":
+                                effect_text_ua = effect_text_ua + ": TRANSLATE"
+                            effects_ua_text.append(effect_text_ua)
+
                     effects_text = '\n'.join(map(lambda x: str(x), item.effects)).replace('"', '""') if item.effects else ''
-                    effects_ua_text = '\n'.join(map(lambda x: str(x), item.effects_ua)).replace('"', '""') if item.effects_ua else ''
-                    f.write(f'{item.id}\t{item.name}\t{item.name_ua if item.name_ua else ''}\t"{effects_text}"\t"{effects_ua_text}"\t\t{item.expansion}\n')
+                    # effects_ua_text = '\n'.join(map(lambda x: str(x), item.effects_ua)).replace('"', '""') if item.effects_ua else ''
+                    effects_ua_text = '\n'.join(effects_ua_text).replace('"', '""') #if pretranslation else ''
+                    f.write(f'{item.id}\t{item.name}\t{item_name_ua}\t"{effects_text}"\t"{effects_ua_text}"\t\t{item.expansion}\n')
+                    count += 1
+        if count > 0:
+            print(f"Added {count} items for translation")
+        if len(missing_spell_ids) > 0:
+            print(f'Consider translating next {len(missing_spell_ids)} spells: {missing_spell_ids}')
 
 
 def __effects_eq(effects1: list[ItemEffect], effects2: list[ItemEffect]) -> bool:
@@ -789,6 +840,7 @@ def convert_translations_to_lua(translations: list[ItemData], expansion: str):
             --     [equip]  = text or number (spell id) for "Equip: ..." (green color) (optional)
             --     [hit]    = text or number (spell id) for "Chance on hit: ..." (green color) (optional)
             --     [use]    = text or number (spell id) for "Use: ..." (green color) (optional)
+            --                supports code "{домівка}" for Hearthstone bind location
             --     [recipe_result_item] = number (item id) to show the item after the spell-recipe (optional)
             --     [flavor] = quoted text (golden color) (optional)
             --     --------
@@ -856,9 +908,10 @@ def convert_translations_to_lua(translations: list[ItemData], expansion: str):
             if ref:
                 translation_strs.append(f'ref={ref}')
 
+            translation_strs.append(f'en="{__prepare_lua_str(item.name)}"')
             translation_str = ", ".join(translation_strs)
 
-            output_file.write('[{}] = {{ {} }}, -- {}\n'.format(item.id, translation_str, item.name))
+            output_file.write('[{}] = {{ {} }},\n'.format(item.id, translation_str))
 
         output_file.write(textwrap.dedent("""\
         }
@@ -971,6 +1024,19 @@ def check_feedback_items(all_items: dict[int, dict[str, ItemData]]):
 
     print(f'Missed IDs: {sorted(missed_items)}')
 
+def filter_latest_untranslated(items: dict[int, dict[str, ItemData]]) -> dict[int, dict[str, ItemData]]:
+    result = dict()
+    for key in items.keys():
+        item_by_expansion = items[key]
+        expansions = sorted(list(item_by_expansion.keys()), key=lambda x: expansion_data[x][INDEX])
+        if len(expansions) > 1:
+            first_expansion_item = item_by_expansion[expansions[0]]
+            last_expansion_item = item_by_expansion[expansions[-1]]
+            if first_expansion_item.is_translated() and not last_expansion_item.is_translated():
+                result[key] = dict()
+                result[key][last_expansion_item.expansion] = last_expansion_item
+    return result
+
 
 if __name__ == '__main__':
     # parse_wowhead_item_page(CLASSIC, 9328)
@@ -994,6 +1060,8 @@ if __name__ == '__main__':
     # print(len(spells))
     validate_spell_references(parsed_items, spells)
 
-    create_translation_sheet(parsed_items)
+    needs_update = filter_latest_untranslated(parsed_items)
+    create_translation_sheet(needs_update, spells)
+    # create_translation_sheet(parsed_items, spells)
 
     convert_translations_to_entries(tsv_translations)
