@@ -19,23 +19,32 @@ class Chat:
         return hash((self.npc_name, self.text))
 
 
-def load_missing_chats() -> list[Chat]:
+def load_missing_chats_from_feedback(path) -> list[Chat]:
     import pickle
     chats = list()
-    with open('input/missing_chats.pkl', 'rb') as f:
+    with open(path, 'rb') as f:
         missing_chats = pickle.load(f)
         for npc_name, npc_chats in missing_chats.items():
-            for chat_key, chat_text in npc_chats.items():
+            for chat_key, chat_object in npc_chats.items():
+                chat_text = None
+                if type(chat_object) == str:
+                    chat_text = chat_object
+                elif type(chat_object) == dict:
+                    chat_text = chat_object[0]
+                else:
+                    print(f"Warning! Unknown chat_object type: {type(chat_object)}")
+                    continue
+                chat_text = chat_text.replace(r'\r\n', '\n').replace(r'\n', '\n').strip()
                 chat = Chat(npc_name, chat_text, chat_key=chat_key)
                 chats.append(chat)
 
     return chats
 
 
-def load_pickled_chats() -> list[Chat]:
+def load_frmm_pickled_wowhead_npcs(path) -> list[Chat]:
     import pickle
     chats = list()
-    with open('input/all_npcs.pkl', 'rb') as f:
+    with open(path, 'rb') as f:
         pickled_chats = pickle.load(f)
         for expansion in pickled_chats.keys():
             for npc_id, npc in pickled_chats[expansion].items():
@@ -104,7 +113,7 @@ def load_from_db(db_path: str) -> list[Chat]:
         for row in chat_rows:
             npc_name = row[0]
             npc_id = row[1]
-            text = row[2]
+            text = row[2] and row[2].replace('\r\n', '\n')
             chat_key = row[3]
             expansion = row[4]
             chat = Chat(npc_name, text, npc_id=npc_id, chat_key=chat_key, expansion=expansion)
@@ -271,11 +280,30 @@ def verify_npcs(chats: list[Chat]):
             npc_to_ids[chat.npc_name] = chat.npc_id
 
 
+def group_chats_by_npcs(chats: list[Chat]) -> dict[(str, int), list[Chat]]:
+    npcs_to_chats: dict[(str, int), list[Chat]] = dict()
+    for chat in chats:
+        npc_key = (chat.npc_name, chat.npc_id)
+        npcs_to_chats[npc_key] = npcs_to_chats.get(npc_key, list())
+        npcs_to_chats[npc_key].append(chat)
+    return npcs_to_chats
+
+
+def verify_duplicates(chats: list[Chat]):
+    chats_by_npcs = group_chats_by_npcs(chats)
+    for npc_key, chats in chats_by_npcs.items():
+        npc_texts = set()
+        for chat in chats:
+            if chat.text in npc_texts:
+                print(f'Warning! Chat duplicated for NPC "{npc_key}": {chat.text}')
+            npc_texts.add(chat.text)
+
 
 if __name__ == '__main__':
     crowdin_chats = load_from_db('crowdin_chats.db')
-    missing_chats = load_missing_chats()
-    pickled_chats = load_pickled_chats()
+    pickled_chats = load_frmm_pickled_wowhead_npcs('input/all_npcs.pkl')
+
+    missing_chats = load_missing_chats_from_feedback('input/missing_chats.pkl')
     npcs = load_npcs_from_db('input/npcs.db')
     missing_chats = populate_npcs(missing_chats, npcs)
 
@@ -284,10 +312,12 @@ if __name__ == '__main__':
     save_to_db([*crowdin_chats, *missing_chats, *pickled_chats], 'raw_chats.db')
     save_to_db(combined_chats, 'chats.db')
     save_to_db(pickled_chats, 'pickled_chats.db')
+    save_to_db(missing_chats, 'missing_chats.db')
 
     # chats = load_from_db('chats.db')
 
     verify_npcs(crowdin_chats)
+    verify_duplicates(crowdin_chats)
     generate_sources(crowdin_chats)
 
     # imp_texts = filter_imp_texts(missing_chats) # Temp
