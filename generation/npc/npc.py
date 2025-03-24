@@ -516,16 +516,32 @@ def check_existing_translations(all_npcs: dict[int, dict[str, NPC_MD]]):
             compare_npc(merged_translations[key][expansion], all_npcs[key][expansion])
 
 
+def build_name_pretranslation_map(npcs: dict[int, dict[str, NPC_MD]]) -> dict[str, str]:
+    name_translations = dict()
+    for key in npcs.keys():
+        for expansion, npc in sorted(npcs[key].items()):
+            if npc.name_ua:
+                if npc.name in name_translations and name_translations[npc.name] != npc.name_ua:
+                    print(f'Warning! Name translation for {npc.name} differs: {name_translations[npc.name]} <> {npc.name_ua}')
+                else:
+                    name_translations[npc.name] = npc.name_ua
+    return name_translations
+
+
 def create_translation_sheet(npcs: dict[int, dict[str, NPC_MD]], missed_npcs: set[int] = None):
+    name_pretranslation_map = build_name_pretranslation_map(npcs)
     with (open(f'translate_this.tsv', mode='w', encoding='utf-8') as f):
         f.write('ID\tName(EN)\tDescription(EN)\tName(UA)\tDescription(UA)\tраса\tстать\tNote\texpansion\n')
         count = 0
         for key in sorted(npcs.keys()):
             for expansion, npc in npcs[key].items():
-                if (npc.name_ua is None and (npc.react != [None, None] or npc.location != [] or key in missed_npcs) and npc.expansion in [CLASSIC, SOD]):
+                if (npc.name_ua is None and (npc.react != [None, None] or npc.location != [] or key in missed_npcs or npc.name in name_pretranslation_map.keys()) and npc.expansion in [CLASSIC, SOD]):
+                    npc_name_ua = npc.name_ua if npc.name_ua else ''
+                    if npc_name_ua == '' and npc.name in name_pretranslation_map.keys():
+                        npc_name_ua = name_pretranslation_map[npc.name] + ' ???'
                 # if npc.name_ua is None and npc.expansion in [CLASSIC, SOD]:
                 # if npc.expansion in [CLASSIC, SOD] and npc.id in [14465, 14466, 229001, 232335, 202387, 202390, 222231, 202392, 202391, 14751, 222240, 205733, 230695, 7863, 8376, 212157, 11200, 213450, 229452, 222293, 7383, 232921, 2671, 2673, 2674, 228596, 11637, 7543, 7545, 223739]:
-                    f.write(f'{npc.id}\t"{npc.name}"\t"{f"<{npc.tag}>" if npc.tag else ""}"\t\t\t\t\t\t{npc.expansion}\n')
+                    f.write(f'{npc.id}\t"{npc.name}"\t"{f"<{npc.tag}>" if npc.tag else ""}"\t{npc_name_ua}\t\t\t\t\t{npc.expansion}\n')
                     count += 1
         if count > 0:
             print(f"Added {count} NPCs for translation")
@@ -569,12 +585,12 @@ def save_htmls_from_wowhead(expansion, ids: set[int]):
     if len(redundant_ids) > 0:
         print(f"There's some redundant IDs: {redundant_ids}")
 
-    for id in save_ids:
-        print(f"Saving NPC #{id}")
-        save_page(expansion, id)
-    # save_func = partial(save_page, expansion)
-    # with multiprocessing.Pool(THREADS) as p:
-    #     p.map(save_func, save_ids)
+    # for id in save_ids:
+    #     print(f"Saving NPC #{id}")
+    #     save_page(expansion, id)
+    save_func = partial(save_page, expansion)
+    with multiprocessing.Pool(THREADS) as p:
+        p.map(save_func, save_ids)
 
 
 def parse_wowhead_npc_page(expansion, id) -> NPC_Data:
@@ -593,6 +609,7 @@ def parse_wowhead_npc_page(expansion, id) -> NPC_Data:
         npc_quotes_list = npc_quotes_header.find_next('ul').find_all('li')
         for list_element in npc_quotes_list:
             npc_quote = list_element.text[list_element.text.find(':') + 2:]
+            # npc_quote = npc_quote.replace('  ', ' ')
             npc_quotes.append(npc_quote)
 
     return NPC_Data(id, expansion, name=npc_name, quotes=npc_quotes)
