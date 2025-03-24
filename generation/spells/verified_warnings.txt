@@ -246,7 +246,6 @@ Warning! Template failed for spell#348459:wrath
 Warning!! Numbers don't match for spell spell#348704
 Warning! Newline count doesn't match for spell#349981:classic aura
 Warning!! Numbers don't match for spell spell#407632
-Warning! Template failed for spell#417145:sod
 Warning!! Numbers don't match for spell spell#424799
 Warning!! Numbers don't match for spell spell#424800
 Warning! Newline count doesn't match for spell#424925:sod description
@@ -255,5 +254,23 @@ Warning! Newline count doesn't match for spell#425600:sod description
 Warning! Newline count doesn't match for spell#436516:sod description
 Warning! Template failed for spell#440672:sod
 Warning! Template failed for spell#444165:sod
+Warning! Template failed for spell#467823:sod
+Warning! Template failed for spell#467863:sod
+Warning! Template failed for spell#467917:sod
+Warning! Template failed for spell#467988:sod
+Warning! Template failed for spell#467988:sod
+Warning! Template failed for spell#468028:sod
+Warning! Template failed for spell#468061:sod
+Warning! Template failed for spell#468235:sod
+Warning!! Numbers don't match for spell spell#1213754
 Warning!! Numbers don't match for spell spell#1214156
+Warning! Template failed for spell#1219747:sod
+Warning!! Numbers don't match for spell spell#1219783
+Warning! Template failed for spell#1219788:sod
+Warning! Template failed for spell#1219790:sod
+Warning! Template failed for spell#1219790:sod
+Warning! Template failed for spell#1219798:sod
+Warning! Template failed for spell#1219800:sod
+Warning! Template failed for spell#1219913:sod
+Warning! Template failed for spell#1219914:sod
 Warning! Template failed for spell#1220853:sod
