@@ -3,7 +3,7 @@
 def load_feedbacks() -> dict:
     import os
     from slpp import slpp as lua
-    feedbacks = list()
+    feedbacks = dict()
     for foldername, subfolders, filenames in os.walk('./input/feedbacks'):
         for filename in filenames:
             # Construct the full path to the file
@@ -14,14 +14,44 @@ def load_feedbacks() -> dict:
                 file_content = file.read()
                 lua_table = file_content[file_content.find('ClassicUA_DevLog = {') + 19:]
                 decoded_table = lua.decode(lua_table)
-                feedbacks.append(decoded_table)
+                feedbacks[filename] = decoded_table
+
+    __detect_redundant_feedbacks(feedbacks)
 
     single_feedback = dict()
-    for feedback in feedbacks:
+    for feedback in feedbacks.values():
         for key, value in feedback.items():
             if type(value) is dict:
                 single_feedback[key] = (single_feedback.get(key) or {}) | value
     return single_feedback
+
+
+def __detect_redundant_feedbacks(feedbacks: dict[str, dict]):
+    previous_filename = None
+    previous_feedback = None
+    for filename, feedback in feedbacks.items():
+        if previous_feedback is None:
+            previous_feedback = feedback
+            previous_filename = filename
+            continue
+        absent_keys = set(previous_feedback.keys()) - set(feedback.keys())
+        if absent_keys:
+            print(f'[!] Previous feedback ({previous_filename}) contains more keys ({sorted(previous_feedback.keys())}) than {filename} ({sorted(feedback.keys())}). Diff: {sorted(absent_keys)}')
+            continue
+
+        is_redundant = True
+        for key in previous_feedback.keys():
+            if isinstance(previous_feedback[key], dict) and isinstance(feedback.get(key), dict):
+                absent_feedbacks = set(previous_feedback[key].keys()) - set(feedback[key].keys())
+                if absent_feedbacks:
+                    # print(f'absent_feedbacks({previous_filename}.{key}): {sorted(absent_feedbacks)}')
+                    is_redundant = False
+
+        if is_redundant:
+            print(f'[!] Previous feedback ({previous_filename}) is a subset of {filename}.')
+
+        previous_feedback = feedback
+        previous_filename = filename
 
 
 def store_missings(feedback: dict, name: str, store_key = True, store_value = True) -> set[int]:
@@ -37,7 +67,8 @@ def store_missings(feedback: dict, name: str, store_key = True, store_value = Tr
                 output_file.write(f'{feedback_name}')
             output_file.write(f'\n')
             missing_keys.add(feedback_key)
-    print(f'{name} keys({len(missing_keys)}): {sorted(missing_keys)}')
+    # print(f'{name} keys({len(missing_keys)}): {sorted(missing_keys)}')
+    print(f'{name} keys: {len(missing_keys)}')
     return missing_keys
 
 
