@@ -172,7 +172,8 @@ def __get_wowhead_spell_search(expansion, start, end=None) -> list[SpellMD]:
         end = script_content.find('}];') + 2
         json_data = (script_content[start:end]
                      .replace('quality:', '"quality":')
-                     .replace('popularity:', '"popularity":'))
+                     .replace('popularity:', '"popularity":')
+                     .replace('frommerge:', '"frommerge":'))
         return list(map(lambda md: SpellMD(md.get('id'), md.get('name'), expansion, md.get('cat'), md.get('level'), md.get('schools'), md.get('rank'), md.get('chrclass'), md.get('reqclass'), md.get('skill')), json.loads(json_data)))
     else:
         return []
@@ -464,6 +465,8 @@ def load_spells_from_db(db_path = 'cache/spells.db') -> dict[int, dict[str, Spel
     return spells
 
 def is_spell_translated(spells: dict[str, SpellData]) -> list[str]:
+    if not spells:
+        return []
     translated_expansions = list()
     for expansion, spell in spells.items():
         if spell.name_ua or spell.description_ua or spell.aura_ua or spell.ref:
