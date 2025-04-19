@@ -147,6 +147,7 @@ known_categories = {
         4922: 'Twilight Highlands',
         5146: 'Vashjir',
         3357: 'Yojamba Isle',  # Added in SoD
+        16335: 'New Avalon',  # Added in SoD
     },
     1: {
         'Name': 'Kalimdor',
@@ -281,6 +282,7 @@ known_categories = {
         4273: 'Ulduar',
         3805: 'Zul\'Aman',
         1977: 'Zul\'Gurub',
+        16236: 'Scarlet Enclave', # Added in SoD
     },
     4: {
         'Name': 'Classes',
