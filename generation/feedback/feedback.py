@@ -145,8 +145,8 @@ if __name__ == '__main__':
     store_missings(feedbacks, 'missing_quests', store_value=False)  # Check in corresponding folder
     store_missings(feedbacks, 'missing_books')
 
-    missing_engravings = store_missings(feedbacks, 'missing_sod_engravings')
-    verify_engravings(missing_engravings)
+    # missing_engravings = store_missings(feedbacks, 'missing_sod_engravings')
+    # verify_engravings(missing_engravings)
 
     missing_objects = store_missings(feedbacks, 'missing_objects', store_value=False)
     cleanup_objects(missing_objects)
