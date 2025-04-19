@@ -180,6 +180,10 @@ def get_wowhead_npc_metadata(expansion) -> dict[int, dict[str, NPC_MD]]:
         with open(f'cache/tmp/{cache_file_name}.pkl', 'wb') as f:
             pickle.dump(wowhead_metadata, f)
 
+    for ignore_id in expansion_data[expansion][IGNORES]:
+        if ignore_id in wowhead_metadata:
+            del wowhead_metadata[ignore_id]
+
     for force_id in expansion_data[expansion][FORCE_DOWNLOAD]:
         wowhead_metadata[force_id] = NPC_MD(force_id, "FORCE LOAD", expansion=expansion)
 
