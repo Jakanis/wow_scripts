@@ -161,6 +161,7 @@ def __get_wowhead_item_search(expansion, start, end=None) -> list[ItemMD]:
         end = script_content.find('}];') + 2
         json_data = (script_content[start:end]
                      .replace('firstseenpatch', '"firstseenpatch"')
+                     .replace('frommerge', '"frommerge"')
                      .replace('popularity', '"popularity"')
                      .replace('contentPhase', '"contentPhase"'))
         return list(map(lambda md: ItemMD(md.get('id'), md.get('name'), expansion, md.get('classs'), md.get('firstseenpatch')), json.loads(json_data)))
@@ -239,9 +240,10 @@ def save_xmls_from_wowhead(expansion, ids: set[int]):
     if len(redundant_ids) > 0:
         print(f"There's some redundant IDs: {redundant_ids}")
 
-    save_func = partial(save_page, expansion)
-    # for id in ids:
+    # for id in save_ids:
+    #     print("Saving XML for item #" + str(id))
     #     save_page(expansion, id)
+    save_func = partial(save_page, expansion)
     with multiprocessing.Pool(THREADS) as p:
         p.map(save_func, save_ids)
 
@@ -702,21 +704,23 @@ def create_translation_sheet(items: dict[int, dict[str, ItemData]], spells: dict
         for key in sorted(items.keys()):
             for expansion, item in sorted(items[key].items()):
                 if ('OLD' in item.name or
-                    'DEP' in item.name or
-                    '[PH]' in item.name or
-                    '(old)' in item.name or
-                    '(old2)' in item.name or
-                    'QATest' in item.name or
-                    'DEBUG' in item.name or
-                    '(DND)' in item.name or
-                    'QAEnchant' in item.name or
-                    'TEST' in item.name or
-                    'UNUSED' in item.name or
-                    item.name.startswith('Monster - ') or
-                    item.id in expansion_data[item.expansion][IGNORES]):
-                        continue
+                        'DEP' in item.name or
+                        '[PH]' in item.name or
+                        '(old)' in item.name or
+                        '(old2)' in item.name or
+                        'QATest' in item.name or
+                        'DEBUG' in item.name or
+                        '(DND)' in item.name or
+                        'QAEnchant' in item.name or
+                        'TEST' in item.name or
+                        'UNUSED' in item.name or
+                        item.name.startswith('Monster - ') or
+                        item.id in expansion_data[item.expansion][IGNORES]):
+                    continue
+
                 # if item.expansion == 'sod' and not item.is_translated():
-                if not item.is_translated():
+                if item.expansion in (SOD, SOD_PTR) and not item.is_translated():
+                # if not item.is_translated():
                     item_name_ua = item.name_ua if item.name_ua else ''
                     if item_name_ua == '' and item.name in name_pretranslation_map.keys():
                         item_name_ua = name_pretranslation_map[item.name] + ' ???'
@@ -724,7 +728,7 @@ def create_translation_sheet(items: dict[int, dict[str, ItemData]], spells: dict
                     # pretranslation = False
                     for original_effect in item.effects:
                         effect_id = int(original_effect.effect_id) if original_effect.effect_id and not original_effect.effect_type == "Item" else None
-                        if effect_id and is_spell_translated(spells[effect_id]):
+                        if effect_id and is_spell_translated(spells.get(effect_id)):
                             effects_ua_text.append(original_effect.spell_ref_str())
                             # pretranslation = True
                         else:
