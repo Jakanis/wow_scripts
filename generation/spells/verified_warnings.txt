@@ -273,4 +273,3 @@ Warning! Template failed for spell#1219798:sod
 Warning! Template failed for spell#1219800:sod
 Warning! Template failed for spell#1219913:sod
 Warning! Template failed for spell#1219914:sod
-Warning! Template failed for spell#1220853:sod
