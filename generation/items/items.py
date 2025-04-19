@@ -8,6 +8,7 @@ from generation.spells.spells import SpellData, load_spells_from_db, is_spell_tr
 THREADS = 16
 CLASSIC = 'classic'
 SOD = 'sod'
+SOD_PTR = 'sod_ptr'
 TBC = 'tbc'
 WRATH = 'wrath'
 CATA = 'cata'
@@ -38,9 +39,20 @@ expansion_data = {
         XML_CACHE: 'wowhead_sod_item_xml',
         ITEM_CACHE: 'wowhead_sod_item_cache',
         METADATA_FILTERS: ('82:', '2:', '11500:'),
+        # METADATA_FILTERS: ('82:82:', '2:4:', '11500:11506:'),
         IGNORES: [759, 9232, 202256, 202316, 215235, 215394, 215405, 215406, 215410, 215412, 215450, 231752, 235583],
         FORCE_DOWNLOAD: []
     },
+    # SOD_PTR: {
+    #     INDEX: 0,
+    #     WOWHEAD_URL: 'https://www.wowhead.com/classic-ptr',
+    #     METADATA_CACHE: 'wowhead_sod_ptr_metadata_cache',
+    #     XML_CACHE: 'wowhead_sod_ptr_item_xml',
+    #     ITEM_CACHE: 'wowhead_sod_ptr_item_cache',
+    #     METADATA_FILTERS: ('82:', '1:', '11506:'),
+    #     IGNORES: [759, 9232, 202256, 202316, 215235, 215394, 215405, 215406, 215410, 215412, 215450, 231752, 235583],
+    #     FORCE_DOWNLOAD: []
+    # },
     TBC: {
         INDEX: 1,
         WOWHEAD_URL: 'https://www.wowhead.com/tbc',
