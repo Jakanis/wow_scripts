@@ -1,4 +1,13 @@
 
+def merge_dicts(a: dict, b: dict):
+    for key in b:
+        if key in a:
+            if isinstance(a[key], dict) and isinstance(b[key], dict):
+                merge_dicts(a[key], b[key])
+        else:
+            a[key] = b[key]
+    return a
+
 
 def load_feedbacks() -> dict:
     import os
@@ -19,10 +28,20 @@ def load_feedbacks() -> dict:
     __detect_redundant_feedbacks(feedbacks)
 
     single_feedback = dict()
-    for feedback in feedbacks.values():
-        for key, value in feedback.items():
-            if type(value) is dict:
-                single_feedback[key] = (single_feedback.get(key) or {}) | value
+
+    for filename, feedback in feedbacks.items():
+        single_feedback = merge_dicts(single_feedback, feedback)
+    # for filename, feedback in feedbacks.items():
+    #     for feedback_type, feedback_values in feedback.items():
+    #         if isinstance(feedback_values, dict):
+    #             single_feedback_values = single_feedback.setdefault(feedback_type, {})
+    #             for feedback_key, feedback_value in feedback_values.items():
+    #                 if isinstance(feedback_value, dict):
+    #                     single_feedback_values[feedback_key] = single_feedback_values.get(feedback_key, {})
+    #                     for sub_key, sub_value in feedback_value.items():
+    #                         single_feedback_values[feedback_key][sub_key] = single_feedback_values[feedback_key].get(sub_key, set())
+    #                         single_feedback_values[feedback_key][sub_key].add(sub_value)
+
     return single_feedback
 
 
