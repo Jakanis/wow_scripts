@@ -647,14 +647,10 @@ def parse_wowhead_pages(expansion, metadata: dict[int, dict[str, NPC_MD]]) -> di
     return wowhead_npcs
 
 
-def store_npc_quotes(npc_metadata: dict[int, dict[str, NPC_MD]]):
+def store_npc_quotes():
     import pickle
     wowhead_md = dict()
     wowhead_npcs = dict()
-    all_npcs = dict()
-    # download_npc_pages(npc_metadata)
-    # wowhead_metadata_classic = get_wowhead_npc_metadata(CLASSIC)
-    # wowhead_metadata_sod = get_wowhead_npc_metadata(SOD)
 
     for expansion in list(expansion_data.keys())[:2]:
         wowhead_md[expansion] = get_wowhead_npc_metadata(expansion)
@@ -678,5 +674,5 @@ if __name__ == '__main__':
     # create_translation_sheet(all_npcs_md)
     create_translation_sheet(all_npcs_md, missed_npcs)
 
-    store_npc_quotes(all_npcs_md)
+    store_npc_quotes()
 
