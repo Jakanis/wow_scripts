@@ -231,44 +231,9 @@ def cleanup_chats(chats: list[Chat]):
         existing_texts_by_npc[chat.npc_name].add(chat.text)
         filtered_chats.append(chat)
 
-    text_repeatance = list(sorted(existing_texts.items(), key=lambda item: item[1], reverse=True))  # look existing_texts dict
+    text_repeatance = list(sorted(filter(lambda x: x[1] > 1, existing_texts.items()), key=lambda item: item[1], reverse=True))
 
     return filtered_chats
-
-
-def filter_imp_texts(chats: list[Chat]):
-    starting_text = "Alright I'm going! Stop yelling!"
-
-    imp_names = set()
-    for chat in chats:
-        if chat.text == starting_text:
-            imp_names.add(chat.npc_name)
-
-    imp_texts = set()
-    for chat in chats:
-        if chat.text == '':
-            continue
-        if chat.npc_name in imp_names:
-            imp_texts.add(chat.text)
-
-    imp_names_2 = set()
-    for chat in chats:
-        if chat.text in imp_texts:
-            imp_names_2.add(chat.npc_name)
-
-    imp_texts_2 = set()
-    for chat in chats:
-        if chat.text == '':
-            continue
-        if chat.npc_name in imp_names_2:
-            imp_texts_2.add(chat.text)
-
-    print(f'imp_names({len(imp_names)}): {imp_names}')
-    print(f'imp_texts({len(imp_texts)}): {imp_texts}')
-    print(f'imp_names_2({len(imp_names_2)}): {imp_names_2}')
-    print(f'imp_texts_2({len(imp_texts_2)}): {imp_texts_2}')
-
-    return imp_texts_2
 
 
 def verify_npcs(chats: list[Chat]):
@@ -297,6 +262,7 @@ def verify_duplicates(chats: list[Chat]):
             if chat.text in npc_texts:
                 print(f'Warning! Chat duplicated for NPC "{npc_key}": {chat.text}')
             npc_texts.add(chat.text)
+
 
 
 if __name__ == '__main__':
