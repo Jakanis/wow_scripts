@@ -151,10 +151,12 @@
 13409	Tearfall Bracers
 13498	Handcrafted Mastersmith Leggings
 13502	Handcrafted Mastersmith Girdle
+13503	Alchemists' Stone
 13505	Runeblade of Baron Rivendare
 13509	Clutch of Foresight
 13514	Wail of the Banshee
 13515	Ramstein's Lightning Bolts
+13517	Recipe: Alchemists' Stone
 13518	Recipe: Flask of Petrification
 13519	Recipe: Flask of the Titans
 13520	Recipe: Flask of Distilled Wisdom
@@ -230,6 +232,7 @@
 14337	Eternal Cord of Fiery Wrath
 14340	Freezing Lich Robes
 14438	Venomshroud Boots
+14444	Venomshroud Leggings
 14452	Highborne Pauldrons
 14465	Elunarian Belt
 14466	Pattern: Frostweave Tunic
@@ -286,6 +289,7 @@
 14641	Cadaverous Walkers
 14664	Keeper's Armor
 14672	Pridelord Bands
+14791	Protector Cape
 14809	Warstrike Sabatons
 14931	Heroic Armor of the Monkey
 14966	Glorious Breastplate of the Bear
@@ -309,6 +313,7 @@
 15216	Rune Sword of Strength
 15218	Crystal Sword of the Monkey
 15219	Dimensional Blade of Strength
+15220	Battlefell Sabre of the Bear
 15221	Holy War Sword of the Bear
 15225	Sequoia Hammer of the Monkey
 15226	Giant Club of Stamina
@@ -413,12 +418,17 @@
 15938	Mystical Orb of Healing
 15939	Councillor's Scepter of the Eagle
 15940	Elegant Scepter of the Wolf
+15943	Imbued Shield
+16022	Arcanite Dragonling
 16044	Schematic: Lifelike Mechanical Toad
 16050	Schematic: Delicate Arcanite Converter
+16051	Schematic: Thorium Shells
+16054	Schematic: Arcanite Dragonling
 16072	Expert Cookbook
 16206	Arcanite Rod
 16207	Runed Arcanite Rod
 16215	Formula: Enchant Boots - Greater Stamina
+16217	Formula: Enchant Shield - Greater Stamina
 16218	Formula: Enchant Bracer - Superior Spirit
 16220	Formula: Enchant Boots - Spirit
 16221	Formula: Enchant Chest - Major Health
@@ -426,7 +436,9 @@
 16244	Formula: Enchant Gloves - Greater Strength
 16245	Formula: Enchant Boots - Greater Agility
 16246	Formula: Enchant Bracer - Superior Strength
+16248	Formula: Enchant Weapon - Unholy
 16249	Formula: Enchant 2H Weapon - Major Intellect
+16250	Formula: Enchant Weapon - Superior Striking
 16251	Formula: Enchant Bracer - Superior Stamina
 16252	Formula: Enchant Weapon - Crusader
 16253	Formula: Enchant Chest - Greater Stats
@@ -482,6 +494,7 @@
 18102	Dragonrider Boots
 18103	Band of Rumination
 18104	Feralsurge Girdle
+18168	Force Reactive Disk
 18204	Eskhandar's Pelt
 18222	Thorny Vine
 18223	Serrated Petal
@@ -503,9 +516,12 @@
 18265	Pattern: Flarecore Wraps
 18267	Recipe: Runn Tum Tuber Surprise
 18268	Gordok Inner Door Key
+18282	Core Marksman Rifle
 18285	Crystallized Mana Shard
 18286	Condensed Mana Fragment
 18289	Barbed Thorn Necklace
+18291	Schematic: Force Reactive Disk
+18292	Schematic: Core Marksman Rifle
 18297	Thornling Seed
 18301	Lethtendris's Wand
 18302	Band of Vigor
@@ -631,7 +647,9 @@
 18852	Insignia of the Horde
 18853	Insignia of the Horde
 18870	Helm of the Lifegiver
+18948	Barbaric Bracers
 18949	Pattern: Barbaric Bracers
+19029	Horn of the Frostwolf Howler
 19031	Frostwolf Battle Tabard
 19046	Frostwolf Battle Standard
 19051	Girdle of the Dawn
@@ -682,6 +700,7 @@
 19219	Pattern: Flarecore Robe
 19220	Pattern: Flarecore Leggings
 19301	Alterac Manna Biscuit
+19308	Tome of Arcane Domination
 19309	Tome of Shadow Force
 19310	Tome of the Ice Lord
 19311	Tome of Fiery Arcana
@@ -693,6 +712,7 @@
 19319	Harpy Hide Quiver
 19320	Gnoll Skin Bandolier
 19321	The Immovable Object
+19323	The Unstoppable Force
 19324	The Lobotomizer
 19325	Don Julio's Band
 19328	Pattern: Dawn Treaders
@@ -704,6 +724,7 @@
 19334	The Untamed Blade
 19442	Formula: Powerful Anti-Venom
 19444	Formula: Enchant Weapon - Strength
+19445	Formula: Enchant Weapon - Agility
 19446	Formula: Enchant Bracer - Mana Regeneration
 19447	Formula: Enchant Bracer - Healing
 19448	Formula: Enchant Weapon - Mighty Spirit
@@ -737,8 +758,10 @@
 19596	Dryad's Wrist Bindings
 19597	Dryad's Wrist Bindings
 19685	Primal Batskin Jerkin
+19687	Primal Batskin Bracers
 19696	Harvest Bread
 19697	Bounty of the Harvest
+19771	Pattern: Primal Batskin Bracers
 19934	Large Scorpid Claw
 19937	Small Scorpid Claw
 19938	Heavy Scorpid Leg
@@ -750,8 +773,11 @@
 20016	Trophy Raptor Skull
 20039	Dark Iron Boots
 20040	Plans: Dark Iron Boots
+20057	Highlander's Plate Spaulders
 20068	Deathguard's Cloak
+20070	Sageclaw
 20072	Defiler's Talisman
+20073	Cloak of the Honor Guard
 20150	Defiler's Chain Girdle
 20151	Defiler's Chain Girdle
 20152	Defiler's Chain Girdle
@@ -767,15 +793,19 @@
 20166	Defiler's Cloth Girdle
 20169	Defiler's Lizardhide Boots
 20171	Defiler's Lizardhide Girdle
+20172	Defiler's Lizardhide Girdle
 20173	Defiler's Lizardhide Girdle
 20175	Defiler's Lizardhide Shoulders
 20176	Defiler's Epaulets
 20186	Defiler's Leather Boots
 20189	Defiler's Leather Boots
 20190	Defiler's Leather Girdle
+20191	Defiler's Leather Girdle
 20192	Defiler's Leather Girdle
+20193	Defiler's Leather Girdle
 20194	Defiler's Leather Shoulders
 20195	Defiler's Mail Girdle
+20196	Defiler's Mail Girdle
 20197	Defiler's Mail Girdle
 20198	Defiler's Mail Girdle
 20203	Defiler's Mail Pauldrons
@@ -803,14 +833,21 @@
 20665	Abyssal Leather Leggings of Striking
 20670	Abyssal Mail Clutch of Striking
 20671	Abyssal Plate Legplates of Striking
+20727	Formula: Enchant Gloves - Shadow Power
+20728	Formula: Enchant Gloves - Frost Power
+20731	Formula: Enchant Gloves - Superior Agility
 20733	Formula: Enchant Cloak - Greater Nature Resistance
 20752	Formula: Minor Mana Oil
 20753	Formula: Lesser Wizard Oil
 20754	Formula: Lesser Mana Oil
 20755	Formula: Wizard Oil
 20758	Formula: Minor Wizard Oil
+21115	Defiler's Talisman
 21116	Defiler's Talisman
+21120	Defiler's Talisman
+21150	Iron Bound Trunk
 21151	Rumsey Rum Black Label
+21219	Recipe: Sagefish Delight
 21228	Mithril Bound Trunk
 21278	Stormshroud Gloves
 21341	Felcloth Bag
@@ -918,6 +955,7 @@
 216924	Felheart Embrace
 216925	Felheart Mantle
 221785	Cenarion Vestments
+224281	Gla'sir
 224282	Rae'lar
 225675	Sooty Obsidian Core
 225676	Molten Obsidian Core
@@ -955,6 +993,7 @@
 226492	Pauldrons of Might
 226493	Leggings of Might
 226494	Hauberk of Might
+226495	Jaws of Might
 226496	Treads of Might
 226497	Hands of Might
 226498	Sash of Might
@@ -973,6 +1012,7 @@
 226555	Arcanist Belt
 226556	Arcanist Gloves
 226557	Arcanist Boots
+226558	Arcanist Bindings
 226560	Arcanist Mantle
 226561	Arcanist Leggings
 226562	Arcanist Crown
@@ -1034,6 +1074,7 @@
 226652	Cenarion Sandals
 226653	Cenarion Mantle
 226654	Cenarion Gauntlets
+226655	Cenarion Wrists
 226656	Cenarion Embrace
 226657	Cenarion Cord
 226658	Cenarion Antlers
@@ -1048,6 +1089,7 @@
 226671	Cenarion Legguards
 226673	Cenarion Walkers
 226674	Cenarion Pauldrons
+226675	Cenarion Armor
 226694	Rune of Defense Specialization
 226697	Red Bag
 226700	Shadowcraft Tunic
@@ -1288,6 +1330,7 @@
 227179	Legionnaire's Dragonhide Chestpiece
 227180	Blood Guard's Dragonhide Grips
 227181	Blood Guard's Dragonhide Treads
+227186	Champion's Dragonhide Helm
 227204	Blood Guard's Dragonhide Gauntlets
 227206	Legionnaire's Dragonhide Legguards
 227279	Loop of the Magister
@@ -1323,6 +1366,7 @@
 227537	Incandescent Shoulderpads
 227683	Sulfuras, Hand of Ragnaros
 227684	Sulfuron Hammer
+227728	Eye of Sulfuras
 227743	Obsidian Power Core
 227745	Family Heirloom
 227747	Family Records
@@ -1415,6 +1459,7 @@
 227923	Water Treads
 227925	Beacon of Hydraxis
 227926	Hydraxian Coronation
+227927	Oath of the Sea
 227936	Diplomat Ring
 227937	Puzzle Box
 227938	Shard of Light
@@ -1648,6 +1693,7 @@
 228298	Shard of the Scale
 228299	Spinal Reaper
 228303	Pattern: Incandescent Mooncloth Robe
+228305	Plans: Refined Hammer of the Titans
 228310	Plans: Hardened Frostguard
 228313	Plans: Tempest Gauntlets
 228315	Plans: Sageblade of the Archmagus
@@ -1829,7 +1875,9 @@
 228955	Ancient Cornerstone Grimoire
 228978	Enchanted Sigil: Flowing Waters
 228979	Enchanted Sigil: Flowing Waters
+228980	Conductive Shield Coating
 228981	Formula: Conductive Shield Coating
+228982	Formula: Enchant Shield - Law of Nature
 228992	Onyxia Hide Backpack
 228993	Pattern: Bottomless Bag
 228994	Bottomless Bag
@@ -1850,26 +1898,42 @@
 230239	Gloves of Rapid Evolution
 230240	Mantle of the Blackwing Cabal
 230241	Spineshatter
+230242	The Untamed Blade
 230244	Shapeshifter's Sigil
 230245	Pendant of the Fallen Dragon
 230248	Red Dragonscale Protector
+230252	Bracers of Arcane Accuracy
 230253	Heartstriker
 230255	Taut Dragonhide Belt
 230256	Drake Talon Pauldrons
+230257	Ring of Blackrock
 230270	Shadow Wing Focus Staff
+230271	Drake Talon Cleaver
 230275	Firemaw's Clutch
 230276	Claw of the Black Drake
+230277	Cloak of Firemaw
 230280	Aegis of Preservation
 230282	Drake Fang Talisman
 230723	Ebony Flame Gloves
 230733	Shroud of Pure Thought
 230734	Circle of Applied Force
+230739	Angelista's Grasp
+230740	Taut Dragonhide Shoulderpads
 230741	Chromatic Boots
+230742	Taut Dragonhide Gloves
+230744	Elementium Threaded Cloak
+230745	Girdle of the Fallen Crusader
+230746	Empowered Leggings
 230794	Claw of Chromaggus
+230800	Primalist's Linked Waistguard
 230801	Ashjre'thul, Crossbow of Smiting
 230802	Elementium Reinforced Bulwark
+230804	Cloak of the Brood Lord
+230805	Boots of the Shadow Flame
 230806	Therazane's Link
 230808	Archimtiros' Ring of Reckoning
+230810	Neltharion's Tear
+230811	Pure Elementium Band
 230812	Mish'undare, Circlet of the Mind Flayer
 230813	Staff of the Shadow Flame
 230818	Ashkandi, Greatsword of the Brotherhood
@@ -1879,6 +1943,7 @@
 230840	Master Dragonslayer's Medallion
 230841	Master Dragonslayer's Orb
 230844	Draconic Maul
+230845	Doom's Edge
 230846	Band of Dark Dominion
 230854	Band of Servitude
 230856	Belt of Untapped Power
@@ -1903,6 +1968,7 @@
 230925	Thekal's Grasp
 230927	Ritualistic Legguards
 230928	Seafury Leggings
+230930	Zulian Slicer
 230941	Arlokk's Hoodoo Stick
 230942	Bloodsoaked Greaves
 230943	Overlord's Onyx Band
@@ -1921,15 +1987,30 @@
 231005	Jin'do's Bag of Whammies
 231007	Bloodstained Coif
 231009	Blooddrenched Leggings
+231010	Bloodsoaked Gauntlets
 231011	Bloodtinged Gloves
 231012	Overlord's Embrace
 231013	The Hexxer's Cover
 231014	Lizardscale Eyepatch
+231026	Legguards of Wrath
 231027	Faceguard of Wrath
+231028	Handguards of Wrath
+231030	Chestguard of Wrath
 231031	Bracers of Wrath
+231034	Legplates of Wrath
+231035	Helm of Wrath
+231036	Gauntlets of Wrath
+231038	Breastplate of Wrath
+231040	Bloodfang Chestpiece
 231042	Bloodfang Gloves
 231043	Bloodfang Hood
+231044	Bloodfang Pants
 231045	Bloodfang Belt
+231047	Bloodfang Shoulderpads
+231048	Bloodfang Chestguard
+231050	Bloodfang Handguards
+231051	Bloodfang Cowl
+231052	Bloodfang Legguards
 231059	Dragonstalker's Helm
 231100	Netherwind Belt
 231102	Netherwind Gloves
@@ -1948,26 +2029,65 @@
 231169	Garb of Transcendence
 231171	Cord of Transcendence
 231172	Bracers of Transcendence
+231192	Judgement Mantle
 231199	Bracers of Ten Storms
+231204	Greaves of Ten Storms
 231219	Headdress of Ten Storms
+231230	Stormrage Chestguard
+231231	Stormrage Boots
+231232	Stormrage Handguards
+231233	Stormrage Cover
+231234	Stormrage Legguards
+231235	Stormrage Pauldrons
+231236	Stormrage Belt
+231237	Stormrage Bracers
+231238	Stormrage Armor
+231239	Stormrage Treads
+231240	Stormrage Gauntlets
+231241	Stormrage Headdress
+231242	Stormrage Leggings
+231243	Stormrage Spaulders
+231244	Stormrage Waistguard
+231245	Stormrage Wristguards
+231246	Stormrage Leathers
+231247	Stormrage Sandals
+231248	Stormrage Mitts
+231249	Stormrage Antlers
+231250	Stormrage Kilt
+231251	Stormrage Mantle
+231252	Stormrage Cord
 231253	Stormrage Bindings
+231254	Stormrage Vest
+231255	Stormrage Stompers
+231256	Stormrage Grips
+231257	Stormrage Cowl
+231258	Stormrage Trousers
+231259	Stormrage Shoulderpads
 231260	Stormrage Sash
+231261	Stormrage Wraps
 231272	Tigule's Harpoon
 231273	Gri'lek's Carver
 231275	Blazefury Retributer
 231278	Hoodoo Hunting Bow
+231280	Wushoolay's Charm of Nature
 231283	Hazza'rah's Charm of Warding
 231287	Renataki's Charm of Trickery
 231289	Aegis of the Blood God
 231300	Cloak of Consumption
 231305	Seafury Gauntlets
 231306	Soul Corrupter's Necklace
+231307	The Eye of Hakkar
+231316	Pristine Enchanted South Seas Kelp
+231317	Zandalar Haruspex's Tunic
 231332	The All-Seeing Eye of Zuldazar
 231333	Zandalar Confessor's Mantle
 231334	Zandalar Confessor's Bindings
 231335	Zandalar Confessor's Wraps
 231336	Zandalarian Shadow Mastery Talisman
 231338	Zandalar Madcap's Mantle
+231341	Zandalar Augur's Hauberk
+231352	Zandalar Vindicator's Belt
+231353	Zandalar Vindicator's Breastplate
 231366	Prophetic Aura
 231367	Prophetic Curse
 231378	Shimmering Golden Disk
@@ -2023,8 +2143,10 @@
 231712	Draconian Gloves
 231713	Draconian Boots
 231714	Draconian Robe
+231715	Primeval Bindings
 231716	Primeval Belt
 231717	Primeval Shoulderpads
+231718	Primeval Leggings
 231719	Primeval Helm
 231720	Primeval Gloves
 231721	Primeval Boots
@@ -2051,22 +2173,32 @@
 231817	Windstriker
 231823	Geddon's Glaive
 231846	Gri'lek's Carver
+231849	Tigule's Harpoon
 231852	Gurubashi Dwarf Destroyer
 231855	Fang of the Faceless
 231858	Bloodcaller
 231860	Jin'do's Judgement
+231864	Pitchfork of Madness
 231867	Bloodlord's Defender
 231871	Wushoolay's Poker
 231872	Hoodoo Hunting Bow
 231873	Zulian Stone Axe
 231875	Thekal's Grasp
+231912	Blade of the Pit
 231995	Hardened Elementium Slag
 232077	Wand of Making
+232096	Stormrage Sash
+232103	Stormrage Wristguards
+232105	Stormrage Spaulders
+232106	Stormrage Leggings
+232109	Stormrage Treads
+232110	Stormrage Armor
 232168	Cord of Transcendence
 232175	Bindings of Transcendence
 232180	Handguards of Transcendence
 232211	Helmet of Ten Storms
 232213	Greaves of Ten Storms
+232247	Bracers of Wrath
 232299	Zulian Defender
 232309	Renataki's Soul Conduit
 232310	Renataki's Soul Conduit
@@ -2081,8 +2213,10 @@
 232455	Emblem of Dishonor
 232456	Emblem of the Violet Eye
 232457	Emblem of the Worldcore
+232550	Ashkandi, Greatsword of the Brotherhood
 232552	Lok'amir il Romathis
 232561	Claw of the Black Drake
+232565	Dragonfang Blade
 232566	The Untamed Blade
 232576	Draconic Avenger
 232577	Doom's Edge
@@ -2117,11 +2251,15 @@
 233370	Qiraji Bindings of Command
 233371	Qiraji Bindings of Sovereignty
 233373	Conqueror's Breastplate
+233382	Stormcaller's Leggings
+233386	Stormcaller's Hauberk
 233392	Footwraps of the Oracle
 233393	Tiara of the Oracle
 233394	Mantle of the Oracle
 233395	Vestments of the Oracle
 233396	Trousers of the Oracle
+233401	Avenger's Pauldrons
+233402	Enigma Robes
 233403	Enigma Shoulderpads
 233404	Enigma Circlet
 233407	Striker's Footguards
@@ -2129,7 +2267,14 @@
 233409	Striker's Pauldrons
 233410	Striker's Diadem
 233411	Striker's Hauberk
+233412	Genesis Helm
+233413	Genesis Shoulderpads
+233414	Genesis Boots
+233415	Genesis Vest
+233416	Genesis Trousers
+233417	Mace of Unending Life
 233418	Cloak of Unending Life
+233419	Band of Unending Life
 233420	Cloak of the Unseen Path
 233421	Scythe of the Unseen Path
 233422	Signet of the Unseen Path
@@ -2139,9 +2284,12 @@
 233429	Gavel of Infinite Wisdom
 233432	Cloak of Veiled Shadows
 233433	Dagger of Veiled Shadows
+233434	Band of Veiled Shadows
 233435	Hammer of the Gathering Storm
 233436	Cloak of the Gathering Storm
+233437	Ring of the Gathering Storm
 233442	Sickle of Unyielding Strength
+233492	Razorspike Battleplate
 233496	Barrage Shoulders
 233502	Amulet of Foul Warding
 233503	Pendant of the Qiraji Guardian
@@ -2269,6 +2417,14 @@
 233681	Shoulderpads of the Oracle
 233682	Crown of the Oracle
 233683	Slippers of the Oracle
+233684	Avenger's Mantle
+233688	Avenger's Cuirass
+233689	Avenger's Spaulders
+233693	Avenger's Chestguard
+233694	Stormcaller's Chestguard
+233695	Stormcaller's Faceguard
+233696	Stormcaller's Sabatons
+233698	Stormcaller's Legplates
 233699	Stormcaller's Breastplate
 233700	Stormcaller's Crown
 233701	Stormcaller's Treads
@@ -2277,11 +2433,17 @@
 233704	Stormcaller's Embrace
 233705	Stormcaller's Headdress
 233707	Stormcaller's Epaulets
+233709	Genesis Cowl
 233710	Genesis Leather Pants
+233711	Genesis Armor
+233714	Genesis Leggings
+233715	Genesis Leathers
 233716	Genesis Treads
 233717	Genesis Mantle
 233718	Genesis Headdress
 233719	Genesis Breeches
+233720	Genesis Chestguard
+233721	Genesis Greaves
 233723	Genesis Mask
 233728	Blood-Caked Insignia
 233729	Blood-Caked Choker
@@ -2297,6 +2459,11 @@
 233739	Blood-Caked Drape
 233740	Blood-Caked Shroud
 233749	Battle Hardened Mail Wristguards
+233759	Battle Hardened Dragonhide Bracers
+233764	Battle Hardened Dragonhide Waistguard
+233766	Battle Hardened Dragonhide Cord
+233768	Battle Hardened Dragonhide Wrists
+233769	Battle Hardened Dragonhide Armbands
 233780	Battle Hardened Satin Bracers
 233781	Battle Hardened Satin Wrists
 233783	Battle Hardened Satin Sash
@@ -2328,13 +2495,16 @@
 233985	The Fumigator
 233986	Obsidian Bomb
 233987	G00 DV-1B3 Generator
+233988	Tuned Force Reactive Disk
 233990	Speedstone
 233991	Tear of the Dreamer
 233992	Lodestone of Retaliation
+233993	Enchanted Stopwatch
 233994	Ruby-Encrusted Broach
 233995	Scroll: Wrath of the Swarm
 233996	Enchanted Repellent
 233997	Formula: Enchant Chest - Living Stats
+233998	Formula: Enchant Gloves - Holy Power
 234001	Enchanted Totem
 234002	Enchanted Mushroom
 234003	Obsidian-Infused Thorium Bar
@@ -2379,9 +2549,11 @@
 234070	Bracers of Qiraji Command
 234071	Legplates of the Qiraji Command
 234072	Southwind's Grasp
+234073	Dustwind Turban
 234075	Gauntlets of the Immovable
 234076	Talon of Furious Concentration
 234077	Thick Silithid Chestguard
+234078	Chitinous Shoulderguards
 234079	Cloak of the Savior
 234080	Eye of Moam
 234081	Gauntlets of Southwind
@@ -2392,6 +2564,7 @@
 234087	Obsidian Scaled Leggings
 234088	Legplates of the Destroyer
 234089	Buru's Skull Fragment
+234090	Gloves of the Swarm
 234091	Slimy Scaled Gauntlets
 234092	Fetish of Chitinous Spikes
 234093	Quicksand Waders
@@ -2404,6 +2577,7 @@
 234100	Helm of Regrowth
 234101	Ring of the Desert Winds
 234102	Scaled Silithid Gauntlets
+234103	Bracers of Brutality
 234104	Crossbow of Imminent Doom
 234105	Gauntlets of New Life
 234106	Gloves of Dark Wisdom
@@ -2419,34 +2593,52 @@
 234117	Treads of the Wandering Nomad
 234118	Gavel of Qiraji Authority
 234119	Antenna of Invigoration
+234120	Helm of the Holy Avenger
 234121	Silithid Husked Launcher
 234122	The Lost Kris of Zedd
 234123	Coif of Elemental Fury
 234124	Handbook of Occult Poison II
+234129	Onyx Embedded Leggings
+234130	Amulet of Shadow Shielding
 234132	Drake Tooth Necklace
+234133	Drudge Boots
 234134	Gnomish Turban of Psychic Might
 234135	Band of Icy Depths
+234136	Darkwater Robes
 234137	Fang of Korialstrasz
+234138	Shadowsong's Sorrow
+234139	Ravencrest's Legacy
 234141	Runesword of the Red
 234142	Bottomless Noggenfogger Elixir
 234143	Globe of Deception
 234144	Censer of the False Prophet
 234145	Blood-Caked Hakkari Bijou
 234146	Acid Inscribed Greaves
+234147	Ancient Corroded Leggings
 234148	Dragonbone Wristguards
 234149	Dragonspur Wraps
+234150	Gloves of Delusional Power
 234151	Green Dragonskin Cloak
 234152	Hammer of Bestial Fury
 234153	Staff of Rampant Growth
 234154	Trance Stone
 234155	Malfurion's Signet Ring
+234156	Boots of the Endless Moor
 234157	Circlet of Restless Dreams
+234158	Dragonheart Necklace
+234159	Polished Ironwood Crossbow
 234160	Ring of the Unliving
 234163	Dark Heart Pants
+234167	Boots of Fright
 234168	Mendicant's Slippers
+234169	Mindtear Band
+234170	Nightmare Blade
 234171	Unnatural Leather Spaulders
+234172	Emerald Dragonfang
+234173	Leggings of the Demented Mind
 234174	Acid Inscribed Pauldrons
 234175	Hibernation Crystal
+234176	Darkmoon Card: Heroism
 234177	Darkmoon Card: Blue Dragon
 234179	Darkmoon Card: Twisting Nether
 234198	Signet Ring of the Bronze Dragonflight
@@ -2456,6 +2648,7 @@
 234202	Signet Ring of the Bronze Dragonflight
 234220	Plans: Razorspike Headcage
 234221	Plans: Razorspike Shoulderplates
+234222	Plans: Razorspike Battleplate
 234223	Plans: Obsidian Reaver
 234225	Plans: Obsidian Destroyer
 234226	Plans: Obsidian Stormhammer
@@ -2473,6 +2666,8 @@
 234251	Pattern: Qiraji Silk Drape
 234252	Recipe: Flask of Unyielding Sorrow
 234253	Recipe: Flask of Ancient Knowledge
+234255	Recipe: Flask of the Old Gods
+234256	Recipe: Flask of Madness
 234257	Recipe: Elixir of the Honey Badger
 234258	Recipe: Elixir of the Mage-Lord
 234259	Recipe: Elixir of the Ironside
@@ -2482,6 +2677,7 @@
 234263	Schematic: Obsidian Bomb
 234264	Schematic: G00 DV-1B3 Generator
 234265	Schematic: Tuned Force Reactive Disk
+234266	Formula: Speedstone
 234267	Formula: Tear of the Dreamer
 234268	Formula: Lodestone of Retaliation
 234269	Formula: Enchanted Stopwatch
@@ -2508,6 +2704,7 @@
 234307	Pattern: Bramblewood Belt
 234308	Bramblewood Boots
 234309	Pattern: Bramblewood Boots
+234310	Bramblewood Helm
 234311	Pattern: Bramblewood Helm
 234314	Pattern: Sylvan Shoulders
 234315	Sylvan Crown
@@ -2522,8 +2719,14 @@
 234325	Pattern: Dreamscale Breastplate
 234429	Plans: Obsidian Heartseeker
 234434	Obsidian Shotgun
+234435	Schematic: Obsidian Shotgun
+234436	Signet Ring of the Bronze Dragonflight
+234439	Signet Ring of the Bronze Dragonflight
+234440	Signet Ring of the Bronze Dragonflight
 234445	Pattern: Bolt of Qiraji Silk
 234447	Bubbles' Rod of Transformation
+234458	Plans: Jagged Obsidian Shield
+234459	Jagged Obsidian Shield
 234462	Earthstrike
 234463	Wrath of Cenarius
 234464	Bubbles' Rod of Bubbles
@@ -2532,20 +2735,29 @@
 234474	Idol of Sidereal Wrath
 234478	Totem of Thunderous Strikes
 234480	Totem of Pyroclastic Thunder
+234481	Pattern: Dreamscale Kilt
+234482	Dreamscale Kilt
+234484	Dreamscale Bracers
 234542	High Warlord's Greatsword
 234543	High Warlord's Battle Axe
+234545	High Warlord's Pulverizer
+234546	High Warlord's Destroyer
 234547	High Warlord's Pig Sticker
 234548	High Warlord's Pig Poker
 234549	High Warlord's War Staff
 234550	High Warlord's Spellblade
 234551	High Warlord's Battle Mace
 234552	High Warlord's Blade
+234553	High Warlord's Quickblade
 234554	High Warlord's Cleaver
 234555	High Warlord's Bludgeon
 234556	High Warlord's Razor
+234557	High Warlord's Right Claw
+234558	High Warlord's Left Claw
 234559	High Warlord's Recurve
 234560	High Warlord's Crossbow
 234561	High Warlord's Street Sweeper
+234562	High Warlord's Shield Wall
 234563	High Warlord's Tome of Destruction
 234564	High Warlord's Tome of Mending
 234614	Void-Touched Emblem
@@ -2583,15 +2795,22 @@
 234814	Pendant of the Shifting Sands
 234960	Reins of the Blood-Caked Tiger
 234961	Whistle of the Blood-Caked Raptor
+234962	Jade Inlaid Vestments
+234963	Strangely Glyphed Legplates
+234964	Signet Ring of the Bronze Dragonflight
+234974	Staff of the Qiraji Prophets
+234976	Wand of Qiraji Nobility
 234978	Jaw of the Sand Reaver
 234980	Huhuran's Stinger
 234985	Dark Edge of Insanity
+234989	Qiraji Sacrificial Dagger
 234990	Manslayer of the Qiraji
 234991	Bow of Taut Sinew
 235006	Dagger of Veiled Shadows
 235008	Kris of Unspoken Names
 235009	Hammer of the Gathering Storm
 235012	Mace of Unending Life
+235014	Scepter of the False Prophet
 235045	Imperial Qiraji Regalia
 235046	Imperial Qiraji Armaments
 235048	Head of Ossirian the Unscarred
@@ -2604,8 +2823,10 @@
 235144	Satchel of Blood-Caked Copper Coins
 235145	Satchel of Blood-Caked Silver Coins
 235275	Portals Deck
+235277	Warlords Deck
 235278	Beasts Deck
 235474	High Warlord's Barricade
+235476	High Warlord's Hacker
 235477	High Warlord's Bonecracker
 235478	High Warlord's Shiv
 235497	Draught of the Sands
@@ -2632,8 +2853,8 @@
 235872	Stalker's Bands
 235873	Crypt's Keepers
 235874	Cultist's Handwraps
-235875	Gravedigger's Gloves
-235876	Sinner's Handguards
+235875	Gravedigger's Gloves of Obliteration
+235876	Sinner's Handguards of Blood
 235877	Fanatic's Gauntlets
 235878	Malefic Belt
 235879	Nimble Links
@@ -2806,8 +3027,8 @@
 236571	Soul of the Spirithealer
 236578	Soul of the Flamebringer
 236642	Mender's Handwraps
-236643	Nightwatcher's Gloves of Plagues
-236644	Mourner's Handguards of Fevers
+236643	Nightwatcher's Gloves of Grasping
+236644	Mourner's Handguards
 236645	Lightwielder's Gauntlets
 236656	Frozen Rune
 236657	Bubbles' Rotting Branch

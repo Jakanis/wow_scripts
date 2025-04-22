@@ -10081,10 +10081,6 @@ ClassicUA_DevLog = {
 ["Professor Thaddeus Paleo"] = {
 ["inltcsmtmb"] = "If you wait to come see me, there may be nothing left!",
 },
-["Blackrock Tracker"] = {
-["makkmngikkohklto"] = "Maka kek magan gi kek Osh'kazil Tago!",
-["oglkhagrklkkohklto"] = "Ogg lok ha golar kil kek Osh'kazil Tago!",
-},
 ["Taerar"] = {
 ["peisbtaafgdmlttenern"] = "Peace is but a fleeting dream! Let the NIGHTMARE reign!",
 ["cnofmsiireyuuntswd"] = "Children of Madness - I release you upon this world!",
@@ -10106,10 +10102,6 @@ ClassicUA_DevLog = {
 },
 ["Core Rager"] = {
 ["ssrstodeweismrised"] = "%s refuses to die while its master is endangered!",
-},
-["Alliance Hunter"] = {
-["ln"] = "lon",
-["lnwslr"] = "Lon wos Landowar!",
 },
 ["Delgren the Purifier"] = {
 ["aaseehtktobktsse"] = "A simple enough task to break this soulstone!",
@@ -10187,9 +10179,6 @@ ClassicUA_DevLog = {
 ["sswspy"] = "%s weeps pitifully.",
 ["ssbstobeptotofhsmy"] = "%s begs to be put out of his misery.",
 ["swpepspiti"] = "%s weeps pitifully.",
-},
-["Scarlet Chaplain"] = {
-["wglfmrovna"] = "Wos barad landowar far mod ruftos odes.  Ver nud agol gol!",
 },
 ["Bashana Runetotem"] = {
 ["dsoootemsg"] = "Denizens of Kalimdor, the dread beast Aku'mai has been slain and Ashenvale has been cleansed of the blight of the Old Gods' influence. Feel the boon of Blackfathom, and bask in the warmth of the Earth Mother's gaze!",
@@ -10440,9 +10429,6 @@ ClassicUA_DevLog = {
 ["Ironbark the Redeemed"] = {
 ["mwccinrtwi"] = "My strength wanes, mortal. I have done as promised, the way is clear. I now return to whence I came.",
 ["aywouwish_"] = "As you wish...",
-},
-["Blackrock Summoner"] = {
-["makkmngikkohklto"] = "Maka kek magan gi kek Osh'kazil Tago!",
 },
 ["Guard Slip'kik"] = {
 ["sbeadranaa"] = "%s lets out a deep roar, alerting nearby allies and becoming enraged!",
@@ -10927,9 +10913,6 @@ ClassicUA_DevLog = {
 ["aimgsytimg"] = "Alright I'm going! Stop yelling!",
 ["jrmaivheas"] = "Just release me already! I've had enough!",
 },
-["Alliance Druid"] = {
-["wsbdalasndyyglbr"] = "Wos Barad agol algos nud y gol bor!",
-},
 ["Ak'Zeloth"] = {
 ["teaasefmtetebryuwlnditfryrqt"] = "Take a stone from the table, Battlemaster.  You will need it for your quest.",
 },
@@ -10943,7 +10926,6 @@ ClassicUA_DevLog = {
 ["ssgsioaakgfy"] = "%s goes into a killing frenzy!",
 },
 ["Scarlet Trainee"] = {
-["wdbegflclb"] = "Wos daegil bur ealdor!  Goibon far, lu cynegold!",
 ["temrhsfnaehmmybn"] = "The master has fallen!  Avenge him, my brethren!",
 },
 ["East Frostwolf Marshal"] = {
@@ -11060,10 +11042,6 @@ ClassicUA_DevLog = {
 ["oyoynondtogtalvtiilltkiilltk"] = "Okay, okay! No need to get all violent. I'll talk. I'll talk!",
 ["iiheaafwnsfmtejbbkatmypeiillgttmadtnmtyubkintein"] = "I have a few notes from the job back at my place. I'll get them and then meet you back in the inn.",
 ["ohitssonnwbtyuttiiddbeaetohh"] = "Oh, it's on now! Bet you thought I'd be alone too, huh?!",
-},
-["Blackrock Renegade"] = {
-["makkmngikkohklto"] = "Maka kek magan gi kek Osh'kazil Tago!",
-["oglkhagrklkkohklto"] = "Ogg lok ha golar kil kek Osh'kazil Tago!",
 },
 ["Wandering Eye of Kilrogg"] = {
 ["ssypaoanpu"] = "%s senses your presence and opens a nether portal!",
@@ -11245,11 +11223,7 @@ ClassicUA_DevLog = {
 ["mgtysvmcjt"] = "My torture is ended and now I can join the Goddess. Thank you so very much!",
 },
 ["Phalanx"] = {
-["vpdnspcepr"] = "Violence!  Property damage!  None shall pass!!",
 ["vepydeneslps"] = "Violence!  Property damage!  None shall pass!!",
-},
-["Arch Druid Renferal"] = {
-["vnavdwlvvk"] = "Vandarwos methrine, vil lon nandige ru! Wos Engoth Ador bur nandige ru vil dyrstigost. Wos lithtos vohl ver ko aziris!",
 },
 ["Orgnil Soulscar"] = {
 ["sslstodrssrt"] = "%s listens to Dominger's report...",
@@ -11420,9 +11394,6 @@ ClassicUA_DevLog = {
 ["sswshswsatna"] = "%s wiggles his whiskers at Nepozbuvna.",
 ["ssnycsfmtece"] = "%s nervously crawls from the crate.",
 ["ssssattegd"] = "%s sniffs at the ground...",
-},
-["Steven Black"] = {
-["gnlbonnuff"] = "Goibon! Nuff lu!",
 },
 ["Sunscale Screecher"] = {
 ["sslsotaaskcgfrhp"] = "%s lets out a shriek, calling for help!",
@@ -11604,8 +11575,6 @@ ClassicUA_DevLog = {
 ["htgbhethin"] = "Hehehe! Things go boom!",
 ["gcynacutya"] = "Gonna cut ya!",
 ["gbynaburny"] = "Gonna burn ya!",
-["twnrwosnud"] = "Thor wos nud!",
-["oocsodescy"] = "Odes...Odes..Cynegold!",
 ["lsswttcdha"] = "Let's see what this thing can do!",
 ["bbbimbutca"] = "BANG! BANG! BANG!  I'm beefing up the car!!!",
 ["wdykmtyouk"] = "Why did you kill me, Tightfx?",
@@ -12213,9 +12182,6 @@ ClassicUA_DevLog = {
 ["vfsswdtttepsaeuybthesshdrsatsesgat"] = "VanCleef sends word that the plans are underway. But he's heard rumors about someone snooping about.",
 ["tedsslsdnomkarwlspus"] = "The Defias shall succeed! No meek adventurer will stop us!",
 },
-["Blackrock Outrunner"] = {
-["oglkhagrklkkohklto"] = "Ogg lok ha golar kil kek Osh'kazil Tago!",
-},
 ["Willix the Importer"] = {
 ["esamaronme"] = "Egads! Agam'ar on me!",
 ["hpgttsrnqdofofme"] = "Help! Get this Razorfen Quilguard off of me!",
@@ -12462,9 +12428,6 @@ ClassicUA_DevLog = {
 ["hwmhlrdstehhgletustotetefs"] = "How much longer does the High General expect us to tolerate these freaks?",
 ["btwyntatlthetmatastevdiftywnkltdssfsorftwdbemher"] = "But why not at least have them act as the vanguard? If they weaken Kel'Thuzad's forces, our fight would be much easier.",
 },
-["Gnomeregan Evacuee"] = {
-["cvrlholdva"] = "Cynegold! Va regen lo hamerung.",
-},
 ["Maybess Riverbreeze"] = {
 ["hitciwwntf"] = "Here is a beacon for you, Moonak.  You must keep it in your possession if you are to find the corrupted items we will need.",
 },
@@ -12669,7 +12632,6 @@ ClassicUA_DevLog = {
 ["Stitches"] = {
 ["deiihr"] = "DARKSHIRE...I HUNGER!!",
 ["rr"] = "ROARRRRR!!",
-["deeese"] = "DANAGARDE...E SKILDE!!",
 },
 ["Quztog"] = {
 ["ybbmuotorb"] = "You better back me up on this one!",
@@ -12705,10 +12667,6 @@ ClassicUA_DevLog = {
 ["Techbot"] = {
 ["yuaeweheaanedy"] = "You are welcome, have a nice day.",
 ["ttisseadtewshtmyespebenetomeiijtwttohp"] = "Techbot is sensitive and those words hurt my ears. :[ Please be nice to me. \r\nI just want to help.",
-},
-["Alliance Rogue"] = {
-["frmanhhrerloru"] = "far melka noth hir ealdor lo ru",
-["bh"] = "Bornevalesh",
 },
 ["Riggle Bassbait"] = {
 ["whawbitman"] = "We have a winner!  Bennet is the Master Angler!",
@@ -12791,11 +12749,6 @@ ClassicUA_DevLog = {
 ["yhcoyimgoo"] = "You take care of yourself! I'm gettin' out o' here.",
 ["atysmmimff"] = "Ach! Thank you so much, Moona! I'm free! Finally!",
 },
-["Alliance Warrior"] = {
-["lnvdreloneosnerh"] = "Lon veld re lo ne odes nandige rogesh!",
-["ln"] = "lon",
-["wsbdalasndyyglbr"] = "Wos Barad agol algos nud y gol bor!",
-},
 ["West Frostwolf Marshal"] = {
 ["rfdortingf"] = "Reporting for duty!",
 },
@@ -12853,9 +12806,6 @@ ClassicUA_DevLog = {
 },
 ["Hooah"] = {
 ["dhtssssssl"] = "Death tarnishes %s's soul.",
-},
-["Alliance Mage"] = {
-["lnvdreloneosnerh"] = "Lon veld re lo ne odes nandige rogesh!",
 },
 ["Dun Baldar North Warmaster"] = {
 ["fththehord"] = "For the Horde!",
@@ -13470,10 +13420,6 @@ ClassicUA_DevLog = {
 ["tltlfcwsft"] = "The Scourge have broken through in all wings!  May the light defeat these foul creatures!  We shall fight to the last!",
 ["odafbtlwmp"] = "Our defenses are failing!  By the light we must prevail!",
 },
-["Alliance Priest"] = {
-["frmanhhrerloru"] = "far melka noth hir ealdor lo ru",
-["ln"] = "lon",
-},
 ["Dun Baldar North Marshal"] = {
 ["sbecomesen"] = "%s becomes enraged!",
 },
@@ -13528,9 +13474,6 @@ ClassicUA_DevLog = {
 ["rsgdysetgo"] = "Ready. Set. GO!",
 ["iwin______"] = "I win!!",
 },
-["Gina MacGregor"] = {
-["gnlbonnuff"] = "Goibon! Nuff lu!",
-},
 ["Kirtonos the Herald"] = {
 ["sloascutas"] = "%s lets out a shrill cry.",
 },
@@ -13584,9 +13527,6 @@ ClassicUA_DevLog = {
 },
 ["Wildspawn Satyr"] = {
 ["sbecomesen"] = "%s becomes enraged!",
-},
-["William MacGregor"] = {
-["gnlbonnuff"] = "Goibon! Nuff lu!",
 },
 ["Captain Garran Vimes"] = {
 ["tkyufrtsrtnaitisnwcrttwemttnorpsnrte"] = "Thank you for this report, Nepozbuvna.  It is now clear that we must tighten our patrols near Theramore.",
@@ -13661,9 +13601,6 @@ ClassicUA_DevLog = {
 ["wtwtamiitgweheaajbtodowhtssf"] = "Wait!  What am I thinking!  We have a job to do with this stuff.",
 ["ssbstode"] = "%s begins to dance.",
 ["tsstsesssg"] = "This stout sure smells strong!",
-},
-["Mike Miller"] = {
-["gnlbonnuff"] = "Goibon! Nuff lu!",
 },
 ["The Duke of Cynders"] = {
 ["tywwdnguya"] = "This act of defiance will not go unpunished.  You, and your world, will die!",
@@ -13743,9 +13680,6 @@ ClassicUA_DevLog = {
 },
 ["Hana'zua"] = {
 ["gosybrmyfeisinyrhs"] = "Go swiftly, Battlemaster. My fate is in your hands.",
-},
-["Viktori Prism'Antras"] = {
-["gnlbonnuff"] = "Goibon! Nuff lu!",
 },
 ["Dun Baldar South Marshal"] = {
 ["sbecomesen"] = "%s becomes enraged!",
@@ -13951,9 +13885,6 @@ ClassicUA_DevLog = {
 ["wwcbwthmcf"] = "Why would you ever want to harm me!? Come. Friends we can be!",
 ["cmiydirwac"] = "Chase me if you dare! I run without a care!",
 },
-["Alliance Warlock"] = {
-["frmanhhrerloru"] = "far melka noth hir ealdor lo ru",
-},
 ["Captain Balinda Stonehearth"] = {
 ["fhtctmafyl"] = "Filthy Frostwolf cowards! If you want a fight, you'll have to come to me!",
 ["bustaspiav"] = "Begone, uncouth scum!  The Alliance shall prevail in Alterac Valley!",
@@ -13963,9 +13894,6 @@ ClassicUA_DevLog = {
 },
 ["Caelestrasz"] = {
 ["aagtmeteretodeoresbk"] = "Alexstrasza grant me the resolve to drive our enemies back!",
-},
-["Murgot Deepforge"] = {
-["cnhlwvldno"] = "Cynegold novas hir landowar wos vandar!",
 },
 ["Janela Stouthammer"] = {
 ["liltehbsfr"] = "Look alive, lads!  The enemy has been sighted!  Form ranks immediately!",
@@ -14433,9 +14361,6 @@ ClassicUA_DevLog = {
 ["wendtogttswnfdbyteedoftedysobktowkwhyucpcp"] = "We need to get this wagon filled by the end of the day.  So back to work with you.  Chop, chop!",
 ["weheyttomtorqafrtewdddnwbktowkwhyu"] = "We have yet to meet our quota for the wood demand.  Now back to work with you.",
 },
-["Clarise Gnarltree"] = {
-["gnlbonnuff"] = "Goibon! Nuff lu!",
-},
 ["Gakyap"] = {
 ["aimgsytimg"] = "Alright I'm going! Stop yelling!",
 },
@@ -14778,10 +14703,6 @@ ClassicUA_DevLog = {
 ["Pozzik"] = {
 ["oycwgttowkonggtebsid"] = "Okay, crew. Get to work on getting these bones installed.",
 },
-["Blackrock Champion"] = {
-["makkmngikkohklto"] = "Maka kek magan gi kek Osh'kazil Tago!",
-["oglkhagrklkkohklto"] = "Ogg lok ha golar kil kek Osh'kazil Tago!",
-},
 ["Lil Timmy"] = {
 ["wlsepegemyleknaagdhe"] = "Will someone please give my little kitten a good home?",
 },
@@ -14822,10 +14743,6 @@ ClassicUA_DevLog = {
 ["Spawn of Mar'li"] = {
 ["sifgullygr"] = "%s is fully grown!",
 ["ssisfygn"] = "%s is fully grown!",
-},
-["Major Mattingly"] = {
-["wrwravnnvv"] = "Waldir wos gloin va wos Landowar! Wos melka ador, Waldir, regen agol wos rogesh! Bor wos cynegold vil va wos rothas aesire vrum noth nostyec!",
-["aunergddlr"] = "Aldonoth lon daegil va Veldbarad, me veld vil, nostyec bur uden thor. O bur dana eynes lo ador algos nud veldbarad lo barad wos vrum va wos ewiddan. Skilde ergin lon dana lu re ruftvess gol daegil.",
 },
 ["Scarlet Strategist"] = {
 ["wemtfdaawybgtelgionswsaame"] = "We must find a way. Bringing the living into Naxxramas was a mistake.",
@@ -15417,7 +15334,7 @@ ClassicUA_DevLog = {
 ["wlbpotjsotbw"] = "When the Darkmoon Faire opens, it will be located in Mulgore.  We'll be pitching our tents just southwest of Thunder Bluff!",
 },
 [8737] = {
-["iistrtargh"] = "I... I'm not really sure how I got here...\n\nI seem to remember traveling... a raft...\n\n",
+["iistrtargh"] = "I... I'm not really sure how I got here...\n\nI seem to remember traveling... a raft...",
 },
 [1228] = {
 ["gimatayraima"] = "Greetings.  I'm a mage trainer, and you're a mage.",
@@ -15889,7 +15806,6 @@ ClassicUA_DevLog = {
 ["yschatsalttc"] = "You have the look of a woman who seeks knowledge. Perhaps you seek the teachings of the forge, and the hammer. Perhaps I can guide you down that path. But only once you have accepted the spirits, and listened to their calling.",
 },
 [376] = {
-["ealegetrnr"] = "E barad ver Garde re nuff ras, Lithtos. Re regen aetwinter lars E gol E thor ras nuff?",
 ["icihywyitsti"] = "I trust the Light is with you, Nepozbuvna. Is there something that I can I help you with?",
 },
 [8931] = {

@@ -7,32 +7,124 @@
 1212	Haste II
 1219	Polymorph
 1906	Debilitating Charge
+2152	Leatherworking: Light Armor Kit
+2165	Leatherworking: Medium Armor Kit
 2329	Alchemy: Elixir of Lion's Strength
+2331	Alchemy: Minor Mana Potion
+2333	Alchemy: Elixir of Lesser Agility
+2334	Alchemy: Elixir of Minor Fortitude
+2335	Alchemy: Swiftness Potion
+2392	Tailoring: Red Linen Shirt
+2393	Tailoring: White Linen Shirt
+2394	Tailoring: Blue Linen Shirt
+2396	Tailoring: Green Linen Shirt
+2406	Tailoring: Gray Woolen Shirt
+2538	Cooking: Charred Wolf Meat
+2540	Cooking: Roasted Boar Meat
+2544	Cooking: Crab Cake
+2546	Cooking: Dry Pork Ribs
+2549	Cooking: Seasoned Wolf Kabob
 2584	Waiting to Resurrect
 2657	Mining: Smelt Copper
+2658	Mining: Smelt Silver
+2659	Mining: Smelt Bronze
+2661	Blacksmithing: Copper Chain Belt
+2662	Blacksmithing: Copper Chain Pants
+2663	Blacksmithing: Copper Bracers
+2664	Blacksmithing: Runed Copper Bracers
+2665	Blacksmithing: Coarse Sharpening Stone
+2666	Blacksmithing: Runed Copper Belt
+2668	Blacksmithing: Rough Bronze Leggings
+2672	Blacksmithing: Patterned Bronze Bracers
+2673	Blacksmithing: Silvered Bronze Breastplate
+2674	Blacksmithing: Heavy Sharpening Stone
+2675	Blacksmithing: Shining Silver Breastplate
+2741	Blacksmithing: Bronze Axe
+2881	Leatherworking: Light Leather
+2963	Tailoring: Bolt of Linen Cloth
+2964	Tailoring: Bolt of Woolen Cloth
+3100	Blacksmithing
 3105	Curse of Stalvan
+3117	Blacksmithing: Heavy Weightstone
 3130	Ice Claw
 3147	Rend Flesh
 3148	Head Crack
 3150	Rabies
+3170	Alchemy: Weak Troll's Blood Potion
 3171	Alchemy: Elixir of Wisdom
+3172	Alchemy: Minor Magic Resistance Potion
+3173	Alchemy: Lesser Mana Potion
+3174	Alchemy: Elixir of Poison Resistance
+3175	Alchemy: Limited Invulnerability Potion
+3176	Alchemy: Strong Troll's Blood Potion
+3177	Alchemy: Elixir of Defense
 3188	Alchemy: Elixir of Ogre's Strength
+3230	Alchemy: Elixir of Minor Agility
 3256	Plague Cloud
 3274	First Aid
+3275	First Aid: Linen Bandage
+3276	First Aid: Heavy Linen Bandage
+3277	First Aid: Wool Bandage
+3278	First Aid: Heavy Wool Bandage
+3293	Blacksmithing: Copper Battle Axe
+3294	Blacksmithing: Thick War Axe
+3295	Blacksmithing: Deadly Bronze Poniard
 3304	Mining: Smelt Tin
 3307	Mining: Smelt Iron
 3308	Mining: Smelt Gold
+3319	Blacksmithing: Copper Chain Boots
+3320	Blacksmithing: Rough Grinding Stone
+3321	Blacksmithing: Copper Chain Vest
+3323	Blacksmithing: Runed Copper Gauntlets
+3324	Blacksmithing: Runed Copper Pants
+3325	Blacksmithing: Gemmed Copper Gauntlets
+3326	Blacksmithing: Coarse Grinding Stone
+3328	Blacksmithing: Rough Bronze Shoulders
+3330	Blacksmithing: Silvered Bronze Shoulders
+3331	Blacksmithing: Silvered Bronze Boots
+3333	Blacksmithing: Silvered Bronze Gauntlets
+3334	Blacksmithing: Green Iron Boots
+3336	Blacksmithing: Green Iron Gauntlets
+3337	Blacksmithing: Heavy Grinding Stone
 3356	Flame Lash
 3366	Opening
+3370	Cooking: Crocolisk Steak
+3372	Cooking: Murloc Fin Soup
 3373	Cooking: Crocolisk Gumbo
+3376	Cooking: Curiously Tasty Omelet
 3377	Cooking: Gooey Spider Cake
 3396	Corrosive Poison
 3397	Cooking: Big Bear Steak
+3398	Cooking: Hot Lion Chops
+3399	Cooking: Tasty Lion Steak
+3400	Cooking: Soothing Turtle Bisque
 3409	Crippling Poison
 3427	Infected Wound
 3429	Plague Mind
 3436	Wandering Plague
 3439	Wandering Plague
+3448	Alchemy: Lesser Invisibility Potion
+3449	Alchemy: Shadow Oil
+3450	Alchemy: Elixir of Fortitude
+3451	Alchemy: Mighty Troll's Blood Potion
+3452	Alchemy: Mana Potion
+3453	Alchemy: Elixir of Detect Lesser Invisibility
+3454	Alchemy: Frost Oil
+3498	Blacksmithing: Massive Iron Axe
+3500	Blacksmithing: Shadow Crescent Axe
+3501	Blacksmithing: Green Iron Bracers
+3502	Blacksmithing: Green Iron Helm
+3503	Blacksmithing: Golden Scale Coif
+3504	Blacksmithing: Green Iron Shoulders
+3505	Blacksmithing: Golden Scale Shoulders
+3506	Blacksmithing: Green Iron Leggings
+3507	Blacksmithing: Golden Scale Leggings
+3508	Blacksmithing: Green Iron Hauberk
+3511	Blacksmithing: Golden Scale Cuirass
+3513	Blacksmithing: Polished Steel Boots
+3515	Blacksmithing: Golden Scale Boots
+3538	Blacksmithing
+3569	Mining: Smelt Steel
 3583	Deadly Poison
 3584	Volatile Infection
 3589	Deafening Screech
@@ -41,8 +133,62 @@
 3604	Tendon Rip
 3635	Crystal Gaze
 3684	Judgement
+3773	Leatherworking: Guardian Armor
+3776	Leatherworking: Green Leather Bracers
+3777	Leatherworking: Guardian Leather Bracers
+3780	Leatherworking: Heavy Armor Kit
 3815	Poison Cloud
+3816	Leatherworking: Cured Light Hide
+3817	Leatherworking: Cured Medium Hide
+3818	Leatherworking: Cured Heavy Hide
+3839	Tailoring: Bolt of Silk Cloth
+3865	Tailoring: Bolt of Mageweave
+3866	Tailoring: Stylish Red Shirt
+3869	Tailoring: Bright Yellow Shirt
+3871	Tailoring: Formal White Shirt
+3873	Tailoring: Black Swashbuckler's Shirt
+3915	Tailoring: Brown Linen Shirt
+3918	Engineering: Rough Blasting Powder
+3919	Engineering: Rough Dynamite
+3922	Engineering: Handful of Copper Bolts
+3923	Engineering: Rough Copper Bomb
+3924	Engineering: Copper Tube
+3925	Engineering: Rough Boomstick
+3926	Engineering: Copper Modulator
+3928	Engineering: Mechanical Squirrel
+3929	Engineering: Coarse Blasting Powder
+3931	Engineering: Coarse Dynamite
+3932	Engineering: Target Dummy
+3933	Engineering: Small Seaforium Charge
+3934	Engineering: Flying Tiger Goggles
+3936	Engineering: Deadly Blunderbuss
+3937	Engineering: Large Copper Bomb
+3938	Engineering: Bronze Tube
+3939	Engineering: Lovingly Crafted Boomstick
+3940	Engineering: Shadow Goggles
+3941	Engineering: Small Bronze Bomb
+3944	Engineering: Flame Deflector
+3946	Engineering: Heavy Dynamite
+3947	Engineering: Crafted Solid Shot
+3949	Engineering: Silver-plated Shotgun
+3950	Engineering: Big Bronze Bomb
+3954	Engineering: Moonsight Rifle
+3956	Engineering: Green Tinted Goggles
+3957	Engineering: Ice Deflector
+3959	Engineering: Discombobulator Ray
+3960	Engineering: Portable Bronze Mortar
+3961	Engineering: Gyrochronatom
+3963	Engineering: Compact Harvest Reaper Kit
+3965	Engineering: Advanced Target Dummy
+3966	Engineering: Craftsman's Monocle
+3967	Engineering: Big Iron Bomb
+3968	Engineering: Goblin Land Mine
+3971	Engineering: Gnomish Cloaking Device
+3972	Engineering: Large Seaforium Charge
+3973	Engineering: Silver Contact
 4036	Engineering
+4094	Cooking: Barbecued Buzzard Wing
+4942	Alchemy: Lesser Stoneshield Potion
 4962	Encasing Webs
 4974	Wither Touch
 5106	Crystal Flash
@@ -62,15 +208,23 @@
 6306	Acid Splash
 6371	Healing Stream
 6408	Faded
+6413	Cooking: Scorpid Surprise
+6418	Cooking: Crispy Lizard Tail
 6419	Cooking: Lean Venison
+6458	Engineering: Ornate Spyglass
 6500	Cooking: Goblin Deviled Clams
+6501	Cooking: Clam Chowder
 6524	Ground Tremor
 6530	Sling Dirt
 6533	Net
 6607	Lash
 6608	Dropped Weapon
+6618	Alchemy: Great Rage Potion
+6624	Alchemy: Free Action Potion
 6653	Dire Wolf
+6661	Leatherworking: Barbaric Harness
 6685	Piercing Shot
+6705	Leatherworking: Murloc Scale Bracers
 6713	Disarm
 6726	Silence
 6751	Weak Poison
@@ -92,8 +246,24 @@
 7120	Proudmoore's Defense
 7125	Toxic Saliva
 7127	Wavering Will
+7133	Leatherworking: Fine Leather Pants
+7135	Leatherworking: Dark Leather Pants
 7139	Fel Stomp
 7140	Expose Weakness
+7153	Leatherworking: Guardian Cloak
+7179	Alchemy: Elixir of Water Breathing
+7181	Alchemy: Greater Healing Potion
+7183	Alchemy: Elixir of Minor Defense
+7213	Cooking: Giant Clam Scorcho
+7221	Blacksmithing: Iron Shield Spike
+7222	Blacksmithing: Iron Counterweight
+7223	Blacksmithing: Golden Scale Bracers
+7224	Blacksmithing: Steel Weapon Chain
+7255	Alchemy: Holy Protection Potion
+7256	Alchemy: Shadow Protection Potion
+7257	Alchemy: Fire Protection Potion
+7258	Alchemy: Frost Protection Potion
+7259	Alchemy: Nature Protection Potion
 7289	Shrink
 7295	Soul Drain
 7321	Chilled
@@ -103,20 +273,44 @@
 7411	Enchanting
 7413	Enchanting
 7418	Enchanting: Enchant Bracer - Minor Health
+7420	Enchanting: Enchant Chest - Minor Health
+7421	Enchanting: Runed Copper Rod
+7426	Enchanting: Enchant Chest - Minor Absorption
 7428	Enchanting: Enchant Bracer - Minor Deflect
+7443	Enchanting: Enchant Chest - Minor Mana
 7454	Enchanting: Enchant Cloak - Minor Resistance
 7457	Enchanting: Enchant Bracer - Minor Stamina
 7713	Wailing Dead
 7731	Fishing
+7732	Fishing
 7745	Enchanting: Enchant 2H Weapon - Minor Impact
+7751	Cooking: Brilliant Smallfish
+7752	Cooking: Slitherskin Mackerel
+7753	Cooking: Longjaw Mud Snapper
 7766	Enchanting: Enchant Bracer - Minor Spirit
+7771	Enchanting: Enchant Cloak - Minor Protection
 7779	Enchanting: Enchant Bracer - Minor Agility
 7782	Enchanting: Enchant Bracer - Minor Strength
 7786	Enchanting: Enchant Weapon - Minor Beastslayer
+7788	Enchanting: Enchant Weapon - Minor Striking
 7793	Enchanting: Enchant 2H Weapon - Lesser Intellect
+7795	Enchanting: Runed Silver Rod
+7817	Blacksmithing: Rough Bronze Boots
+7818	Blacksmithing: Silver Rod
 7836	Alchemy: Blackmouth Oil
 7837	Alchemy: Fire Oil
+7841	Alchemy: Swim Speed Potion
+7845	Alchemy: Elixir of Firepower
 7859	Enchanting: Enchant Bracer - Lesser Spirit
+7861	Enchanting: Enchant Cloak - Lesser Fire Resistance
+7863	Enchanting: Enchant Boots - Minor Stamina
+7867	Enchanting: Enchant Boots - Minor Agility
+7892	Tailoring: Stylish Blue Shirt
+7924	First Aid
+7928	First Aid: Silk Bandage
+7929	First Aid: Heavy Silk Bandage
+7934	First Aid: Anti-Venom
+7935	First Aid: Strong Anti-Venom
 7964	Smoke Bomb
 7992	Slowing Poison
 8014	Tetanus
@@ -126,44 +320,107 @@
 8140	Befuddlement
 8147	Thunderclap
 8191	Zeal
+8238	Cooking: Savory Deviate Delight
+8240	Alchemy: Elixir of Giant Growth
+8243	Engineering: Flash Bomb
 8245	Corrosive Acid
 8267	Cursed Blood
 8269	Enrage
 8272	Mind Tremor
 8281	Sonic Burst
 8282	Curse of Blood
+8334	Engineering: Practice Lock
+8339	Engineering: EZ-Thro Dynamite
 8348	Julie's Blessing
 8379	Disarm
 8391	Ravage
 8395	Emerald Raptor
 8398	Frostbolt Volley
+8483	Tailoring: White Swashbuckler's Shirt
+8489	Tailoring: Red Swashbuckler's Shirt
+8607	Cooking: Smoked Bear Meat
 8690	Hearthstone
 8715	Terrifying Howl
 8733	Blessing of Blackfathom
+8768	Blacksmithing: Iron Buckle
 8806	Poisoned Shot
 8892	Goblin Rocket Boots
+8895	Engineering: Goblin Rocket Boots
 8988	Silence
 8994	Banish
+9059	Leatherworking: Handstitched Leather Bracers
+9060	Leatherworking: Light Leather Quiver
+9065	Leatherworking: Light Leather Bracers
 9080	Hamstring
+9193	Leatherworking: Heavy Quiver
+9194	Leatherworking: Heavy Leather Ammo Pouch
+9196	Leatherworking: Dusky Leather Armor
+9197	Leatherworking: Green Whelp Armor
+9201	Leatherworking: Dusky Bracers
+9202	Leatherworking: Green Whelp Bracers
 9256	Deep Sleep
+9271	Engineering: Aquadynamic Fish Attractor
+9273	Engineering: Goblin Jumper Cables
 9275	Immolate
 9459	Corrosive Ooze
+9513	Cooking: Thistle Tea
 9573	Flame Breath
 9612	Ink Spray
 9672	Frostbolt
 9775	Irradiated
+9785	Blacksmithing
 9791	Head Crack
+9811	Blacksmithing: Barbaric Iron Shoulders
+9813	Blacksmithing: Barbaric Iron Breastplate
+9814	Blacksmithing: Barbaric Iron Helm
+9818	Blacksmithing: Barbaric Iron Boots
+9820	Blacksmithing: Barbaric Iron Gloves
 9826	Pounce Bleed
+9916	Blacksmithing: Steel Breastplate
+9920	Blacksmithing: Solid Grinding Stone
+9921	Blacksmithing: Solid Weightstone
+9926	Blacksmithing: Heavy Mithril Shoulder
+9928	Blacksmithing: Heavy Mithril Gauntlet
+9931	Blacksmithing: Mithril Scale Pants
+9933	Blacksmithing: Heavy Mithril Pants
+9935	Blacksmithing: Steel Plate Helm
+9937	Blacksmithing: Mithril Scale Bracers
+9939	Blacksmithing: Mithril Shield Spike
+9945	Blacksmithing: Ornate Mithril Pants
+9950	Blacksmithing: Ornate Mithril Gloves
+9952	Blacksmithing: Ornate Mithril Shoulders
+9954	Blacksmithing: Truesilver Gauntlets
+9957	Blacksmithing: Orcish War Leggings
+9961	Blacksmithing: Mithril Coif
+9964	Blacksmithing: Mithril Spurs
+9966	Blacksmithing: Mithril Scale Shoulders
+9970	Blacksmithing: Heavy Mithril Helm
+9980	Blacksmithing: Ornate Mithril Helm
+9987	Blacksmithing: Bronze Battle Axe
+9993	Blacksmithing: Heavy Mithril Axe
+9995	Blacksmithing: Blue Glittering Axe
+10013	Blacksmithing: Ebon Shiv
+10097	Mining: Smelt Mithril
+10098	Mining: Smelt Truesilver
 10460	Healing Stream
 10461	Healing Stream
 10477	Frost Resistance
+10482	Leatherworking: Cured Thick Hide
+10487	Leatherworking: Thick Armor Kit
 10491	Mana Spring
 10493	Mana Spring
 10494	Mana Spring
+10509	Leatherworking: Turtle Scale Gloves
 10534	Fire Resistance
 10535	Fire Resistance
+10542	Leatherworking: Tough Scorpid Gloves
+10562	Leatherworking: Big Voodoo Cloak
+10574	Leatherworking: Wild Leather Cloak
 10598	Nature Resistance
 10599	Nature Resistance
+10619	Leatherworking: Dragonscale Gauntlets
+10621	Leatherworking: Wolfshead Helm
+10632	Leatherworking: Helm of Fire
 10653	Curse of the Eye
 10656	Dragonscale Leatherworking
 10658	Elemental Leatherworking
@@ -171,6 +428,8 @@
 10662	Leatherworking
 10796	Turquoise Raptor
 10799	Violet Raptor
+10840	First Aid: Mageweave Bandage
+10841	First Aid: Heavy Mageweave Bandage
 10846	First Aid
 10852	Battle Net
 10861	Raptor Riding
@@ -183,8 +442,28 @@
 11428	Knockdown
 11436	Slow
 11443	Cripple
+11449	Alchemy: Elixir of Agility
+11450	Alchemy: Elixir of Greater Defense
+11451	Alchemy: Oil of Immolation
+11452	Alchemy: Restorative Potion
+11453	Alchemy: Magic Resistance Potion
+11454	Blacksmithing: Inlaid Mithril Cylinder
+11456	Alchemy: Goblin Rocket Fuel
+11457	Alchemy: Superior Healing Potion
+11459	Alchemy: Philosophers' Stone
+11460	Alchemy: Elixir of Detect Undead
 11461	Alchemy: Arcane Elixir
+11464	Alchemy: Invisibility Potion
+11465	Alchemy: Elixir of Greater Intellect
+11466	Alchemy: Gift of Arthas
+11467	Alchemy: Elixir of Greater Agility
+11468	Alchemy: Elixir of Dream Vision
 11472	Alchemy: Elixir of Giants
+11473	Alchemy: Ghost Dye
+11476	Alchemy: Elixir of Shadow Power
+11478	Alchemy: Elixir of Detect Demon
+11643	Blacksmithing: Golden Scale Gauntlets
+11876	War Stomp
 11892	Shrink
 11918	Poison
 11922	Entangling Roots
@@ -194,6 +473,13 @@
 12020	Call of the Grave
 12021	Fixate
 12054	Rend
+12061	Tailoring: Orange Mageweave Shirt
+12064	Tailoring: Orange Martial Shirt
+12065	Tailoring: Mageweave Bag
+12075	Tailoring: Lavender Mageweave Shirt
+12079	Tailoring: Red Mageweave Bag
+12080	Tailoring: Pink Mageweave Shirt
+12085	Tailoring: Tuxedo Shirt
 12096	Fear
 12097	Pierce Armor
 12098	Sleep
@@ -202,6 +488,8 @@
 12251	Virulent Poison
 12252	Web Spray
 12255	Curse of Tuten'kash
+12259	Blacksmithing: Silvered Bronze Leggings
+12260	Blacksmithing: Rough Copper Vest
 12279	Curse of Blood
 12280	Acid of Hakkar
 12461	Backhand
@@ -213,14 +501,44 @@
 12541	Ghoul Rot
 12544	Frost Armor
 12557	Cone of Cold
+12585	Engineering: Solid Blasting Powder
+12587	Engineering: Bright-Eye Goggles
+12589	Engineering: Mithril Tube
+12590	Engineering: Gyromatic Micro-Adjustor
+12591	Engineering: Unstable Trigger
+12594	Engineering: Fire Goggles
+12595	Engineering: Mithril Blunderbuss
+12596	Engineering: Hi-Impact Mithril Slugs
+12599	Engineering: Mithril Casing
+12603	Engineering: Mithril Frag Bomb
+12607	Engineering: Catseye Ultra Goggles
+12609	Alchemy: Catseye Elixir
+12614	Engineering: Mithril Heavy-bore Rifle
+12615	Engineering: Spellpower Goggles Xtreme
+12617	Engineering: Deepdive Helmet
+12618	Engineering: Rose Colored Goggles
+12619	Engineering: Hi-Explosive Bomb
+12621	Engineering: Mithril Gyro-Shot
+12622	Engineering: Green Lens
 12656	Engineering
 12674	Frost Nova
 12675	Frostbolt
+12715	Engineering: Goblin Rocket Fuel Recipe
+12717	Engineering: Goblin Mining Helmet
+12718	Engineering: Goblin Construction Helmet
 12734	Ground Smash
 12738	Amplify Damage
 12741	Curse of Weakness
 12742	Immolate
 12747	Entangling Roots
+12754	Engineering: The Big One
+12758	Engineering: Goblin Rocket Helmet
+12760	Engineering: Goblin Sapper Charge
+12895	Engineering: Inlaid Mithril Cylinder Plans
+12897	Engineering: Gnomish Goggles
+12903	Engineering: Gnomish Harm Prevention Belt
+12905	Engineering: Gnomish Rocket Boots
+12907	Engineering: Gnomish Mind Control Cap
 13005	Hammer of Justice
 13224	Wound Poison
 13298	Poison
@@ -228,12 +546,16 @@
 13327	Reckless Charge
 13338	Curse of Tongues
 13380	Enchanting: Enchant 2H Weapon - Lesser Spirit
+13419	Enchanting: Enchant Cloak - Minor Agility
 13443	Rend
 13444	Sunder Armor
 13445	Rend
+13464	Enchanting: Enchant Shield - Lesser Protection
+13485	Enchanting: Enchant Shield - Lesser Spirit
 13494	Haste
 13501	Enchanting: Enchant Bracer - Lesser Stamina
 13503	Enchanting: Enchant Weapon - Lesser Striking
+13522	Enchanting: Enchant Cloak - Lesser Shadow Resistance
 13526	Corrosive Poison
 13529	Enchanting: Enchant 2H Weapon - Lesser Impact
 13536	Enchanting: Enchant Bracer - Lesser Strength
@@ -243,37 +565,56 @@
 13617	Enchanting: Enchant Gloves - Herbalism
 13620	Enchanting: Enchant Gloves - Fishing
 13622	Enchanting: Enchant Bracer - Lesser Intellect
+13628	Enchanting: Runed Golden Rod
 13631	Enchanting: Enchant Shield - Lesser Stamina
 13635	Enchanting: Enchant Cloak - Defense
+13637	Enchanting: Enchant Boots - Lesser Agility
 13640	Enchanting: Enchant Chest - Greater Health
 13642	Enchanting: Enchant Bracer - Spirit
+13644	Enchanting: Enchant Boots - Lesser Stamina
 13646	Enchanting: Enchant Bracer - Lesser Deflection
 13648	Enchanting: Enchant Bracer - Stamina
 13653	Enchanting: Enchant Weapon - Lesser Beastslayer
 13655	Enchanting: Enchant Weapon - Lesser Elemental Slayer
+13657	Enchanting: Enchant Cloak - Fire Resistance
+13659	Enchanting: Enchant Shield - Spirit
 13661	Enchanting: Enchant Bracer - Strength
+13663	Enchanting: Enchant Chest - Greater Mana
+13687	Enchanting: Enchant Boots - Lesser Spirit
+13689	Enchanting: Enchant Shield - Lesser Block
 13692	Dire Growl
 13693	Enchanting: Enchant Weapon - Striking
 13695	Enchanting: Enchant 2H Weapon - Impact
+13698	Enchanting: Enchant Gloves - Skinning
 13700	Enchanting: Enchant Chest - Lesser Stats
+13702	Enchanting: Runed Truesilver Rod
 13704	Psychic Scream
 13729	Flame Shock
 13730	Demoralizing Shout
 13737	Mortal Strike
 13738	Rend
+13746	Enchanting: Enchant Cloak - Greater Defense
 13747	Slow
+13794	Enchanting: Enchant Cloak - Resistance
+13815	Enchanting: Enchant Gloves - Agility
+13817	Enchanting: Enchant Shield - Stamina
 13822	Enchanting: Enchant Bracer - Intellect
 13836	Enchanting: Enchant Boots - Stamina
+13841	Enchanting: Enchant Gloves - Advanced Mining
 13846	Enchanting: Enchant Bracer - Greater Spirit
+13858	Enchanting: Enchant Chest - Superior Health
 13868	Enchanting: Enchant Gloves - Advanced Herbalism
 13880	Magma Splash
 13882	Enchanting: Enchant Cloak - Lesser Agility
 13887	Enchanting: Enchant Gloves - Strength
 13890	Enchanting: Enchant Boots - Minor Speed
+13898	Enchanting: Enchant Weapon - Fiery Weapon
 13905	Enchanting: Enchant Shield - Greater Spirit
+13915	Enchanting: Enchant Weapon - Demonslaying
 13917	Enchanting: Enchant Chest - Superior Mana
 13920	Enchanting
 13931	Enchanting: Enchant Bracer - Deflection
+13933	Enchanting: Enchant Shield - Frost Resistance
 13935	Enchanting: Enchant Boots - Agility
 13937	Enchanting: Enchant 2H Weapon - Greater Impact
 13939	Enchanting: Enchant Bracer - Greater Strength
@@ -287,20 +628,28 @@
 14208	JD Explosion
 14297	Shadow Storm
 14331	Vicious Rend
+14379	Blacksmithing: Golden Rod
+14380	Blacksmithing: Truesilver Rod
 14515	Dominate Mind
 14517	Crusader Strike
 14518	Crusader Strike
 14533	Disjunction
 14538	Aural Shock
 14539	Putrid Enzyme
+14891	Mining: Smelt Dark Iron
 14897	Slowing Poison
 14907	Frost Nova
+14930	Leatherworking: Quickdraw Quiver
+14932	Leatherworking: Thick Leather Ammo Pouch
 15007	Resurrection Sickness
 15042	Curse of Blood
 15043	Frostbolt
 15110	Windwall
 15128	Mark of Flames
 15244	Cone of Cold
+15255	Engineering: Mechanical Repair Kit
+15293	Blacksmithing: Dark Iron Mail
+15294	Blacksmithing: Dark Iron Sunderer
 15366	Songflower Serenade
 15470	Curse of Tongues
 15471	Enveloping Web
@@ -318,20 +667,36 @@
 15583	Rupture
 15588	Thunderclap
 15595	Force of Will
+15596	Enchanting: Smoking Heart of the Mountain
 15602	Lord General's Sword
 15604	Second Wind
 15623	Cleave
+15628	Engineering: Pet Bombling
+15633	Engineering: Lil' Smoky
 15646	Burst of Knowledge
 15654	Shadow Word: Pain
 15655	Shield Slam
 15708	Mortal Strike
+15728	Plague Cloud
 15732	Immolate
 15784	Frost Armor
 15802	Shrink
+15833	Alchemy: Dreamless Sleep Potion
 15847	Tail Sweep
 15848	Festering Rash
 15852	Dragonbreath Chili
+15853	Cooking: Lean Wolf Steak
+15855	Cooking: Roast Raptor
+15856	Cooking: Hot Wolf Ribs
+15861	Cooking: Jungle Stew
 15863	Cooking: Carrion Surprise
+15865	Cooking: Mystery Stew
+15906	Cooking: Dragonbreath Chili
+15910	Cooking: Heavy Kodo Stew
+15915	Cooking: Spiced Chili Crab
+15933	Cooking: Monster Omelet
+15972	Blacksmithing: Glinting Steel Dagger
+15973	Blacksmithing: Searing Golden Blade
 15976	Puncture
 16046	Blast Wave
 16053	Dominion of Soul
@@ -344,6 +709,7 @@
 16128	Infected Bite
 16143	Cadaver Worms
 16145	Sunder Armor
+16153	Mining: Smelt Thorium
 16170	Bloodlust
 16172	Head Crack
 16186	Fevered Plague
@@ -376,9 +742,34 @@
 16555	Drowning Death
 16567	Tainted Mind
 16573	Putrid Bile
+16599	Blessing of Shahram
 16609	Warchief's Blessing
+16639	Blacksmithing: Dense Grinding Stone
+16640	Blacksmithing: Dense Weightstone
+16645	Blacksmithing: Radiant Belt
+16648	Blacksmithing: Radiant Breastplate
+16650	Blacksmithing: Wildthorn Mail
+16651	Blacksmithing: Thorium Shield Spike
+16653	Blacksmithing: Thorium Helm
+16654	Blacksmithing: Radiant Gloves
+16655	Blacksmithing: Fiery Plate Gauntlets
+16656	Blacksmithing: Radiant Boots
+16659	Blacksmithing: Radiant Circlet
+16661	Blacksmithing: Storm Gauntlets
+16662	Blacksmithing: Thorium Leggings
+16707	Hex
+16708	Hex
+16709	Hex
 16711	Grow
+16712	Special Brew
+16713	Ghostly
+16724	Blacksmithing: Whitesoul Helm
+16725	Blacksmithing: Radiant Leggings
+16726	Blacksmithing: Runic Plate Helm
 16727	War Stomp
+16728	Blacksmithing: Helm of the Great Chief
+16741	Blacksmithing: Stronghold Gauntlets
+16746	Blacksmithing: Invulnerable Mail
 16790	Knockdown
 16798	Enchanting Lullaby
 16799	Frostbolt
@@ -389,6 +780,12 @@
 16869	Ice Tomb
 16922	Starfire Stun
 16927	Chilled
+16969	Blacksmithing: Ornate Thorium Handaxe
+16970	Blacksmithing: Dawn's Edge
+16971	Blacksmithing: Huge Thorium Battleaxe
+16991	Blacksmithing: Annihilator
+16994	Blacksmithing: Arcanite Reaper
+16995	Blacksmithing: Heartseeker
 17014	Bone Shards
 17086	Breath
 17105	Banshee Curse
@@ -420,8 +817,24 @@
 17465	Green Skeletal Warhorse
 17503	Frostbolt
 17504	Rend
+17547	Mortal Strike
 17551	Alchemy: Stonescale Oil
+17552	Alchemy: Mighty Rage Potion
+17553	Alchemy: Superior Mana Potion
+17554	Alchemy: Elixir of Superior Defense
+17555	Alchemy: Elixir of the Sages
+17556	Alchemy: Major Healing Potion
+17557	Alchemy: Elixir of Brute Force
+17570	Alchemy: Greater Stoneshield Potion
+17571	Alchemy: Elixir of the Mongoose
+17572	Alchemy: Purification Potion
 17573	Alchemy: Greater Arcane Elixir
+17574	Alchemy: Greater Fire Protection Potion
+17575	Alchemy: Greater Frost Protection Potion
+17576	Alchemy: Greater Nature Protection Potion
+17577	Alchemy: Greater Arcane Protection Potion
+17578	Alchemy: Greater Shadow Protection Potion
+17580	Alchemy: Major Mana Potion
 17620	Drain Life
 17632	Alchemy: Alchemist's Stone
 17634	Alchemy: Flask of Petrification
@@ -436,6 +849,7 @@
 17745	Diseased Spit
 17820	Veil of Shadow
 17831	Call of the Grave
+17883	Immolate
 17961	Scarlet Illusion
 17963	Sundering Cleave
 18099	Chill Nova
@@ -443,6 +857,7 @@
 18103	Backhand
 18125	Blessed Sunfruit
 18141	Blessed Sunfruit Juice
+18144	Swoop
 18149	Volatile Infection
 18151	Noxious Catalyst
 18159	Curse of the Fallen Magram
@@ -450,7 +865,14 @@
 18194	Mana Regeneration
 18202	Rend
 18233	Food
+18238	Cooking: Spotted Yellowtail
+18239	Cooking: Cooked Glossy Mightfish
 18240	Cooking: Grilled Squid
+18241	Cooking: Filet of Redgill
+18243	Cooking: Nightfin Soup
+18244	Cooking: Poached Sunscale Salmon
+18246	Cooking: Mightfish Steak
+18247	Cooking: Baked Salmon
 18248	Fishing
 18264	Headmaster's Charge
 18270	Dark Plague
@@ -459,8 +881,15 @@
 18376	Corruption
 18392	Fireball
 18400	Piccolo of the Flaming Fire
+18401	Tailoring: Bolt of Runecloth
+18405	Tailoring: Runecloth Bag
 18431	Bellowing Roar
+18445	Tailoring: Mooncloth Bag
+18455	Tailoring: Bottomless Bag
 18543	Flame Lash
+18560	Tailoring: Mooncloth
+18629	First Aid: Runecloth Bandage
+18630	First Aid: Heavy Runecloth Bandage
 18671	Curse of Agony
 18702	Curse of the Darkmaster
 18763	Freeze
@@ -472,6 +901,16 @@
 18989	Gray Kodo
 18990	Brown Kodo
 18995	Kodo Riding
+19047	Leatherworking: Cured Rugged Hide
+19052	Leatherworking: Wicked Leather Bracers
+19058	Leatherworking: Rugged Armor Kit
+19064	Leatherworking: Heavy Scorpid Gauntlets
+19065	Leatherworking: Runic Leather Bracers
+19071	Leatherworking: Wicked Leather Headband
+19082	Leatherworking: Runic Leather Headband
+19093	Leatherworking: Onyxia Scale Cloak
+19101	Leatherworking: Volcanic Shoulders
+19103	Leatherworking: Runic Leather Shoulders
 19128	Knockdown
 19134	Intimidating Shout
 19137	Slow
@@ -489,14 +928,21 @@
 19428	Conflagration
 19448	Poison
 19450	Magma Spit
+19469	Poison Mind
 19486	Improved Scorpid Sting
 19496	Magma Shackles
+19567	Engineering: Salt Shaker
+19595	Shadow and Frost Reflect
 19615	Frenzy Effect
 19631	Melt Armor
+19632	Cleave
 19635	Incite Flames
 19641	Pyroclast Barrage
 19645	Anti-Magic Shield
 19659	Ignite Mana
+19666	Blacksmithing: Silver Skeleton Key
+19667	Blacksmithing: Golden Skeleton Key
+19668	Blacksmithing: Truesilver Skeleton Key
 19690	Scarlet Illusion
 19702	Impending Doom
 19703	Lucifron's Curse
@@ -513,25 +959,50 @@
 19776	Shadow Word: Pain
 19778	Demoralizing Shout
 19780	Hand of Ragnaros
+19788	Engineering: Dense Blasting Powder
+19790	Engineering: Thorium Grenade
+19791	Engineering: Thorium Widget
+19792	Engineering: Thorium Rifle
+19794	Engineering: Spellpower Goggles Xtreme Plus
+19795	Engineering: Thorium Tube
+19796	Engineering: Dark Iron Rifle
+19799	Engineering: Dark Iron Bomb
+19800	Engineering: Thorium Shells
+19814	Engineering: Masterwork Target Dummy
 19815	Engineering: Delicate Arcanite Converter
+19819	Engineering: Voice Amplification Modulator
+19825	Engineering: Master Engineer's Goggles
+19830	Engineering: Arcanite Dragonling
+19831	Engineering: Arcane Bomb
+19832	Possess
+19833	Engineering: Flawless Arcanite Rifle
 19839	Blessing of Might
 19840	Blessing of Might
 19841	Blessing of Might
 19842	Blessing of Might
 19843	Blessing of Might
+19872	Calm Dragonkin
+19873	Destroy Egg
 19937	Illusion: Black Dragonkin
 20007	Holy Strength
 20008	Enchanting: Enchant Bracer - Greater Intellect
 20009	Enchanting: Enchant Bracer - Superior Spirit
 20010	Enchanting: Enchant Bracer - Superior Strength
 20011	Enchanting: Enchant Bracer - Superior Stamina
+20012	Enchanting: Enchant Gloves - Greater Agility
 20013	Enchanting: Enchant Gloves - Greater Strength
+20014	Enchanting: Enchant Cloak - Greater Resistance
+20015	Enchanting: Enchant Cloak - Superior Defense
+20016	Enchanting: Enchant Shield - Superior Spirit
+20017	Enchanting: Enchant Shield - Greater Stamina
 20019	Engulfing Flames
 20020	Enchanting: Enchant Boots - Greater Stamina
 20023	Enchanting: Enchant Boots - Greater Agility
 20024	Enchanting: Enchant Boots - Spirit
 20025	Enchanting: Enchant Chest - Greater Stats
 20026	Enchanting: Enchant Chest - Major Health
+20028	Enchanting: Enchant Chest - Major Mana
+20029	Enchanting: Enchant Weapon - Icy Chill
 20030	Enchanting: Enchant 2H Weapon - Superior Impact
 20031	Enchanting: Enchant Weapon - Superior Striking
 20032	Enchanting: Enchant Weapon - Lifestealing
@@ -539,7 +1010,9 @@
 20034	Enchanting: Enchant Weapon - Crusader
 20035	Enchanting: Enchant 2H Weapon - Major Spirit
 20036	Enchanting: Enchant 2H Weapon - Major Intellect
+20051	Enchanting: Runed Arcanite Rod
 20184	Judgement of Justice
+20201	Blacksmithing: Arcanite Rod
 20222	Goblin Engineer
 20229	Blast Wave
 20276	Knockdown
@@ -551,6 +1024,10 @@
 20542	Static Conduit
 20564	Elemental Fire
 20604	Dominate Mind
+20629	Corrosive Venom Spit
+20648	Leatherworking: Medium Leather
+20649	Leatherworking: Heavy Leather
+20650	Leatherworking: Thick Leather
 20654	Entangling Roots
 20656	Faerie Fire
 20663	Sleep
@@ -558,7 +1035,12 @@
 20669	Sleep
 20792	Frostbolt
 20812	Cripple
+20854	Leatherworking: Molten Helm
+20872	Blacksmithing: Fiery Chain Girdle
+20873	Blacksmithing: Fiery Chain Shoulders
+20876	Blacksmithing: Dark Iron Leggings
 20882	Subjugate Demon
+20897	Blacksmithing: Dark Iron Destroyer
 21047	Corrosive Acid Spit
 21056	Mark of Kazzak
 21060	Blind
@@ -567,14 +1049,22 @@
 21097	Manastorm
 21098	Chill
 21099	Frost Breath
+21143	Cooking: Gingerbread Cookie
 21147	Arcane Vacuum
 21153	Bonereaver's Edge
 21159	Fireball
 21163	Polished Armor
 21165	Haste
+21174	Aura of Battle
+21175	Cooking: Spider Sausage
 21547	Spore Cloud
 21687	Toxic Volley
 21787	Deadly Poison
+21848	Snowman
+21913	Blacksmithing: Edge of Winter
+21923	Alchemy: Elixir of Frost Power
+21940	Engineering: SnowMaster 9000
+21945	Tailoring: Green Holiday Shirt
 21970	Mark of the Chosen Effect
 22067	Reflection
 22127	Entangling Roots
@@ -589,6 +1079,7 @@
 22289	Brood Power: Green
 22290	Brood Power: Blue
 22291	Brood Power: Bronze
+22331	Leatherworking: Rugged Leather
 22335	Bottle of Poison
 22356	Slow
 22371	Curse of Impotence
@@ -596,9 +1087,11 @@
 22420	Submersion
 22423	Flame Shock
 22424	Blast Wave
+22425	Fireball Volley
 22438	Mark of Detonation
 22442	Growing Flames
 22478	Intense Pain
+22480	Cooking: Tender Wolf Steak
 22558	Brood Power: Red
 22559	Brood Power: Blue
 22561	Brood Power: Green
@@ -614,16 +1107,25 @@
 22687	Veil of Shadow
 22689	Mangle
 22703	Inferno Effect
+22704	Engineering: Field Repair Bot 74A
 22718	Black War Kodo
 22721	Black War Raptor
 22724	Black War Wolf
+22727	Leatherworking: Core Armor Kit
 22730	Increased Intellect
+22732	Alchemy: Major Rejuvenation Potion
 22749	Enchanting: Enchant  Weapon - Spell Power
 22750	Enchanting: Enchant  Weapon - Healing Power
 22751	Fury of the Frostwolf
+22757	Blacksmithing: Elemental Sharpening Stone
+22761	Cooking: Runn Tum Tuber Surprise
 22789	Gordok Green Grog
 22790	Kreeg's Stout Beatdown
+22795	Engineering: Core Marksman Rifle
+22797	Engineering: Force Reactive Disk
 22799	King of the Gordok
+22802	Choking Spores
+22808	Alchemy: Elixir of Greater Water Breathing
 22817	Fengus' Ferocity
 22818	Mol'dar's Moxie
 22820	Slip'kik's Savvy
@@ -632,14 +1134,25 @@
 22884	Psychic Scream
 22888	Rallying Cry of the Dragonslayer
 22911	Charge
+22926	Leatherworking: Chromatic Cloak
+22927	Leatherworking: Hide of the Wild
+22928	Leatherworking: Shifting Cloak
 22959	Fire Vulnerability
+22967	Mining: Smelt Elementium
 22997	Plague
 23023	Conflagration
 23036	Battle Standard
 23038	Flame Shock
+23069	Engineering: EZ-Thro Dynamite II
+23070	Engineering: Dense Dynamite
+23071	Engineering: Truesilver Transformer
+23080	Engineering: Powerful Seaforium Charge
+23082	Engineering: Ultra-Flash Shadow Reflector
+23096	Engineering: Alarm-O-Bot
 23101	Eye of Divinity
 23108	Blessing of Nordrassil
 23127	Death's Door
+23129	Engineering: World Enlarger
 23153	Brood Affliction: Blue
 23154	Brood Affliction: Black
 23155	Brood Affliction: Red
@@ -651,6 +1164,7 @@
 23186	Aura of Frost
 23187	Frost Burn
 23189	Frost Burn
+23190	Leatherworking: Heavy Leather Ball
 23243	Swift Orange Raptor
 23246	Purple Skeletal Warhorse
 23247	Great White Kodo
@@ -667,8 +1181,10 @@
 23331	Blast Wave
 23340	Shadow of Ebonroc
 23364	Tail Lash
+23379	Magma Splash
 23397	Berserk
 23398	Involuntary Transformation
+23399	Leatherworking: Barbaric Bracers
 23401	Corrupted Healing
 23402	Corrupted Healing
 23410	Wild Magic
@@ -687,9 +1203,18 @@
 23598	Meeting Stone Summon
 23600	Piercing Howl
 23603	Wild Polymorph
+23628	Blacksmithing: Heavy Timbermaw Belt
+23629	Blacksmithing: Heavy Timbermaw Boots
+23633	Blacksmithing: Gloves of the Dawn
+23637	Blacksmithing: Dark Iron Gauntlets
+23653	Blacksmithing: Nightfall
 23697	Alterac Spring Water
 23698	Alterac Spring Water
+23706	Leatherworking: Golden Mantle of the Dawn
+23708	Leatherworking: Chromatic Gauntlets
+23787	First Aid: Powerful Anti-Venom
 23799	Enchanting: Enchant Weapon - Strength
+23800	Enchanting: Enchant Weapon - Agility
 23801	Enchanting: Enchant Bracer - Mana Regeneration
 23802	Enchanting: Enchant Bracer - Healing Power
 23803	Enchanting: Enchant Weapon - Mighty Spirit
@@ -717,11 +1242,18 @@
 24054	Shrink
 24097	Poison
 24099	Poison Bolt Volley
+24121	Leatherworking: Primal Batskin Jerkin
+24123	Leatherworking: Primal Batskin Bracers
+24124	Leatherworking: Blood Tiger Breastplate
+24125	Leatherworking: Blood Tiger Shoulders
+24137	Blacksmithing: Bloodsoul Shoulders
+24138	Blacksmithing: Bloodsoul Gauntlets
 24178	Will of Hakkar
 24192	Speed Slash
 24210	Mark of Arlokk
 24212	Shadow Word: Pain
 24213	Ravage
+24266	Alchemy: Gurubashi Mojo Madness
 24300	Drain Life
 24306	Delusions of Jin'do
 24314	Threatening Gaze
@@ -736,6 +1268,11 @@
 24336	Wyvern Sting
 24339	Infected Bite
 24340	Meteor
+24356	Engineering: Bloodvine Goggles
+24357	Engineering: Bloodvine Lens
+24365	Alchemy: Mageblood Potion
+24367	Alchemy: Living Action Potion
+24368	Alchemy: Major Troll's Blood Potion
 24375	War Stomp
 24378	Berserking
 24379	Restoration
@@ -747,36 +1284,54 @@
 24611	Fireball
 24618	Drain Life
 24619	Soul Tap
+24655	Leatherworking: Green Dragonscale Gauntlets
 24659	Unstable Power
 24664	Sleep
 24671	Snap Kick
 24673	Curse of Blood
 24674	Veil of Shadow
 24698	Gouge
+24703	Leatherworking: Dreamscale Breastplate
 24705	Invocation of the Wickerman
 24708	Pirate Costume
 24709	Pirate Costume
 24711	Ninja Costume
 24732	Bat Costume
+24735	Ghost Costume
+24736	Ghost Costume
 24740	Wisp Costume
 24778	Sleep
 24799	Well Fed
 24801	Cooking: Smoked Desert Dumplings
 24818	Noxious Breath
 24839	Acid Breath
+24847	Leatherworking: Spitfire Gauntlets
 24869	Food
 24870	Well Fed
 24910	Corruption of the Earth
+24912	Blacksmithing: Darkrune Gauntlets
+24937	Using Control Console
 24957	Moonfire
+25026	Activate MG Turret
 25051	Sunder Armor
+25072	Enchanting: Enchant Gloves - Threat
 25073	Enchanting: Enchant Gloves - Shadow Power
 25074	Enchanting: Enchant Gloves - Frost Power
+25078	Enchanting: Enchant Gloves - Fire Power
+25079	Enchanting: Enchant Gloves - Healing Power
 25080	Enchanting: Enchant Gloves - Superior Agility
 25081	Enchanting: Enchant Cloak - Greater Fire Resistance
 25082	Enchanting: Enchant Cloak - Greater Nature Resistance
 25083	Enchanting: Enchant Cloak - Stealth
+25084	Enchanting: Enchant Cloak - Subtlety
+25086	Enchanting: Enchant Cloak - Dodge
+25101	Battle Shout
+25124	Enchanting: Minor Wizard Oil
+25125	Enchanting: Minor Mana Oil
+25126	Enchanting: Lesser Wizard Oil
 25127	Enchanting: Lesser Mana Oil
 25128	Enchanting: Wizard Oil
+25129	Enchanting: Brilliant Wizard Oil
 25130	Enchanting: Brilliant Mana Oil
 25174	Sundering Cleave
 25185	Itch
@@ -796,6 +1351,10 @@
 25648	Sand Trap
 25654	Tail Lash
 25656	Sand Trap
+25659	Cooking: Dirge's Kickin' Chimaerok Chops
+25661	Increased Stamina
+25695	Food
+25696	Drink
 25698	Explode
 25725	Paralyze
 25748	Poison Stinger
@@ -810,9 +1369,11 @@
 25812	Toxic Volley
 25839	Mass Healing
 25909	Tranquil Air
+25954	Cooking: Sagefish Delight
 25962	Blessing of Might
 25989	Toxin
 25991	Poison Bolt Volley
+26011	Engineering: Tranquil Mechanical Yeti
 26013	Deserter
 26025	Impale
 26044	Mind Flay
@@ -827,6 +1388,7 @@
 26078	Vekniss Catalyst
 26079	Cause Insanity
 26084	Whirlwind
+26087	Tailoring: Core Felcloth Bag
 26102	Sand Blast
 26143	Mind Flay
 26157	PX-238 Winter Wondervolt
@@ -835,6 +1397,8 @@
 26198	Whisperings of C'Thun
 26211	Hamstring
 26218	Mistletoe
+26260	Food
+26261	Drink
 26272	PX-238 Winter Wondervolt
 26273	PX-238 Winter Wondervolt
 26379	Piercing Shriek
@@ -852,9 +1416,17 @@
 26977	Curse of the Elemental Lord
 27177	Defile
 27420	Ectoplasmic Distiller
+27586	Blacksmithing: Jagged Obsidian Shield
+27588	Blacksmithing: Light Obsidian Belt
+27589	Blacksmithing: Black Grasp of the Destroyer
 27616	Extra-Dimensional Ghost Revealer
 27641	Fear
 27652	Elixir of Resistance
+27658	Tailoring: Enchanted Mageweave Pouch
+27659	Tailoring: Enchanted Runecloth Bag
+27660	Tailoring: Big Bag of Enchantment
+27724	Tailoring: Cenarion Herb Bag
+27725	Tailoring: Satchel of Cenarius
 27737	Moonfire
 27741	Love is in the Air
 27758	War Stomp
@@ -865,6 +1437,7 @@
 27818	Blessed Recovery
 27819	Detonate Mana
 27825	Shadow Mark
+27829	Blacksmithing: Titanic Leggings
 27837	Enchanting: Enchant 2H Weapon - Agility
 27861	The Baron's Ultimatum
 27863	The Baron's Ultimatum
@@ -879,8 +1452,13 @@
 28134	Power Surge
 28167	Chain Lightning
 28169	Mutating Injection
+28219	Leatherworking: Polar Tunic
+28221	Leatherworking: Polar Bracers
+28223	Leatherworking: Icy Scale Gauntlets
 28240	Poison Cloud
+28243	Blacksmithing: Icebane Gauntlets
 28311	Slime Bolt
+28327	Engineering: Steam Tonk Controller
 28335	Whirlwind
 28338	Magnetic Pull
 28342	Breath of Sargeras
@@ -892,6 +1470,7 @@
 28413	Aura of Agony
 28431	Poison Charge
 28434	Spider Web
+28462	Blacksmithing: Ironvine Gloves
 28479	Frostbolt
 28522	Icebolt
 28524	Frost Breath
@@ -937,6 +1516,7 @@
 30683	Echoes of Lordaeron
 30754	Cenarion Favor
 30880	Echoes of Lordaeron
+43680	Idle
 63645	Activate Primary Spec
 301091	Alliance Flag
 349981	Supercharged Chronoboon Displacer
@@ -992,7 +1572,9 @@
 418459	Meditation on Undeath
 419307	Meditation on Elune
 422621	Preparation
+423300	M'grrgl's Protection
 423478	Wyvern Taming Wand
+424641	Engineering: Shredder Autosalvage Unit
 425098	Master of Subtlety
 425415	Enrage
 425467	Demonic Pact
@@ -1004,6 +1586,8 @@
 427066	Enrage
 427746	Intercept Stun
 429959	Well-Rested
+430409	Enchanting: Blackfathom Mana Oil
+431362	Engineering: Soul Vessel
 431567	Self-Found Adventurer
 431624	Divine Aegis
 431688	Void Zone
@@ -1013,8 +1597,16 @@
 434433	Sludge
 434724	Radiation Sickness
 435481	Enchanting: Enchant Weapon - Dismantle
+435819	Leatherworking: Faintly Glowing Leather
 435893	Gniodine Side Effect
 435903	Enchanting: Enchant Chest - Retricutioner
+435904	Leatherworking: Glowing Gneuro-Linked Cowl
+435910	Blacksmithing: Low-Background Truesilver Plates
+435956	Engineering: Polished Truesilver Gears
+435958	Engineering: Whirling Truesilver Gearwall
+435960	Engineering: Hyperconductive Goldwap
+435964	Engineering: High-Yield Radiation Bomb
+435966	Engineering: Ez-Thro Radiation Bomb
 435969	Alchemy: Insulating Gniodine
 435971	Alchemy: Mildly Irradiated Rejuvenation Potion
 435986	Trogg Transfigurator 3000
@@ -1028,6 +1620,7 @@
 436378	Tigerblood Talisman
 436412	Discoverer's Delight
 436471	Bloodlash
+436513	TEST DEVELOPER DEBUG SPELL
 437324	Deep Slumber
 437327	Charged Inspiration
 437353	Corrosive Breath
@@ -1049,6 +1642,16 @@
 438721	Frozen Solid
 438727	Radiation Sickness
 438735	High Voltage!
+439110	Leatherworking: Guardian Leather Bracers
+439112	Leatherworking: Guardian Belt
+439114	Leatherworking: Guardian Pants
+439116	Leatherworking: Turtle Scale Breastplate
+439120	Blacksmithing: Golden Scale Gauntlets
+439122	Blacksmithing: Golden Scale Boots
+439124	Blacksmithing: Golden Scale Cuirass
+439126	Blacksmithing: Golden Scale Coif
+439130	Blacksmithing: Golden Scale Shoulders
+439132	Blacksmithing: Golden Scale Leggings
 439134	Enchanting: Greater Mystic Wand
 439155	Sigil of Innovation
 439156	Enchanting: Sigil of Innovation
@@ -1079,6 +1682,7 @@
 444046	Curse of Tongues
 444165	Skeletal
 444255	Corrupted Blood
+444285	Corrupted Blood
 444760	Emerald Nightmare
 444762	Emerald Nightmare
 445158	Lucid Dreaming
@@ -1094,6 +1698,9 @@
 446104	Atal'alarion's Enchanted Boulder
 446219	Cries of Corrupted Ancestry
 446226	Alchemy: Flask of Everlasting Nightmares
+446236	Engineering: Void-Powered Invoker's Vambraces
+446237	Engineering: Void-Powered Slayer's Vambraces
+446238	Engineering: Void-Powered Protector's Vambraces
 446240	Sigil of Living Dreams
 446243	Enchanting: Sigil of Living Dreams
 446274	Dream Fog
@@ -1110,6 +1717,7 @@
 446722	Call of the Arena
 446731	Headhunter's Barbed Spear
 446851	Alchemy: Flask of Nightmarish Mojo
+447554	Undying Slumber
 447591	Undying Fel Fire
 447894	Sting of the Serpent
 448085	Alchemy: Flask of Restless Dreams
@@ -1117,6 +1725,7 @@
 448618	Empty Supply Crate
 448624	Enchanting: Scroll of Spatial Mending
 448824	Devour
+449009	Protected by Shadows
 449379	Decay
 449920	Malevolence
 449923	Benevolence
@@ -1133,6 +1742,7 @@
 452454	Boon of Water
 452456	Boon of Air
 452460	Boon of Fire
+452464	Boon of Earth
 454042	Burn
 454469	Overcharge
 455868	Revealed Weakness
@@ -1182,6 +1792,7 @@
 460200	Defender's Resolve
 460338	Purged by Fire
 460402	Abysmal Aura
+460460	Blacksmithing: Sulfuron Hammer
 460755	Veil of Shadow
 460756	Sleep
 460767	Berserker Charge
@@ -1223,15 +1834,51 @@
 461634	Flametongue Weapon
 461635	Rockbiter Weapon
 461636	Windfury Weapon
+461645	Leatherworking: Honed Blue Dragonscale Shoulders
+461649	Leatherworking: Living Green Dragonscale Leggings
+461653	Leatherworking: Brilliant Chromatic Cloak
+461655	Leatherworking: Hardened Black Dragonscale Breastplate
+461659	Leatherworking: Hardened Black Dragonscale Shoulders
+461661	Leatherworking: Masterwork Volcanic Breastplate
+461663	Leatherworking: Masterwork Volcanic Shoulders
+461665	Leatherworking: Masterwork Volcanic Leggings
+461667	Blacksmithing: Tempered Dark Iron Plate
+461669	Blacksmithing: Refined Arcanite Champion
+461671	Blacksmithing: Stronger-hold Gauntlets
+461673	Leatherworking: Honed Blue Dragonscale Breastplate
+461675	Blacksmithing: Refined Arcanite Reaper
+461677	Leatherworking: Living Green Dragonscale Gauntlets
 461680	Ephemeral Power
+461690	Leatherworking: Mastercrafted Shifting Cloak
+461706	Leatherworking: Swift Flight Vambraces
+461708	Tailoring: Incandescent Mooncloth Robe
 461710	Engineering: Fiery Core Sharpshooter Rifle
+461712	Blacksmithing: Refined Hammer of the Titans
+461714	Blacksmithing: Desecration
+461716	Blacksmithing: Deadly Heartseeker
+461718	Blacksmithing: Tranquility
+461720	Leatherworking: Living Green Dragonscale Breastplate
+461722	Leatherworking: Devilcore Gauntlets
+461724	Leatherworking: Devilcore Leggings
+461730	Blacksmithing: Hardened Frostguard
+461733	Blacksmithing: Finely-Enchanted Battlehammer
+461735	Blacksmithing: Invincible Mail
+461737	Blacksmithing: Tempest Gauntlets
+461739	Blacksmithing: Warcrest of the Great Chief
+461743	Blacksmithing: Sageblade of the Archmagus
+461747	Tailoring: Incandescent Mooncloth Vest
+461750	Tailoring: Incandescent Mooncloth Circlet
+461752	Tailoring: Incandescent Mooncloth Leggings
+461754	Leatherworking: Girdle of Arcane Insight
 461810	Thunder Clap
 461826	Thunder Clap
 461827	Thunder Clap
 461966	Vampiric Embrace
 462223	Destructor's Devastation
+462227	Leatherworking: Honed Blue Dragonscale Leggings
 462230	Defender's Resolve
 462250	Curse of Agony
+462282	Tailoring: Embroidered Belt of the Archmage
 462395	Pyroclast Barrage
 462400	Incinerate
 462584	Unbalancing Strike
@@ -1249,6 +1896,7 @@
 464241	Tactician
 464250	Surge
 465230	Entrapment
+465352	Banish
 465483	Mangle
 465725	Living Bomb
 466071	Bronze Trial
@@ -1289,9 +1937,11 @@
 468475	Poison
 468491	Aspect of Arlokk
 468543	Demonic Destruction
+468775	Memory of Hazza'rah
 468777	Memory of Wushoolay
 468781	Gathering Storm
 469110	Corrupted Blood
+469132	Broodling Venom
 469145	Aspect of the Falcon
 469148	Kestrel
 469183	Terrestris
@@ -1321,6 +1971,7 @@
 473450	Dark Fortune of Damage
 473469	Cleansed Firewater
 473476	Dreams of Zandalar
+473855	Summon Light Green Qiraji Battle Tank
 473869	Summon Light Blue Qiraji Battle Tank
 473874	Summon Orange Qiraji Battle Tank
 473882	Summon Twilight Qiraji Battle Tank
@@ -1355,6 +2006,27 @@
 1213450	Corruption
 1213452	Fear
 1213464	Thunderclap
+1213481	Blacksmithing: Razorspike Headcage
+1213484	Blacksmithing: Razorspike Shoulderplate
+1213490	Blacksmithing: Razorspike Battleplate
+1213492	Blacksmithing: Obsidian Reaver
+1213498	Blacksmithing: Obsidian Champion
+1213500	Blacksmithing: Obsidian Destroyer
+1213502	Blacksmithing: Obsidian Stormhammer
+1213504	Blacksmithing: Obsidian Sageblade
+1213506	Blacksmithing: Obsidian Defender
+1213513	Leatherworking: Glowing Chitin Armor Kit
+1213519	Leatherworking: Sharpened Chitin Armor Kit
+1213521	Leatherworking: Razorbramble Cowl
+1213523	Leatherworking: Razorbramble Shoulderpads
+1213525	Leatherworking: Razorbramble Leathers
+1213527	Tailoring: Vampiric Cowl
+1213530	Tailoring: Vampiric Shawl
+1213532	Tailoring: Vampiric Robe
+1213534	Tailoring: Qiraji Silk Scarf
+1213536	Tailoring: Qiraji Silk Cape
+1213538	Tailoring: Qiraji Silk Cloak
+1213540	Tailoring: Qiraji Silk Drape
 1213544	Alchemy: Flask of Unyielding Sorrow
 1213546	Alchemy: Flask of Ancient Knowledge
 1213548	Alchemy: Flask of the Old Gods
@@ -1363,6 +2035,11 @@
 1213563	Alchemy: Elixir of the Mage-Lord
 1213565	Alchemy: Elixir of the Ironside
 1213571	Alchemy: Elixir of Alacrity
+1213573	Engineering: Arcane Megabomb
+1213576	Engineering: The Fumigator
+1213578	Engineering: Obsidian Bomb
+1213586	Engineering: G00 DV-1B3 Generator
+1213588	Engineering: Tuned Force Reactive Disk
 1213593	Enchanting: Speedstone
 1213595	Enchanting: Tear of the Dreamer
 1213598	Enchanting: Lodestone of Retaliation
@@ -1376,6 +2053,26 @@
 1213628	Enchanting: Enchanted Prayer Tome
 1213633	Enchanting: Enchanted Totem
 1213635	Enchanting: Enchanted Mushroom
+1213638	Mining: Smelt Obsidian-Infused Thorium Bar
+1213643	Blacksmithing: Obsidian Grinding Stone
+1213646	Engineering: Obsidian Blasting Powder
+1213709	Blacksmithing: Ironvine Belt
+1213711	Blacksmithing: Ironvine Gloves
+1213715	Blacksmithing: Ironvine Breastplate
+1213717	Leatherworking: Sandstalker Bracers
+1213720	Leatherworking: Sandstalker Gauntlets
+1213723	Leatherworking: Sandstalker Breastplate
+1213728	Leatherworking: Spitfire Gauntlets
+1213731	Leatherworking: Spitfire Breastplate
+1213734	Leatherworking: Bramblewood Belt
+1213736	Leatherworking: Bramblewood Boots
+1213738	Leatherworking: Bramblewood Helm
+1213740	Tailoring: Sylvan Shoulders
+1213742	Tailoring: Sylvan Crown
+1213744	Tailoring: Sylvan Vest
+1213746	Blacksmithing: Heavy Obsidian Belt
+1213748	Blacksmithing: Light Obsidian Belt
+1213751	Leatherworking: Dreamscale Breastplate
 1213886	Flask of Unyielding Sorrow
 1213892	Flask of Ancient Knowledge
 1213897	Flask of Madness
@@ -1389,16 +2086,27 @@
 1214001	Scroll: Wrath of the Swarm
 1214028	Bellowing Roar
 1214136	Divergent Lightning
+1214137	Blacksmithing: Obsidian Heartseeker
+1214145	Engineering: Obsidian Shotgun
 1214156	Spreading Pain
 1214170	Occult Poison II
+1214173	Tailoring: Bolt of Qiraji Silk
 1214179	Furbolg Form
+1214257	Blacksmithing: Black Grasp of the Destroyer
+1214270	Blacksmithing: Jagged Obsidian Shield
+1214274	Blacksmithing: Obsidian Mail Tunic
 1214278	Earthstrike
 1214279	Spell Blasting
 1214281	Naga Form
 1214284	Drakonid Form
+1214303	Leatherworking: Dreamscale Kilt
+1214306	Tailoring: Dreamscale Bracers
+1214307	Tailoring: Dreamscale Mitts
+1214309	Blacksmithing: Dreamscale Visor
 1214956	Curse of Despair
 1215202	Noxious Burst
 1215421	Toxic Pool
+1215507	Blacksmithing: Thick Obsidian Breastplate
 1215740	Mind Flay
 1215744	Blinding Admiration
 1215752	Noxious Poison
@@ -1413,18 +2121,22 @@
 1216020	Enchanting: Idol of Sidereal Wrath
 1216022	Enchanting: Idol of Feline Ferocity
 1216024	Enchanting: Idol of Ursin Power
+1216033	[DNT] Find Players
 1216049	[DNT] Find Players
+1216566	Traces of Silithyst
 1216928	Guiding Torchlight
 1216932	Oppressive Darkness
 1216982	Within Light
 1217084	Draught of the Sands
 1217142	Summon Flawless Yellow Qiraji Battle Tank
 1217144	Summon Flawless Yellow Qiraji Battle Tank
+1217146	Summon Flawless Green Qiraji Battle Tank
 1217150	Summon Flawless Blue Qiraji Battle Tank
 1217155	Summon Flawless Red Qiraji Battle Tank
 1217156	Summon Flawless Red Qiraji Battle Tank
 1217189	Enchanting: Enchant Bracer - Spell Power
 1217203	Enchanting: Enchant Bracer - Agility
+1217207	Engineering: Obsidian Scope
 1217694	The Red Death
 1217724	Scorching Torchlight
 1217775	Intolerable Heat

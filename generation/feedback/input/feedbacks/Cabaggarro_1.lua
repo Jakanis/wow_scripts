@@ -1566,7 +1566,7 @@ ClassicUA_DevLog = {
 },
 [14904] = {
 ["wabemmobdwts"] = "What you be expectin', mon?\n\nMaywiki only be dealin' with the druids and shaman.",
-["tztscppiimco"] = "The Paragons of Power are remnants from the ancient Gurubashi Empire.  We Zandalar seek them - not only are they of tremendous collectible value to us, but we believe that they also hold the strongest of mojo used by the old Empire.\n\nYa can expect to be findin' three kinds of Paragons in Zul'Gurub: coins, bijous, and primal items.  Bring them to us in the quantities that we seek, and you'll be rewarded with the some of the finest items we Zandalar have ever crafted.\n\nCount on it, mon!\r\n\r\n",
+["tztscppiimco"] = "The Paragons of Power are remnants from the ancient Gurubashi Empire.  We Zandalar seek them - not only are they of tremendous collectible value to us, but we believe that they also hold the strongest of mojo used by the old Empire.\n\nYa can expect to be findin' three kinds of Paragons in Zul'Gurub: coins, bijous, and primal items.  Bring them to us in the quantities that we seek, and you'll be rewarded with the some of the finest items we Zandalar have ever crafted.\n\nCount on it, mon!",
 },
 [3615] = {
 ["mhbattfqtt"] = "My wind riders are trained to fly quickly through the hot Barrens air.",
@@ -1961,7 +1961,7 @@ ClassicUA_DevLog = {
 ["is_reply"] = true,
 },
 ["wtsgdyslweetofehoryrpsadfswlbeofnohptoyuintsbe"] = {
-"What sparring difficulty shall we expect of each other?\r\nYour pets and familiars will be of no help to you in this battle.\r\n\n\r\n\n\r\n\n",
+"What sparring difficulty shall we expect of each other?\r\nYour pets and familiars will be of no help to you in this battle.",
 ["is_reply"] = false,
 },
 ["imtoygtodeeydy"] = {
@@ -2109,10 +2109,10 @@ ClassicUA_DevLog = {
 ["diaaadihtcba"] = "Darkmoon Faire Cards?  See the Professor here for those.  Come see me if you are a dealer in hard to come by antiquities and artifacts.",
 },
 [14822] = {
-["yatiossiaycm"] = "Your next choice awaits.\n\nYou are the sworn executioner for your liege.  A man has been sent to you for execution as a traitor of the liege and your people.  You know this individual as a close, virtuous friend who mysteriously vanished one day.  You also know that the man's crimes for which he was convicted supposedly caused the deaths of many innocent civilians.  Upon seeing you he begs for his life, claiming he was framed by a higher authority.\n\nMake your choice.\r\n\r\n",
+["yatiossiaycm"] = "Your next choice awaits.\n\nYou are the sworn executioner for your liege.  A man has been sent to you for execution as a traitor of the liege and your people.  You know this individual as a close, virtuous friend who mysteriously vanished one day.  You also know that the man's crimes for which he was convicted supposedly caused the deaths of many innocent civilians.  Upon seeing you he begs for his life, claiming he was framed by a higher authority.\n\nMake your choice.",
 ["iibtfmyfltdw"] = "I have long known you'd seek me out, Cabbagarro.\n\nEvery sentient being in this world is driven by the choices they make.  Choices begat further choices, and these in turn make someone who they are.  This is where your fortune is drawn from - who you are, and the choices you make.\n\nAre you ready to discover where your fortune lies?",
 ["yyyylimtmqsa"] = "Your fortune is cast, hunter.  For the next few hours, you will find your spirit in tune with your true nature.  Be careful, as your fortune - and your fate - are never as clear as you might think them to be.\n\nIf you would like a small glimpse of something to ponder in your future, by all means let me know.  I'd be happy to give you a written fortune, provided you have room in your inventory.  It is one drawn from the insight you have shown in answering my questions.",
-["vhpchhtlctly"] = "Very well then...\n\nYou have been tasked by your liege to guard his fields of corn from poachers and thieves.  One night on patrol, you stumble across a haggard man in thread-bare clothing stealing corn from the field.  You quickly confront him, and he immediately begs for his life.  He claims he is stealing the corn to feed his family since the lord of the land - your liege - demands too much in taxes.  Your liege is indeed known for his harsh taxes throughout the land.\n\nMake your choice.\r\n",
+["vhpchhtlctly"] = "Very well then...\n\nYou have been tasked by your liege to guard his fields of corn from poachers and thieves.  One night on patrol, you stumble across a haggard man in thread-bare clothing stealing corn from the field.  You quickly confront him, and he immediately begs for his life.  He claims he is stealing the corn to feed his family since the lord of the land - your liege - demands too much in taxes.  Your liege is indeed known for his harsh taxes throughout the land.\n\nMake your choice.",
 },
 [14845] = {
 ["drhotgcagewt"] = "Darkmoon Dogs fresh off the grill.  Come and get em while they're hot!",
@@ -2286,14 +2286,14 @@ ClassicUA_DevLog = {
 },
 },
 [15736] = {
-["gowsbhsfya"] = "Greetings, hunter - I'm a Commendation Officer acting on behalf of Orgrimmar.  It is my duty to assist adventurers who have received Horde Commendation Signets.\n\nI accept signets in different quantities, but the most beneficial exchange for you is to hand in a set of ten at once.  I will enter your deeds into our records when you hand in your signets.  As a result, you will earn recognition from Orgrimmar for your duty and service.\r\n",
-["gisbsyhrfdas"] = "Greetings, hunter - I'm a Commendation Officer acting on behalf of Orgrimmar.  It is my duty to assist adventurers who have received Horde Commendation Signets.\n\nI accept signets in different quantities, but the most beneficial exchange for you is to hand in a set of ten at once.  I will enter your deeds into our records when you hand in your signets.  As a result, you will earn recognition from Orgrimmar for your duty and service.\r\n",
+["gowsbhsfya"] = "Greetings, hunter - I'm a Commendation Officer acting on behalf of Orgrimmar.  It is my duty to assist adventurers who have received Horde Commendation Signets.\n\nI accept signets in different quantities, but the most beneficial exchange for you is to hand in a set of ten at once.  I will enter your deeds into our records when you hand in your signets.  As a result, you will earn recognition from Orgrimmar for your duty and service.",
+["gisbsyhrfdas"] = "Greetings, hunter - I'm a Commendation Officer acting on behalf of Orgrimmar.  It is my duty to assist adventurers who have received Horde Commendation Signets.\n\nI accept signets in different quantities, but the most beneficial exchange for you is to hand in a set of ten at once.  I will enter your deeds into our records when you hand in your signets.  As a result, you will earn recognition from Orgrimmar for your duty and service.",
 ["wdletobyfmyu"] = {
 "I would like to buy from you.",
 ["is_reply"] = true,
 },
 ["gshrimcnoragonbfoforitismydytoataswoherdhecnssatssindtqsbttemtbleefryuistohdinstoftnatoewleryrdsioorrswnyuhdinyrssasrtyuwlenrnfmorfryrdyadse"] = {
-"Greetings, hunter - I'm a Commendation Officer acting on behalf of Orgrimmar.  It is my duty to assist adventurers who have received Horde Commendation Signets.\n\nI accept signets in different quantities, but the most beneficial exchange for you is to hand in a set of ten at once.  I will enter your deeds into our records when you hand in your signets.  As a result, you will earn recognition from Orgrimmar for your duty and service.\r\n\r\n",
+"Greetings, hunter - I'm a Commendation Officer acting on behalf of Orgrimmar.  It is my duty to assist adventurers who have received Horde Commendation Signets.\n\nI accept signets in different quantities, but the most beneficial exchange for you is to hand in a set of ten at once.  I will enter your deeds into our records when you hand in your signets.  As a result, you will earn recognition from Orgrimmar for your duty and service.",
 ["is_reply"] = false,
 },
 },
@@ -2878,10 +2878,6 @@ ClassicUA_DevLog = {
 ["Baron Geddon"] = {
 ["sspsoeltsefrrs"] = "%s performs one last service for Ragnaros...",
 },
-["Alliance Rogue"] = {
-["frmanhhrerloru"] = "far melka noth hir ealdor lo ru",
-["bh"] = "Bornevalesh",
-},
 ["Arcanist Hilda"] = {
 ["rttobxwemtfyords"] = {
 "Retreat to Beatrix! We must fortify our defenses!",
@@ -2980,11 +2976,6 @@ ClassicUA_DevLog = {
 ["lang_name"] = "Orcish",
 },
 },
-["Alliance Warrior"] = {
-["lnvdreloneosnerh"] = "Lon veld re lo ne odes nandige rogesh!",
-["wsbdalasndyyglbr"] = "Wos Barad agol algos nud y gol bor!",
-["ln"] = "lon",
-},
 ["Kharon"] = {
 ["ssgsioaabrre"] = "%s goes into a berserker rage!",
 ["wtbsheyuwhhe"] = "What business have you with hope?",
@@ -3036,9 +3027,6 @@ ClassicUA_DevLog = {
 },
 ["Princess Yauj"] = {
 ["ssisdd"] = "%s is devoured!",
-},
-["Alliance Mage"] = {
-["lnvdreloneosnerh"] = "Lon veld re lo ne odes nandige rogesh!",
 },
 ["Emperor Vek'lor"] = {
 ["celeos"] = "Come, little ones.\r\n",
@@ -3533,10 +3521,6 @@ ClassicUA_DevLog = {
 ["tyhebniotehloflswemtspteis"] = "They have broken into the Hall of Lights!  We must stop the intruders!",
 ["odafbtlwmp"] = "Our defenses are failing!  By the light we must prevail!",
 },
-["Alliance Priest"] = {
-["frmanhhrerloru"] = "far melka noth hir ealdor lo ru",
-["ln"] = "lon",
-},
 ["Mekgineer Thermaplugg"] = {
 ["esmeesiigttohemees"] = "Explosions! MORE explosions! I got to have more explosions!",
 ["usgnisme"] = "Usurpers! Gnomeregan is mine!",
@@ -3572,9 +3556,6 @@ ClassicUA_DevLog = {
 ["Emeriss"] = {
 ["teyrwdsscn"] = "Taste your world's corruption!",
 ["heisaadeoftesltsldslwradde"] = "Hope is a DISEASE of the soul! This land shall wither and die!",
-},
-["Alliance Druid"] = {
-["wsbdalasndyyglbr"] = "Wos Barad agol algos nud y gol bor!",
 },
 ["The Duke of Zephyrs"] = {
 ["yuwlpyteuepefrtsielevnyrslisme"] = "You will pay the ultimate price for this insolence, little vermin.  Your soul is mine!",
@@ -3886,9 +3867,6 @@ ClassicUA_DevLog = {
 ["teldofelstkrwsaangmrtoalofiscstemcoftewlofeypdteldadedtemeoffaadfattwdmetewdtrhefmtsmlerwebntesditwsthtesdtttebgodgdwdrhadattosrtewdttitoehdinisulgp"] = "The land of eternal starlight, Kalimdor, was a nurturing mother to all of its creatures. The magic of the Well of Eternity permeated the land and empowered the multitude of flora and fauna that would make the world their home. From this magical ether were born the silithid. It was through the silithid that the brooding Old God would reach and attempt to sunder the world that it once held in its unmerciful grasp. \r\n",
 ["teisme"] = "There is more.",
 ["vnertopehsfrcdfltoawhmtoteaaslbntotedeofsdsywhteteofbetgtrwynohmcdcetohsbdcdtetpwsmdvnwscdbytehgqiadsdveodrxhfwdtetecevntoteftlsoftebeweinftofsmadtenffshewdbyeeteygnf"] = "Valstann, eager to please his father, convinced Fandral to allow him to take a small battalion to the defense of Southwind. Surely with the tide of battle turning their way, no harm could come to his beloved child. The trap was missed. Valstann was captured by the hiding Qiraji and Southwind Village obliterated. Rajaxx himself would take the captive Valstann to the front lines of the battle where - in front of Staghelm and the night elf forces - he would brutally execute the young night elf.\r\n",
-},
-["Alliance Warlock"] = {
-["frmanhhrerloru"] = "far melka noth hir ealdor lo ru",
 },
 ["Shadowed Spirit"] = {
 ["ssesfmtedsdnotbytednsr"] = "%s emerges from the darkness, drawn out by the divination scryer!",
@@ -4245,10 +4223,6 @@ ClassicUA_DevLog = {
 ["tednfeiscgteisfnfrcnofalasceoeceal"] = "The Darkmoon Faire is coming!  There is fun for children of ALL ages!  Come one, come all!",
 ["sprtupadhrattemtagseinalofahtednfehh"] = "Step right up and hear about the most amazing spectacle in all of Azeroth - the Darkmoon Faire!  Huzzah!",
 },
-["Alliance Hunter"] = {
-["lnwslr"] = "Lon wos Landowar!",
-["ln"] = "lon",
-},
 ["Varimathras"] = {
 ["ddhdyrlehtteaeoftese"] = {
 "Dreadguard, hold your line.  Halt the advance of those Scourge!",
@@ -4460,7 +4434,6 @@ ClassicUA_DevLog = {
 },
 },
 ["Zilbagob"] = {
-["ososcd"] = "Odes...Odes..Cynegold!",
 ["yubn"] = "You burn!",
 ["gactya"] = "Gonna cut ya!",
 ["ltsssewttstgcndo"] = "Let's see what this thing can do!",

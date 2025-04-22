@@ -1114,20 +1114,6 @@ ClassicUA_DevLog = {
 ["pehpustepehsgemd"] = "Please help us! The Prince has gone mad!",
 ["teseaeunusrnrnfryrls"] = "The Scourge are upon us! Run! Run for your lives!",
 },
-["Gerard Abernathy"] = {
-["seghnfvannfe"] = {
-"Sturume, goth nuff va Nevren Firalaine.",
-["lang_name"] = "Gutterspeak",
-},
-["rsmsrsners"] = {
-"Ras majis ras, ne ras.",
-["lang_name"] = "Gutterspeak",
-},
-["eruudarsnendvswhvd"] = {
-"Ealdor U dana ras ne nud vandarwos wirsh veld?",
-["lang_name"] = "Gutterspeak",
-},
-},
 ["Sorcerer Ashcrombe"] = {
 ["lnvmeemalsndun"] = {
 "Lon vrum E melka lars nud... uden.",
@@ -1487,7 +1473,6 @@ ClassicUA_DevLog = {
 },
 ["Crimson Monk"] = {
 ["tswlntbeteedoftestceyuwlntbkorle"] = "This will not be the end of the Scarlet Crusade!  You will not break our line! \n",
-["wskgseesnnwsrslnasosalgnes"] = "Wos Kaelsig Sturume eynes nagan wos ruftos lon algos odes agol gloin eynes!",
 },
 ["Jessica Chambers"] = {
 ["fryuhdteblofftrt"] = "Father, you had the bowl of fruit? Right?",
@@ -2323,7 +2308,7 @@ ClassicUA_DevLog = {
 },
 [14822] = {
 ["yatiossiaycm"] = {
-"Your next choice awaits.\n\nYou are the sworn executioner for your liege.  A man has been sent to you for execution as a traitor of the liege and your people.  You know this individual as a close, virtuous friend who mysteriously vanished one day.  You also know that the man's crimes for which he was convicted supposedly caused the deaths of many innocent civilians.  Upon seeing you he begs for his life, claiming he was framed by a higher authority.\n\nMake your choice.\r\n\r\n",
+"Your next choice awaits.\n\nYou are the sworn executioner for your liege.  A man has been sent to you for execution as a traitor of the liege and your people.  You know this individual as a close, virtuous friend who mysteriously vanished one day.  You also know that the man's crimes for which he was convicted supposedly caused the deaths of many innocent civilians.  Upon seeing you he begs for his life, claiming he was framed by a higher authority.\n\nMake your choice.",
 ["is_reply"] = false,
 },
 ["iibtfmyfltdw"] = {
@@ -2335,7 +2320,7 @@ ClassicUA_DevLog = {
 ["is_reply"] = false,
 },
 ["vhpchhtlctly"] = {
-"Very well then...\n\nYou have been tasked by your liege to guard his fields of corn from poachers and thieves.  One night on patrol, you stumble across a haggard man in thread-bare clothing stealing corn from the field.  You quickly confront him, and he immediately begs for his life.  He claims he is stealing the corn to feed his family since the lord of the land - your liege - demands too much in taxes.  Your liege is indeed known for his harsh taxes throughout the land.\n\nMake your choice.\r\n",
+"Very well then...\n\nYou have been tasked by your liege to guard his fields of corn from poachers and thieves.  One night on patrol, you stumble across a haggard man in thread-bare clothing stealing corn from the field.  You quickly confront him, and he immediately begs for his life.  He claims he is stealing the corn to feed his family since the lord of the land - your liege - demands too much in taxes.  Your liege is indeed known for his harsh taxes throughout the land.\n\nMake your choice.",
 ["is_reply"] = false,
 },
 },
@@ -2834,7 +2819,7 @@ ClassicUA_DevLog = {
 ["is_reply"] = false,
 },
 ["tztscppiimco"] = {
-"The Paragons of Power are remnants from the ancient Gurubashi Empire.  We Zandalar seek them - not only are they of tremendous collectible value to us, but we believe that they also hold the strongest of mojo used by the old Empire.\n\nYa can expect to be findin' three kinds of Paragons in Zul'Gurub: coins, bijous, and primal items.  Bring them to us in the quantities that we seek, and you'll be rewarded with the some of the finest items we Zandalar have ever crafted.\n\nCount on it, mon!\r\n\r\n",
+"The Paragons of Power are remnants from the ancient Gurubashi Empire.  We Zandalar seek them - not only are they of tremendous collectible value to us, but we believe that they also hold the strongest of mojo used by the old Empire.\n\nYa can expect to be findin' three kinds of Paragons in Zul'Gurub: coins, bijous, and primal items.  Bring them to us in the quantities that we seek, and you'll be rewarded with the some of the finest items we Zandalar have ever crafted.\n\nCount on it, mon!",
 ["is_reply"] = false,
 },
 },
