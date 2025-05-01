@@ -1,3 +1,17 @@
+Warning! Original description for spell#1231417:sod differs:
+- [The blade does not respond to your presence.][Striking a higher level enemy applies a stack of Coup, increasing their damage taken from your next Execute by 10% per stack, stacking up to 20 times. At 20 stacks, Execute may be cast regardless of the target's health.][Striking a higher level enemy applies a stack of Coup, increasing their damage taken from your next Envenom by 5% per stack, stacking up to 20 times.][Striking a higher level enemy applies a stack of Coup, increasing their damage taken from your next Kill Shot by 5% per stack, stacking up to 20 times.]
++ The blade does not respond to your presence.
+Warning! Original description for spell#1235320:sod differs:
+- [Chance on hit to cause your next 4 instances of Nature damage to be increased by 20%. Lasts 12 sec.][Chance on hit to cause your next 2 instances of Raptor Strike damage to be increased by 20%. Lasts 12 sec.][Chance on hit to cause your next 2 instances of Cleave damage to be increased by 20%. Lasts 12 sec.][Chance on hit to cause your next 2 instances of Holy damage to be increased by 20%. Lasts 12 sec.][The Crimson Cleaver does not respond to your presence, maybe another class could benefit from this?]
++ The Crimson Cleaver does not respond to your presence, maybe another class could benefit from this?
+Warning! Original description for spell#1235351:sod differs:
+- [Chance on hit to cause your next 2 instances of
+- damage from your pet's special abilities to be
+- increased by 20%. Lasts 12 sec.][Chance on hit to cause your next 2 instances of
+- Whirlwind damage to be increased by 20%. Lasts 12
+- sec.][Chance on hit to cause your next 4 instances of
+- Fire damage to be increased by 20%. Lasts 12 sec.]
+Saving spells to DB
 Validating...
 Warning! Newline count doesn't match for spell#17:cata description
 Warning! Newline count doesn't match for spell#66:cata description
@@ -26,8 +40,6 @@ Warning! Template failed for spell#596:cata
 Warning! Newline count doesn't match for spell#596:cata description
 Warning! Newline count doesn't match for spell#633:cata description
 Warning! Template failed for spell#635:cata
-Warning! Newline count doesn't match for spell#642:classic description
-Warning! Newline count doesn't match for spell#642:classic aura
 Warning! Template failed for spell#686:cata
 Warning! Newline count doesn't match for spell#845:cata description
 Warning! Newline count doesn't match for spell#879:cata description
@@ -39,10 +51,8 @@ Warning! Newline count doesn't match for spell#1064:cata description
 Warning! Newline count doesn't match for spell#1120:cata description
 Warning! Template failed for spell#1122:cata
 Warning! Template failed for spell#1449:cata
-Warning! Newline count doesn't match for spell#1454:classic description
 Warning! Template failed for spell#1535:cata
 Warning! Newline count doesn't match for spell#1715:cata description
-Warning! Newline count doesn't match for spell#1719:classic description
 Warning! Newline count doesn't match for spell#1752:cata description
 Warning! Newline count doesn't match for spell#1784:cata description
 Warning! Template failed for spell#1822:cata
@@ -95,50 +105,30 @@ Warning! Newline count doesn't match for spell#8647:cata description
 Warning! Template failed for spell#8921:cata
 Warning! Template failed for spell#8936:cata
 Warning! Newline count doesn't match for spell#8936:cata description
-Warning! Newline count doesn't match for spell#9452:classic description
-Warning! Template failed for spell#10138:classic
-Warning! Newline count doesn't match for spell#10138:classic description
-Warning! Template failed for spell#10139:classic
-Warning! Newline count doesn't match for spell#10139:classic description
-Warning! Template failed for spell#10140:classic
-Warning! Newline count doesn't match for spell#10140:classic description
 Warning! Template failed for spell#11113:cata
 Warning! Template failed for spell#11129:cata
-Warning! Newline count doesn't match for spell#11237:classic description
 Warning! Newline count doesn't match for spell#12042:cata description
 Warning! Newline count doesn't match for spell#12051:cata description
-Warning! Newline count doesn't match for spell#12321:classic description
 Warning! Newline count doesn't match for spell#12472:cata description
 Warning! Template failed for spell#13795:cata
 Warning! Template failed for spell#13813:cata
 Warning! Template failed for spell#13819:cata
 Warning! Newline count doesn't match for spell#14185:cata description
-Warning! Newline count doesn't match for spell#14892:classic description
 Warning! Template failed for spell#14914:cata
 Warning! Template failed for spell#15237:cata
 Warning! Template failed for spell#15237:cata
-Warning! Newline count doesn't match for spell#15473:classic description
 Warning! Newline count doesn't match for spell#16166:cata description
-Warning! Newline count doesn't match for spell#16178:classic description
 Warning! Newline count doesn't match for spell#16511:cata description
-Warning! Newline count doesn't match for spell#16864:classic description
 Warning! Template failed for spell#16896:classic
-Warning! Newline count doesn't match for spell#16896:classic description
 Warning! Template failed for spell#16902:classic
-Warning! Newline count doesn't match for spell#16902:classic description
 Warning! Newline count doesn't match for spell#16914:wrath description
 Warning! Newline count doesn't match for spell#16914:cata description
 Warning! Template failed for spell#17877:cata
 Warning! Newline count doesn't match for spell#18499:cata description
-Warning! Newline count doesn't match for spell#18562:classic description
 Warning! Template failed for spell#18562:cata
 Warning! Newline count doesn't match for spell#18562:cata description
-Warning! Newline count doesn't match for spell#19028:classic description
 Warning! Newline count doesn't match for spell#19028:cata description
-Warning! Newline count doesn't match for spell#19416:classic description
-Warning! Newline count doesn't match for spell#19485:classic description
 Warning! Template failed for spell#19750:cata
-Warning! Newline count doesn't match for spell#20049:classic description
 Warning! Template failed for spell#20138:cata
 Warning! Newline count doesn't match for spell#20154:cata description
 Warning! Template failed for spell#20473:cata
@@ -154,7 +144,6 @@ Warning! Newline count doesn't match for spell#23881:cata description
 Warning! Newline count doesn't match for spell#23922:classic description
 Warning! Template failed for spell#23922:cata
 Warning! Template failed for spell#24275:cata
-Warning! Newline count doesn't match for spell#24858:classic description
 Warning! Template failed for spell#27243:cata
 Warning! Template failed for spell#27243:cata
 Warning! Newline count doesn't match for spell#29166:cata description
@@ -248,10 +237,6 @@ Warning! Newline count doesn't match for spell#349981:classic aura
 Warning!! Numbers don't match for spell spell#407632
 Warning!! Numbers don't match for spell spell#424799
 Warning!! Numbers don't match for spell spell#424800
-Warning! Newline count doesn't match for spell#424925:sod description
-Warning! Template failed for spell#425600:sod
-Warning! Newline count doesn't match for spell#425600:sod description
-Warning! Newline count doesn't match for spell#436516:sod description
 Warning! Template failed for spell#440672:sod
 Warning! Template failed for spell#444165:sod
 Warning! Template failed for spell#467823:sod
@@ -273,3 +258,5 @@ Warning! Template failed for spell#1219798:sod
 Warning! Template failed for spell#1219800:sod
 Warning! Template failed for spell#1219913:sod
 Warning! Template failed for spell#1219914:sod
+Warning!! Numbers don't match for spell spell#1231612
+Warning!! Numbers don't match for spell spell#1231612
