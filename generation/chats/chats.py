@@ -41,14 +41,21 @@ def load_missing_chats_from_feedback(path) -> list[Chat]:
     return chats
 
 
-def load_frmm_pickled_wowhead_npcs(path) -> list[Chat]:
+def load_from_pickled_wowhead_npcs(path) -> list[Chat]:
     import pickle
     chats = list()
+    texts_by_npc: dict[int, set[str]] = dict()
     with open(path, 'rb') as f:
         pickled_chats = pickle.load(f)
         for expansion in pickled_chats.keys():
             for npc_id, npc in pickled_chats[expansion].items():
                 for quote in npc.quotes:
+                    if quote is None or quote == '':
+                        continue
+                    if npc_id in texts_by_npc and quote in texts_by_npc[npc_id]:
+                        continue
+                    texts_by_npc[npc_id] = texts_by_npc.get(npc_id, set())
+                    texts_by_npc[npc_id].add(quote)
                     chat = Chat(npc.name, quote, chat_key='wowhead', expansion=expansion, npc_id=npc_id)
                     chats.append(chat)
 
@@ -237,12 +244,12 @@ def cleanup_chats(chats: list[Chat]):
 
 
 def verify_npcs(chats: list[Chat]):
-    npc_to_ids: dict[str, str] = dict()
+    npc_to_ids: dict[(str, str), str] = dict()
     for chat in chats:
         if chat.npc_name in npc_to_ids and npc_to_ids[chat.npc_name] != chat.npc_id:
-            print(f'Warning! ID differs for NPC "{chat.npc_name}": {npc_to_ids[chat.npc_name]} and {chat.npc_id}')
+            print(f'Warning! ID differs for NPC "{chat.npc_name}:{chat.expansion}": {npc_to_ids[chat.npc_name]} and {chat.npc_id}')
         else:
-            npc_to_ids[chat.npc_name] = chat.npc_id
+            npc_to_ids[(chat.npc_name, chat.expansion)] = chat.npc_id
 
 
 def group_chats_by_npcs(chats: list[Chat]) -> dict[(str, int), list[Chat]]:
@@ -256,9 +263,12 @@ def group_chats_by_npcs(chats: list[Chat]) -> dict[(str, int), list[Chat]]:
 
 def verify_duplicates(chats: list[Chat]):
     chats_by_npcs = group_chats_by_npcs(chats)
+    common_texts = set(map(lambda x: x.text, chats_by_npcs.get(('common', 0), list())))
     for npc_key, chats in chats_by_npcs.items():
         npc_texts = set()
         for chat in chats:
+            if npc_key != ('common', 0) and chat.text in common_texts:
+                print(f'Warning! Chat is common for NPC "{npc_key}": {chat.text}')
             if chat.text in npc_texts:
                 print(f'Warning! Chat duplicated for NPC "{npc_key}": {chat.text}')
             npc_texts.add(chat.text)
@@ -267,7 +277,7 @@ def verify_duplicates(chats: list[Chat]):
 
 if __name__ == '__main__':
     crowdin_chats = load_from_db('crowdin_chats.db')
-    pickled_chats = load_frmm_pickled_wowhead_npcs('input/all_npcs.pkl')
+    pickled_chats = load_from_pickled_wowhead_npcs('input/all_npcs.pkl')
 
     missing_chats = load_missing_chats_from_feedback('input/missing_chats.pkl')
     npcs = load_npcs_from_db('input/npcs.db')
