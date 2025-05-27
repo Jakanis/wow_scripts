@@ -1,17 +1,15 @@
 import json
 import os
-import time
 
 import requests
 import multiprocessing
 from bs4 import BeautifulSoup
 import sqlite3
 import difflib
-from generation.utils.utils import compare_directories
+from generation.utils.utils import compare_directories, write_crowdin_xml_file, update_on_crowdin
 
 THREADS = 32
 
-CROWDIN_PROJECT_ID = 393919
 CLASSIC = 'classic'
 SOD = 'sod'
 TBC = 'tbc'
@@ -37,6 +35,7 @@ expansion_data = {
             1, 785, 912, 999, 1005, 1006, 1099, 1174, 1272, 1500, 2000, 5383, 6843, 7522, 7561, 7797, 7906, 7961, 7962, 8226, 8259, 8289, 8296, 8478, 8489, 8618, 8896, 9065,  # Not used in all expansions
             # 8617, 8618, 8530, 8531 # '<faction_name> needs singed corestones' quests actually not used.
             236,  # Wintergrasp (lich o_O)
+            2358,  # Horns of Nez'ra (added in Wrath)
             8325, 8326, 8327, 8328, 8329, 8334, 8335, 8338, 8344, 8347, 8350, 8463, 8468, 8472, 8473, 8474, 8475, 8476, 8477, 8479, 8480, 8482, 8483, 8486, 8487, 8488, 8490, 8491, 8547, 8563, 8564, 8884, 8885, 8886, 8887, 8888, 8889, 8890, 8891, 8892, 8894, 8895, 9249, # TBC
         ]
     },
@@ -47,7 +46,8 @@ expansion_data = {
         QUESTS_CACHE: 'wowhead_sod_quest_cache',
         METADATA_FILTERS: ('8:', '2:', '11500:'),
         IGNORES: [
-            2000, 7797, 63769, 81977, 81979, 81980, 81982, 81983
+            2000, 7797, 63769, 81977, 81979, 81980, 81982, 81983,
+            2358,  # Horns of Nez'ra (added in Wrath)
         ]
     },
     TBC: {
@@ -1728,7 +1728,7 @@ def check_categories():
 def generate_sources(quests):
     from pathlib import Path
     import shutil
-    from generation.utils.utils import get_quest_filename, write_xml_quest_file
+    from generation.utils.utils import get_quest_filename
 
     print('Generating sources...')
     if os.path.exists('./source_for_crowdin'):
@@ -1752,64 +1752,18 @@ def generate_sources(quests):
             filename = get_quest_filename(quest_entity.id, quest_entity.name)
             # print(id, title)
 
-            write_xml_quest_file(
-                f'{path}/{filename}.xml',
-                quest_entity.name,
-                quest_entity.objective,
-                quest_entity.description,
-                quest_entity.progress,
-                quest_entity.completion)
+            file_content = {
+                'TITLE': quest_entity.name,
+                'OBJECTIVE': quest_entity.objective,
+                'DESCRIPTION': quest_entity.description,
+                'PROGRESS': quest_entity.progress,
+                'COMPLETION': quest_entity.completion,
+            }
+            write_crowdin_xml_file(f'{path}/{filename}.xml', {k: v for k, v in file_content.items() if v is not None})
 
             count += 1
 
     print(f'Generated {count} sources.')
-
-
-def __get_crowdin_files(client) -> dict[str, int]:
-    crowdin_dirs = dict()
-    offset = 0
-    page_size = 500
-    while (True):
-        files = client.source_files.list_files(CROWDIN_PROJECT_ID, offset=offset, limit=page_size)
-        if not files['data']:
-            break
-        for file in files['data']:
-            file_id = file['data']['id']
-            file_path = file['data']['path']
-            crowdin_dirs[file_path] = file_id
-        offset += page_size
-    return crowdin_dirs
-
-
-
-def update_on_crowdin(diffs: list):
-    import pathlib
-    from crowdin_api import CrowdinClient
-    from crowdin_api.api_resources.source_files.enums import FileUpdateOption
-
-    if not diffs:
-        print('No diffs in files.')
-        return
-    print('Going to update diffed files on Crowdin. Type "UPDATE" to confirm: ')
-    user_input = input()
-    if user_input != 'UPDATE':
-        print('Ok, cancelling update')
-        return
-    token = os.getenv('CROWDIN_TOKEN')
-    client = CrowdinClient(token=token)
-    print('Getting Crowdin files...')
-    crowdin_files = __get_crowdin_files(client)
-    for diff in diffs:
-        file_path = '/' + pathlib.Path(*pathlib.Path(diff).parts[1:]).as_posix()
-        if file_path in crowdin_files:
-            print(f'Updating {file_path}')
-            storage = client.storages.add_storage(open(diff, 'rb'))
-            uploaded_file = client.source_files.update_file(projectId=CROWDIN_PROJECT_ID,
-                                                         storageId=storage['data']['id'],
-                                                         fileId=crowdin_files[file_path],
-                                                         updateOption=FileUpdateOption.KEEP_TRANSLATIONS)
-        else:
-            print(f'File path "{file_path}" not found')
 
 
 def check_feedback_quests(all_quests: dict[int, dict[str, QuestEntity]]):
@@ -1838,11 +1792,11 @@ if __name__ == '__main__':
 
     generate_sources(all_quests)
 
-    diffs = compare_directories('source_from_crowdin', 'source_for_crowdin')
+    diffs, removals, additions = compare_directories('source_from_crowdin', 'source_for_crowdin')
 
     check_feedback_quests(all_quests)
 
-    update_on_crowdin(diffs)
+    update_on_crowdin(diffs, removals, additions)
 
     # TODO: Validations for duplicating strings (may be wrong data from ClassicDB)
     # TODO: Validations for empty rows (\n\n\n\n) (may be skipped in Wowhead)
