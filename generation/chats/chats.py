@@ -1,7 +1,7 @@
 import re
 
-from generation.npc.npc import load_npcs_from_db, NPC_MD, NPC_Data
-from generation.utils.utils import compare_directories
+from generation.npc.npc import load_npcs_from_db, NPC_MD
+from generation.utils.utils import compare_directories, update_on_crowdin
 
 
 class Chat:
@@ -298,6 +298,6 @@ if __name__ == '__main__':
 
     # imp_texts = filter_imp_texts(missing_chats) # Temp
 
-    diffs = compare_directories('input/source_from_crowdin', 'output/source_for_crowdin')
+    diffs, removals, additions = compare_directories('input/source_from_crowdin', 'output/source_for_crowdin')
 
-    print('')
+    update_on_crowdin(diffs, removals, additions)

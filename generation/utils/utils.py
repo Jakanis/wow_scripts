@@ -4,34 +4,42 @@ from crowdin_api import CrowdinClient
 
 CROWDIN_PROJECT_ID = 393919
 
+def gather_files_in_subfolders(parent_dir: str) -> list[str]:
+    file_list = []
+    for dirpath, _, filenames in os.walk(parent_dir):
+        for filename in filenames:
+            file_list.append(os.path.join(dirpath, filename))
+    return file_list
+
 
 def compare_directories(dir1, dir2) -> tuple[list[str], list[str], list[str]]:
-    import os
     import filecmp, difflib
-    # print('-'*100)
-    # print('-'*100)
-    # print(f'Comparing {dir1} and {dir2}')
+
     dcmp = filecmp.dircmp(dir1, dir2)
-
-    # List of files that are only in the first directory
     only_in_dir1 = dcmp.left_only
-
-    # List of files that are only in the second directory
     only_in_dir2 = dcmp.right_only
 
     diffed_files = list()
     removed_files = list()
     added_files = list()
 
-    # Print the results for the current directory
     if len(only_in_dir1) > 0:
         print("Files only in", dir1, ":", only_in_dir1)
         for filename in only_in_dir1:
-            removed_files.append(os.path.join(dir1, filename))
+            path = os.path.join(dir1, filename)
+            if os.path.isdir(path):
+                removed_files.extend(gather_files_in_subfolders(path))
+            if os.path.isfile(path):
+                removed_files.append(path)
+
     if len(only_in_dir2) > 0:
         print("Files only in", dir2, ":", only_in_dir2)
         for filename in only_in_dir2:
-            added_files.append(os.path.join(dir2, filename))
+            path = os.path.join(dir2, filename)
+            if os.path.isdir(path):
+                added_files.extend(gather_files_in_subfolders(path))
+            if os.path.isfile(path):
+                added_files.append(path)
 
     for common_file in dcmp.common_files:
         file1 = os.path.join(dir1, common_file)
@@ -132,7 +140,7 @@ def __ensure_path_exists(client: CrowdinClient, path: pathlib.Path, existing_dir
             last_parent_dir_id = new_dir['data']['id']
 
 
-def update_on_crowdin(diffs: list[str], removals: list[str], additions: list[str]) -> None:
+def update_on_crowdin(diffs: list[str], removals: list[str], additions: list[str], skip_parent_dirs = 2) -> None:
     from crowdin_api.api_resources.source_files.enums import FileUpdateOption
 
     if not diffs and not removals and not additions:
@@ -148,7 +156,7 @@ def update_on_crowdin(diffs: list[str], removals: list[str], additions: list[str
     crowdin_files = __get_crowdin_files(client)
     crowdin_dirs = __get_crowdin_directories(client)
     for diff in diffs:
-        file_path = '/' + pathlib.Path(*pathlib.Path(diff).parts[1:]).as_posix()
+        file_path = '/' + pathlib.Path(*pathlib.Path(diff).parts[skip_parent_dirs:]).as_posix()
         if file_path in crowdin_files:
             print(f'Updating {file_path}...', end='')
             storage = client.storages.add_storage(open(diff, 'rb'))
@@ -161,7 +169,7 @@ def update_on_crowdin(diffs: list[str], removals: list[str], additions: list[str
             print(f'File path "{file_path}" not found')
 
     for removal in removals:
-        file_path = '/' + pathlib.Path(*pathlib.Path(removal).parts[1:]).as_posix()
+        file_path = '/' + pathlib.Path(*pathlib.Path(removal).parts[skip_parent_dirs:]).as_posix()
         if file_path in crowdin_files:
             print(f'Removing {file_path}...', end='')
             deleted_file = client.source_files.delete_file(projectId=CROWDIN_PROJECT_ID,
@@ -171,12 +179,12 @@ def update_on_crowdin(diffs: list[str], removals: list[str], additions: list[str
             print(f'File path "{file_path}" not found')
 
     for addition in additions:
-        file_path = '/' + pathlib.Path(*pathlib.Path(addition).parts[1:]).as_posix()
+        file_path = '/' + pathlib.Path(*pathlib.Path(addition).parts[skip_parent_dirs:]).as_posix()
         if file_path in crowdin_files:
             print(f'File path "{file_path}" already exists')
         else:
             print(f'Adding {file_path}...', end='')
-            dir_path = pathlib.Path(*pathlib.Path(addition).parts[1:-1])
+            dir_path = pathlib.Path(*pathlib.Path(addition).parts[skip_parent_dirs:-1])
             __ensure_path_exists(client, dir_path, crowdin_dirs)
             storage = client.storages.add_storage(open(addition, 'rb'))
             uploaded_file = client.source_files.add_file(projectId=CROWDIN_PROJECT_ID,
