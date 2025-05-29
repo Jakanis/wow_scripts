@@ -1,7 +1,7 @@
 import re
 
-from generation.npc.npc import load_npcs_from_db, NPC_MD
-from generation.utils.utils import compare_directories, update_on_crowdin
+from generation.npc.npc import load_npcs_from_db, NPC_MD, NPC_Data
+from generation.utils.utils import compare_directories, update_on_crowdin, get_text_code, get_text_hash
 
 
 class Chat:
@@ -138,7 +138,11 @@ def write_xml_chat_file(path: str, chats: list[Chat]):
         f.write('<?xml version="1.0" encoding="utf-8"?>\n')
         f.write('<resources>\n')
         for chat in chats:
-            f.write(f'  <string><![CDATA[{chat.text}]]></string>\n')
+            string_comment = get_text_code(chat.text)[0]
+            string_name = string_comment
+            if not '.' in string_name:
+                string_name = str(get_text_hash(chat.text))
+            f.write(f'  <string name="{string_name}" comment="{string_comment}"><![CDATA[{chat.text}]]></string>\n')
         f.write('</resources>\n')
 
 
@@ -209,7 +213,7 @@ def generate_sources(chats: list[Chat]):
         write_xml_chat_file(path, chats_on_path)
 
         count += 1
-    print(f'Generated {count} chats.')
+    print(f'Generated {count} chat files.')
 
 
 def cleanup_chats(chats: list[Chat]):
@@ -232,6 +236,8 @@ def cleanup_chats(chats: list[Chat]):
             continue
         if chat.npc_name == 'common':
             existing_common_texts.add(chat.text)
+        if chat.npc_id is None:
+            continue
         existing_texts[chat.text] = existing_texts.get(chat.text, 0) + 1  # look existing_texts dict
         existing_chats.add(chat)
         existing_texts_by_npc[chat.npc_name] = existing_texts_by_npc.get(chat.npc_name, set())
@@ -272,7 +278,6 @@ def verify_duplicates(chats: list[Chat]):
             if chat.text in npc_texts:
                 print(f'Warning! Chat duplicated for NPC "{npc_key}": {chat.text}')
             npc_texts.add(chat.text)
-
 
 
 if __name__ == '__main__':

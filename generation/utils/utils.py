@@ -1,5 +1,7 @@
 import os
 import pathlib
+import re
+
 from crowdin_api import CrowdinClient
 
 CROWDIN_PROJECT_ID = 393919
@@ -84,9 +86,36 @@ def write_crowdin_xml_file(path: str, content: dict[str, str]) -> None:
         f.write('</resources>\n')
 
 
+# Was used to add ids in chats and gossips on Crowdin
+# def __update_crowdin_string_keys(client: CrowdinClient, folder_filter: str) -> None:
+#     from crowdin_api.api_resources.source_strings.enums import StringBatchOperations
+#     dirs = __get_crowdin_directories(client)
+#     for dir_path in dirs.keys():
+#         if dir_path.startswith(folder_filter):
+#             print(f'Updating string keys in directory {dir_path}...')
+#             files = client.source_files.list_files(CROWDIN_PROJECT_ID, directoryId=dirs[dir_path], limit=500)
+#             for file in files['data']:
+#                 file_id = file['data']['id']
+#                 file_name = file['data']['name']
+#                 print(f'Updating strings in file {file_name}...')
+#                 strings = client.source_strings.list_strings(CROWDIN_PROJECT_ID, fileId=file_id, limit=500)
+#                 for string in strings['data']:
+#                     string_identifier = string['data']['identifier']
+#                     if string_identifier is not None:
+#                         continue
+#                     string_id = string['data']['id']
+#                     string_text = string['data']['text']
+#                     text_context = get_text_code(string_text)[0]
+#                     text_key = text_context
+#                     if not '.' in text_key:
+#                         text_key = str(get_text_hash(string_text))
+#                     client.source_strings.string_batch_operation(projectId=CROWDIN_PROJECT_ID, data=[{'op': StringBatchOperations.REPLACE, 'value': text_key, 'path': f'/{string_id}/identifier'}, {'op': StringBatchOperations.REPLACE, 'value': text_context, 'path': f'/{string_id}/context'}])
+
+
+
 def __get_crowdin_files(client: CrowdinClient) -> dict[str, int]:
     print('Getting Crowdin files...', end='')
-    crowdin_dirs = dict()
+    crowdin_files = dict()
     offset = 0
     page_size = 500
     while (True):
@@ -96,10 +125,10 @@ def __get_crowdin_files(client: CrowdinClient) -> dict[str, int]:
         for file in files['data']:
             file_id = file['data']['id']
             file_path = file['data']['path']
-            crowdin_dirs[file_path] = file_id
+            crowdin_files[file_path] = file_id
         offset += page_size
     print(' done')
-    return crowdin_dirs
+    return crowdin_files
 
 
 def __get_crowdin_directories(client: CrowdinClient) -> dict[str, int]:
@@ -132,12 +161,13 @@ def __ensure_path_exists(client: CrowdinClient, path: pathlib.Path, existing_dir
             last_parent_dir_id = existing_dirs[current_path]
             continue
         else:
-            print(f'Creating directory {current_path} on Crowdin')
+            print(f'Creating directory {current_path} on Crowdin...', end='')
             new_dir = client.source_files.add_directory(projectId=CROWDIN_PROJECT_ID,
                                                         name=sub_dir,
                                                         directoryId=last_parent_dir_id)
             existing_dirs[current_path] = new_dir['data']['id']
             last_parent_dir_id = new_dir['data']['id']
+            print(' done')
 
 
 def update_on_crowdin(diffs: list[str], removals: list[str], additions: list[str], skip_parent_dirs = 2) -> None:
@@ -183,12 +213,84 @@ def update_on_crowdin(diffs: list[str], removals: list[str], additions: list[str
         if file_path in crowdin_files:
             print(f'File path "{file_path}" already exists')
         else:
-            print(f'Adding {file_path}...', end='')
             dir_path = pathlib.Path(*pathlib.Path(addition).parts[skip_parent_dirs:-1])
             __ensure_path_exists(client, dir_path, crowdin_dirs)
+            print(f'Adding {file_path}...', end='')
             storage = client.storages.add_storage(open(addition, 'rb'))
             uploaded_file = client.source_files.add_file(projectId=CROWDIN_PROJECT_ID,
                                                          storageId=storage['data']['id'],
                                                          directoryId=crowdin_dirs['/' + dir_path.as_posix()],
                                                          name=pathlib.Path(addition).name)
             print(' done')
+
+# [!] Any changes made to string_hash() func must be kept in sync with Lua impl
+def string_hash(text: str) -> int:
+    import math
+    if not text:
+        return 0
+
+    counter = 1
+    text_len = len(text)
+    for i in range(0, text_len, 3):
+        counter = math.fmod(counter * 8161, 4294967279) +\
+            (ord(text[i]) * 16776193) +\
+            ((ord(text[i+1]) if text_len > i+1 else (text_len - (i+1) + 256)) * 8372226) +\
+            ((ord(text[i+2]) if text_len > i+2 else (text_len - (i+1) + 256)) * 3932164)
+
+    return int(math.fmod(counter, 4294967291))
+
+# [!] Any changes made to get_text_hash() func must be kept in sync with Lua impl
+def get_text_hash(text: str) -> int:
+    return string_hash(text.strip().lower()) if isinstance(text, str) else 0
+
+known_gossip_dynamic_seq_with_multiple_words_for_get_text_code = (
+    ("night elf", "nightelf"),
+    ("blood elf", "bloodelf"),
+    ("death knight", "deathknight"),
+    ("demon hunter", "demonhunter"),
+    ("void elf", "voidelf"),
+    ("lightforged draenei", "lightforgeddraenei"),
+    ("dark iron dwarf", "darkirondwarf"),
+    ("kul tiran", "kultiran"),
+    ("highmountain tauren", "highmountaintauren"),
+    ("mag'har orc", "magharorc"),
+    ("zandalari troll", "zandalaritroll"),
+)
+MAX_CODE_LENGTH = 42
+
+# [!] Any changes made to get_text_code() func must be kept in sync with Lua impl in main.lua and utils.lua in ClassicUA
+def get_text_code(text) -> (str, str):
+    text = text.lower()
+    for p in known_gossip_dynamic_seq_with_multiple_words_for_get_text_code:
+        text = text.replace(p[0], p[1])
+
+    words = re.findall(r"""([\w<][\w\-'/]*[\w>])""", text)  # matches words with at least 2 word-characters and allows punctuation characters inside (boss-lady, ma'am, etc)
+    result = list()
+    for word in words:
+        if len(word) > 0:
+            if word.startswith('<') and word.endswith('>'):
+                #  It should be <class>, <race>, <name>, <target> or gender-specific text (<his/her>)
+                # TODO: if gender template contains space - it will not work (like <he's a king/she's a queen>)
+                template_type = word[1:-1]
+                if template_type in ('class', 'race'):
+                    result.append('..')
+                elif template_type in ('name', 'target'):
+                    result.append('.-')
+                elif '/' in template_type:
+                    male_word, female_word = template_type.split('/')
+                    if male_word[0] == female_word[0]:
+                        result.append(male_word[0])
+                    else:
+                        result.append('.')
+                    if male_word[-1] == female_word[-1]:
+                        result.append(male_word[-1])
+                    else:
+                        result.append('.')
+            else:
+                cleaned_word = word.replace('<', '').replace('>', '') # Removing characters that aren't captured in game
+                result.append(cleaned_word[0])
+                result.append(cleaned_word[-1])
+        if len(result) >= MAX_CODE_LENGTH:
+            break
+
+    return ''.join(result), None

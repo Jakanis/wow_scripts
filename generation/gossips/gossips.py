@@ -1,7 +1,8 @@
 import os
 
 from generation.npc.npc import load_npcs_from_db, NPC_MD
-from generation.utils.utils import compare_directories
+from generation.utils.utils import compare_directories, update_on_crowdin, get_text_code, get_text_hash
+
 
 class Gossip:
     def __init__(self, npc_id, text: str, gossip_type = None, gossip_key: str = None, npc_name: str = None, expansion: str = None):
@@ -248,11 +249,11 @@ def write_xml_gossip_file(path: str, gossips: list[Gossip]):
         f.write('<?xml version="1.0" encoding="utf-8"?>\n')
         f.write('<resources>\n')
         for gossip in gossips:
-            # gossip_key = __get_text_code(gossip.text)
-            # if gossip.gossip_key and gossip_key != gossip.gossip_key:
-            #     print(f"Warning! Gossip keys don't match: {gossip_key}<>{gossip.gossip_key}")
-            # f.write(f'  <string name="{gossip_key}"><![CDATA[{gossip.text}]]></string>\n')
-            f.write(f'  <string><![CDATA[{gossip.text}]]></string>\n')
+            string_comment = get_text_code(gossip.text)[0]
+            string_name = string_comment
+            if not '.' in string_name:
+                string_name = str(get_text_hash(gossip.text))
+            f.write(f'  <string name="{string_name}" comment="{string_comment}"><![CDATA[{gossip.text}]]></string>\n')
         f.write('</resources>\n')
 
 
@@ -287,7 +288,7 @@ def generate_sources(gossips: list[Gossip]):
         write_xml_gossip_file(path, gossips_on_path)
 
         count += 1
-    print(f'Generated {count} gossips.')
+    print(f'Generated {count} gossip files.')
 
 
 def group_gossips_by_npcs(gossips: list[Gossip]) -> dict[(str, int), list[Gossip]]:
@@ -329,9 +330,8 @@ if __name__ == '__main__':
     verify_duplicates(crowdin_gossips)
     generate_sources(crowdin_gossips)
 
-    diffs = compare_directories('input/source_from_crowdin', 'output/source_for_crowdin')
-
-    print('')
+    diffs, removals, additions = compare_directories('input/source_from_crowdin', 'output/source_for_crowdin')
+    update_on_crowdin(diffs, removals, additions)
 
 # 14338 - nextlines
 # 214070 and 214098 - names and same gossips with different npcs
