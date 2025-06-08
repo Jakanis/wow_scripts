@@ -4,6 +4,7 @@ import os
 import requests
 from bs4 import BeautifulSoup, CData
 from generation.spells.spells import SpellData, load_spells_from_db, is_spell_translated
+from generation.utils.utils import compare_directories, update_on_crowdin
 
 THREADS = 16
 CLASSIC = 'classic'
@@ -14,8 +15,10 @@ WRATH = 'wrath'
 CATA = 'cata'
 WOWHEAD_URL = 'wowhead_url'
 METADATA_CACHE = 'metadata_cache'
-XML_CACHE = 'html_cache'
+XML_CACHE = 'xml_cache'
+HTML_CACHE = 'html_cache'
 ITEM_CACHE = 'item_cache'
+BOOK_CACHE = 'book_cache'
 IGNORES = 'ignores'
 FORCE_DOWNLOAD = 'force_download'
 INDEX = 'index'
@@ -27,20 +30,24 @@ expansion_data = {
         WOWHEAD_URL: 'https://www.wowhead.com/classic',
         METADATA_CACHE: 'wowhead_classic_metadata_cache',
         XML_CACHE: 'wowhead_classic_item_xml',
+        HTML_CACHE: 'wowhead_classic_item_html',
         ITEM_CACHE: 'wowhead_classic_item_cache',
+        BOOK_CACHE: 'wowhead_classic_book_cache',
         METADATA_FILTERS: ('82:', '5:', '11500:'),
         IGNORES: [],
-        FORCE_DOWNLOAD: [13503, 17782]
+        FORCE_DOWNLOAD: [13503, 16785, 17782]
     },
     SOD: {
         INDEX: 0,
         WOWHEAD_URL: 'https://www.wowhead.com/classic',
         METADATA_CACHE: 'wowhead_sod_metadata_cache',
         XML_CACHE: 'wowhead_sod_item_xml',
+        HTML_CACHE: 'wowhead_sod_item_html',
         ITEM_CACHE: 'wowhead_sod_item_cache',
+        BOOK_CACHE: 'wowhead_sod_book_cache',
         METADATA_FILTERS: ('82:', '2:', '11500:'),
         # METADATA_FILTERS: ('82:82:', '2:4:', '11500:11506:'),
-        IGNORES: [759, 9232, 202256, 202316, 215235, 215394, 215405, 215406, 215410, 215412, 215450, 231752, 235583],
+        IGNORES: [759, 9232, 202256, 202316, 215235, 215394, 215405, 215406, 215410, 215412, 215450, 231752, 235583, 239061],
         FORCE_DOWNLOAD: []
     },
     # SOD_PTR: {
@@ -50,7 +57,7 @@ expansion_data = {
     #     XML_CACHE: 'wowhead_sod_ptr_item_xml',
     #     ITEM_CACHE: 'wowhead_sod_ptr_item_cache',
     #     METADATA_FILTERS: ('82:', '1:', '11506:'),
-    #     IGNORES: [759, 9232, 202256, 202316, 215235, 215394, 215405, 215406, 215410, 215412, 215450, 231752, 235583],
+    #     IGNORES: [759, 9232, 202256, 202316, 215235, 215394, 215405, 215406, 215410, 215412, 215450, 231752, 235583, 239061],
     #     FORCE_DOWNLOAD: []
     # },
     TBC: {
@@ -58,30 +65,36 @@ expansion_data = {
         WOWHEAD_URL: 'https://www.wowhead.com/tbc',
         METADATA_CACHE: 'wowhead_tbc_metadata_cache',
         XML_CACHE: 'wowhead_tbc_item_xml',
+        HTML_CACHE: 'wowhead_tbc_item_html',
         ITEM_CACHE: 'wowhead_tbc_item_cache',
+        BOOK_CACHE: 'wowhead_tbc_book_cache',
         METADATA_FILTERS: ('', '', ''),
         IGNORES: [],
-        FORCE_DOWNLOAD: []
+        FORCE_DOWNLOAD: [16785, ]
     },
     WRATH: {
         INDEX: 2,
         WOWHEAD_URL: 'https://www.wowhead.com/wotlk',
         METADATA_CACHE: 'wowhead_wrath_metadata_cache',
         XML_CACHE: 'wowhead_wrath_item_xml',
+        HTML_CACHE: 'wowhead_wrath_item_html',
         ITEM_CACHE: 'wowhead_wrath_item_cache',
+        BOOK_CACHE: 'wowhead_wrath_book_cache',
         METADATA_FILTERS: ('', '', ''),
         IGNORES: [],
-        FORCE_DOWNLOAD: []
+        FORCE_DOWNLOAD: [16785, ]
     },
     CATA: {
         INDEX: 3,
         WOWHEAD_URL: 'https://www.wowhead.com/cata',
         METADATA_CACHE: 'wowhead_cata_metadata_cache',
         XML_CACHE: 'wowhead_cata_item_xml',
+        HTML_CACHE: 'wowhead_cata_item_html',
         ITEM_CACHE: 'wowhead_cata_item_cache',
+        BOOK_CACHE: 'wowhead_cata_book_cache',
         METADATA_FILTERS: ('', '', ''),
         IGNORES: [],
-        FORCE_DOWNLOAD: []
+        FORCE_DOWNLOAD: [16785, ]
     }
 }
 
@@ -137,7 +150,7 @@ class ItemEffect:
 
 
 class ItemData:
-    def __init__(self, id, expansion, name: str = None, effects: list[ItemEffect] = [], readable=None, random_enchantment=False, name_ua=None, effects_ua: list[ItemEffect]=None, ref=None, raw_effects=None):
+    def __init__(self, id, expansion, name: str = None, effects: list[ItemEffect] = [], readable=None, random_enchantment=False, name_ua=None, effects_ua: list[ItemEffect]=None, ref=None, raw_effects=None, readable_pages: list[str] = None):
         self.id = id
         self.name = name
         self.expansion = expansion
@@ -148,11 +161,20 @@ class ItemData:
         self.effects_ua = effects_ua
         self.ref = ref
         self.raw_effects = raw_effects
+        self.readable_pages = readable_pages
 
     def is_translated(self) -> bool:
         if self.name_ua or self.effects_ua:
             return True
         return False
+
+
+class ReadableItem:
+    def __init__(self, id, expansion, name: str = None, pages: list[str] = []):
+        self.id = id
+        self.name = name
+        self.expansion = expansion
+        self.pages = pages
 
 
 def __get_wowhead_item_search(expansion, start, end=None) -> list[ItemMD]:
@@ -214,7 +236,7 @@ def get_wowhead_items_metadata(expansion) -> dict[int, ItemMD]:
     return wowhead_metadata
 
 
-def save_page(expansion, id):
+def save_xml_page(expansion, id):
     url = expansion_data[expansion][WOWHEAD_URL] + f'/item={id}?xml'
     xml_file_path = f'cache/{expansion_data[expansion][XML_CACHE]}/{id}.xml'
     if os.path.exists(xml_file_path):
@@ -229,6 +251,22 @@ def save_page(expansion, id):
     if (f"<error>Item not found!</error>" in r.text):
         return
     with open(xml_file_path, 'w', encoding="utf-8") as output_file:
+        output_file.write(r.text)
+
+
+def save_html_page(expansion, id):
+    url = expansion_data[expansion][WOWHEAD_URL] + f'/item={id}'
+    html_file_path = f'cache/{expansion_data[expansion][HTML_CACHE]}/{id}.html'
+    if os.path.exists(html_file_path):
+        print(f'Warning! Trying to download existing HTML for #{id}')
+        return
+    r = requests.get(url)
+    if not r.ok:
+        # You download over 90000 pages in one hour - you'll fail
+        # You do it async - you fail
+        # Have a tea break (or change IP, lol)
+        raise Exception(f'Wowhead({expansion}) returned {r.status_code} for item #{id}')
+    with open(html_file_path, 'w', encoding="utf-8") as output_file:
         output_file.write(r.text)
 
 
@@ -255,12 +293,40 @@ def save_xmls_from_wowhead(expansion, ids: set[int]):
     # for id in save_ids:
     #     print("Saving XML for item #" + str(id))
     #     save_page(expansion, id)
-    save_func = partial(save_page, expansion)
+    save_func = partial(save_xml_page, expansion)
     with multiprocessing.Pool(THREADS) as p:
         p.map(save_func, save_ids)
 
 
-def parse_wowhead_item_page(expansion, id) -> ItemData:
+def save_htmls_from_wowhead(expansion, ids: set[int]):
+    from functools import partial
+    import multiprocessing
+    cache_dir = f'cache/{expansion_data[expansion][HTML_CACHE]}'
+
+    os.makedirs(cache_dir, exist_ok=True)
+    existing_files = os.listdir(cache_dir)
+    existing_ids = set(int(file_name.split('.')[0]) for file_name in existing_files)
+
+    if os.path.exists(cache_dir) and existing_ids == ids:
+        print(f'HTML cache for all Wowhead({expansion}) items ({len(ids)}) exists and seems legit. Skipping.')
+        return
+
+    save_ids = ids - existing_ids
+    print(f'Saving HTMLs for {len(save_ids)} of {len(ids)} items from Wowhead({expansion}).')
+
+    redundant_ids = existing_ids - ids
+    if len(redundant_ids) > 0:
+        print(f"There's some redundant IDs: {redundant_ids}")
+
+    # for id in save_ids:
+    #     print("Saving XML for item #" + str(id))
+    #     save_page(expansion, id)
+    save_func = partial(save_html_page, expansion)
+    with multiprocessing.Pool(THREADS) as p:
+        p.map(save_func, save_ids)
+
+
+def parse_wowhead_item_xml_page(expansion, id) -> ItemData:
     import re
     xml_path = f'cache/{expansion_data[expansion][XML_CACHE]}/{id}.xml'
     with open(xml_path, 'r', encoding="utf-8") as file:
@@ -284,8 +350,8 @@ def parse_wowhead_item_page(expansion, id) -> ItemData:
 
     effects = list()
     effect_tags = tooltip_soup.find_all('span')
-    random_enchantment = False
-    readable = False
+    random_enchantment = True if "Random enchantment" in tooltip.text else False
+    readable = True if "Right Click to Read" in tooltip.text else False
     for effect_tag in effect_tags:
         if effect_tag.text == 'Random enchantment':
             random_enchantment = True
@@ -344,7 +410,47 @@ def parse_wowhead_item_page(expansion, id) -> ItemData:
     return ItemData(id, expansion, item_name, effects, readable, random_enchantment)
 
 
-def parse_wowhead_pages(expansion, metadata: dict[int, ItemMD]) -> dict[int, ItemData]:
+def parse_wowhead_item_html_page(expansion, id) -> ReadableItem|None:
+    import json5
+    html_path = f'cache/{expansion_data[expansion][HTML_CACHE]}/{id}.html'
+    content = None
+    with open(html_path, 'r', encoding="utf-8") as file:
+        content = file.read()
+
+    soup = BeautifulSoup(content, 'html.parser')
+    item_name = soup.find('h1').text
+
+    for item in content.split("\n"):
+        if f"new Book(" in item:
+            start = item.find('new Book({') + 9
+            end = item.find('})', start) + 1
+            json_raw = item[start:end]
+            json_data = json5.loads(json_raw).get('pages')
+            pages = []
+            page_no = 1
+            for page in json_data:
+                page_soup = BeautifulSoup(page, 'html5lib')
+                for element in page_soup.find_all('br'):
+                    # if br.previous_sibling and br.previous_sibling.name == 'p':
+                    #     br.replace_with('\n\n')
+                    # else:
+                    element.replace_with('\n')
+                for element in page_soup.find_all('p'):
+                    if element.next_sibling:
+                        element.replace_with(element.text + '\n')
+                for element in page_soup.find_all(['h1', 'h2', 'h3', 'h4', 'h5', 'h6']):
+                    element.replace_with(element.text + '\n')
+                page_content = page_soup.text.replace(' ', '')
+                if page_content.strip():
+                    pages.append(page_content)
+                    page_no += 1
+
+            return ReadableItem(id, expansion, item_name, list(pages))
+
+    return ReadableItem(id, expansion, item_name, [])
+
+
+def parse_wowhead_xml_pages(expansion: str, item_ids: set[int]) -> dict[int, ItemData]:
     import pickle
     import multiprocessing
     from functools import partial
@@ -356,10 +462,10 @@ def parse_wowhead_pages(expansion, metadata: dict[int, ItemMD]) -> dict[int, Ite
             wowhead_items = pickle.load(f)
     else:
         print(f'Parsing Wowhead({expansion}) item pages')
-        # wowhead_items = {id: parse_wowhead_item_page(expansion, id) for id in metadata.keys()}
-        parse_func = partial(parse_wowhead_item_page, expansion)
+        # wowhead_items = {id: parse_wowhead_item_xml_page(expansion, id) for id in item_ids}
+        parse_func = partial(parse_wowhead_item_xml_page, expansion)
         with multiprocessing.Pool(THREADS) as p:
-            wowhead_items = p.map(parse_func, metadata.keys())
+            wowhead_items = p.map(parse_func, item_ids)
         wowhead_items = {item.id: item for item in wowhead_items}
 
         os.makedirs('cache/tmp', exist_ok=True)
@@ -370,6 +476,32 @@ def parse_wowhead_pages(expansion, metadata: dict[int, ItemMD]) -> dict[int, Ite
 
     # return wowhead_quest_entities
     return wowhead_items
+
+
+def parse_wowhead_html_pages(expansion: str, items_ids: set[int]) -> dict[int, ReadableItem]:
+    import pickle
+    import multiprocessing
+    from functools import partial
+    cache_path = f'cache/tmp/{expansion_data[expansion][BOOK_CACHE]}.pkl'
+
+    if os.path.exists(cache_path):
+        print(f'Loading cached Wowhead({expansion}) readable items')
+        with open(cache_path, 'rb') as f:
+            wowhead_items = pickle.load(f)
+    else:
+        print(f'Parsing Wowhead({expansion}) readable items')
+        # wowhead_items = {id: parse_wowhead_item_html_page(expansion, id) for id in items_ids}
+        parse_func = partial(parse_wowhead_item_html_page, expansion)
+        with multiprocessing.Pool(THREADS) as p:
+            wowhead_items = p.map(parse_func, items_ids)
+        wowhead_items = {item.id: item for item in wowhead_items if item is not None}
+
+        os.makedirs('cache/tmp', exist_ok=True)
+        with open(cache_path, 'wb') as f:
+            pickle.dump(wowhead_items, f)
+
+    return wowhead_items
+
 
 def load_object_lua() -> dict[str, str]:
     from slpp import slpp as lua
@@ -488,9 +620,9 @@ def __merge_item_effects(old_item: ItemData, new_item: ItemData):
 def merge_item(id: int, old_items: dict[str, ItemData], new_item: ItemData) -> dict[str, ItemData]:
     import re
     if len(old_items) > 1:
-        last_old_spell_key = list(old_items.keys())[-1]
-        result = merge_item(id, {last_old_spell_key: old_items[last_old_spell_key]}, new_item)
-        del old_items[last_old_spell_key]
+        last_old_item_key = list(old_items.keys())[-1]
+        result = merge_item(id, {last_old_item_key: old_items[last_old_item_key]}, new_item)
+        del old_items[last_old_item_key]
         return {**old_items, **result}
     if len(old_items) == 1:
         old_item = next(iter(old_items.values()))
@@ -539,19 +671,179 @@ def merge_expansions(old_expansion: dict[int, dict[str, ItemData]], new_expansio
     return result
 
 
-def retrieve_item_data():
+def merge_readable_item(id: int, old_items: dict[str, ReadableItem], new_item: ReadableItem) -> dict[str, ReadableItem]:
+    if len(old_items) > 1:
+        last_old_item_key = list(old_items.keys())[-1]
+        result = merge_readable_item(id, {last_old_item_key: old_items[last_old_item_key]}, new_item)
+        del old_items[last_old_item_key]
+        return {**old_items, **result}
+    if len(old_items) == 1:
+        old_item = next(iter(old_items.values()))
+
+        if len(old_item.pages) != len(new_item.pages):
+            print(f'Warning! Readable item #{id} changed between {old_item.expansion} and {new_item.expansion}!')
+            return {**old_items, **{new_item.expansion: new_item}}
+
+        for i in range(len(old_item.pages)):
+            old_page = old_item.pages[i]
+            new_page = new_item.pages[i]
+            if old_page != new_page:
+                print(f'Warning! Readable item #{id} changed between {old_item.expansion} and {new_item.expansion} at page #{i+1}!')
+                return {**old_items, **{new_item.expansion: new_item}}
+
+        return old_items
+    else:
+        print(f'Skip: Readable item #{id} instance number unexpected')
+
+
+def merge_readable_items(old_expansion: dict[int, dict[str, ReadableItem]], new_expansion: dict[int, ReadableItem]) -> dict[int, dict[str, ReadableItem]]:
+    result = dict()
+
+    for item_id in sorted(new_expansion.keys()):
+        item = new_expansion[item_id]
+        if not item.pages or len(item.pages) == 0:
+            # print(f'Warning! Readable item #{item_id}:{item.expansion} has no pages!')
+            del new_expansion[item_id]
+
+    for item_id in old_expansion.keys() - new_expansion.keys():
+        result[item_id] = old_expansion[item_id]
+
+    for item_id in new_expansion.keys() - old_expansion.keys():
+        new_item = new_expansion.get(item_id)
+        if new_item and len(new_item.pages) > 0:
+            result[item_id] = dict()
+            result[item_id][new_expansion[item_id].expansion] = new_expansion[item_id]
+        # else:
+        #     print(f'Warning! No readable item data for #{item_id} in new expansion!')
+
+    for item_id in sorted(old_expansion.keys() & new_expansion.keys()):
+        result[item_id] = merge_readable_item(item_id, old_expansion[item_id], new_expansion[item_id])
+    return result
+
+
+def populate_book_text(item_data: dict[int, ItemData], readable_items: dict[int, ReadableItem]):
+    for item_id, item in item_data.items():
+        if item.readable and item_id in readable_items:
+            readable_item = readable_items[item_id]
+            if readable_item and readable_item.pages:
+                item.readable_pages = readable_item.pages
+            else:
+                print(f'Warning! Item #{item_id} has no readable pages!')
+        else:
+            item.readable_pages = None
+
+
+def fix_readables(expansion, items):
+    ## Known valid diffs:
+    # Readable item #20545 changed between classic and wrath at page #1
+    # Readable item #745 changed between classic and cata
+    # Readable item #2223 changed between classic and cata
+    # Warning! Readable item #4834 changed between classic and cata # TODO: Check ingame
+    # Readable item #4992 changed between classic and cata at page #1
+    # Readable item #5505 changed between classic and cata at page #6
+    # Readable item #9553 changed between classic and cata at page #1
+    # Readable item #9577 changed between classic and cata at page #1
+    # Readable item #9580 changed between classic and cata at page #1
+    # Readable item #10839 changed between classic and cata at page #2
+    # Readable item #16263 changed between classic and cata at page #1
+    # Readable item #16307 changed between classic and cata at page #1
+    # Readable item #16310 changed between classic and cata at page #1
+
+    if expansion == CLASSIC:
+        items[2007].pages[1] = items[2007].pages[1].replace("I'lalia", "I'lalai")
+        items[2154].pages[2] = items[2154].pages[2].replace("cemetary near Raven's Hill", "cemetery near Raven Hill")
+        items[2154].pages[3] = items[2154].pages[3].replace("cemetary", "cemetery")
+        items[2154].pages[4] = items[2154].pages[4].replace("cemetary", "cemetery")
+        items[2154].pages[6] = items[2154].pages[6].replace("cemetary", "cemetery")
+        items[2154].pages[6] = items[2154].pages[6].replace("the chests of", "the chest of")
+        items[2154].pages[7] = items[2154].pages[7].replace("cemetary", "cemetery")
+        items[2748].pages[0] = items[2748].pages[0].replace("Lashtail Raptor's stalking", 'Lashtail Raptors stalking')
+        items[2758].pages[0] = items[2758].pages[0].replace("their sites on the", 'their sights on the')
+        items[2758].pages[7] = items[2758].pages[7].replace("Lashtail Raptor's stalking", 'Lashtail Raptors stalking')
+        items[2885].pages[0] = items[2885].pages[0].replace("Captain Melrose", 'Captain Melrache')
+        items[2885].pages[1] = items[2885].pages[1].replace("Captain Melrose", 'Captain Melrache')
+        items[3657].pages[2] = items[3657].pages[2].replace('next deliver of', 'next delivery of')
+        items[3657].pages[2] = items[3657].pages[2].replace('Azureload', 'Azurelode')
+        items[3657].pages[3] = items[3657].pages[3].replace('Azureload', 'Azurelode')
+        items[5088].pages[0] = items[5088].pages[0].replace('autmoatically', 'automatically')
+        items[5594].pages[0] = items[5594].pages[0].replace("the Bloodfeather's have", 'the Bloodfeathers have')
+        items[5594].pages[0] = items[5594].pages[0].replace("can have her head", 'can have their heads') # meh. pronouns? rly?
+        items[5897].pages[0] = items[5897].pages[0].replace("disappounted", 'disappointed')
+        items[9559].pages[0] = items[9559].pages[0].replace("we posses no magical", 'we possess no magical')
+        items[9580].pages[0] = items[9580].pages[0].replace("hopefuly", 'hopefully')
+        items[12438].pages[0] = items[12438].pages[0].replace("guage", 'gauge')
+        items[13202].pages[8] = items[13202].pages[8].replace("Davil Lightforge", 'Davil Lightfire')
+        items[15998].pages[0] = items[15998].pages[0].replace("bounty this land was", 'bounty for which this land was')
+        items[16310].pages[0] = items[16310].pages[0].replace("the list students", 'the list of students')
+        items[16310].pages[0] = items[16310].pages[0].replace("Honarary", 'Honorary')
+        items[18664].pages[0] = items[18664].pages[0].replace('with the ranks of each listed in descending order from highest to lowest. Long live the Alliance!', 'with the ranks\nof each listed in descending order from highest to lowest.\nLong live the Alliance!')
+        items[18675].pages[0] = items[18675].pages[0].replace('As is fitting, the strongest are listed at the top, with the weaker listed below them.', 'As is\nfitting, the strongest are listed at the top, with the weaker\nlisted below them.')
+        items[20676].pages[0] = items[20676].pages[0].replace("The sing praise", 'They sing praise')
+
+    if expansion == TBC:
+        items[2007].pages[1] = items[2007].pages[1].replace("I'lalia", "I'lalai")
+        items[2154].pages[2] = items[2154].pages[2].replace("cemetary near Raven's Hill", "cemetery near Raven Hill")
+        items[2154].pages[3] = items[2154].pages[3].replace("cemetary", "cemetery")
+        items[2154].pages[4] = items[2154].pages[4].replace("cemetary", "cemetery")
+        items[2154].pages[6] = items[2154].pages[6].replace("cemetary", "cemetery")
+        items[2154].pages[6] = items[2154].pages[6].replace("the chests of", "the chest of")
+        items[2154].pages[7] = items[2154].pages[7].replace("cemetary", "cemetery")
+        items[2885].pages[0] = items[2885].pages[0].replace("Captain Melrose", 'Captain Melrache')
+        items[2885].pages[1] = items[2885].pages[1].replace("Captain Melrose", 'Captain Melrache')
+        items[3657].pages[2] = items[3657].pages[2].replace('Azureload', 'Azurelode')
+        items[3657].pages[3] = items[3657].pages[3].replace('Azureload', 'Azurelode')
+        items[9559].pages[0] = items[9559].pages[0].replace("we posses no magical", 'we possess no magical')
+        items[11737].pages[0] = items[11737].pages[0].replace('Master Kariel Winthalus', 'Master Telmius Dreamseeker')
+        items[13202].pages[8] = items[13202].pages[8].replace("Davil Lightforge", 'Davil Lightfire')
+        items[18664].pages[0] = items[18664].pages[0].replace('with the ranks of each listed in descending order from highest to lowest. Long live the Alliance!', 'with the ranks\nof each listed in descending order from highest to lowest.\nLong live the Alliance!')
+        items[18675].pages[0] = items[18675].pages[0].replace('As is fitting, the strongest are listed at the top, with the weaker listed below them.', 'As is\nfitting, the strongest are listed at the top, with the weaker\nlisted below them.')
+        items[32888].pages[0] = items[32888].pages[0].replace("to convice his", 'to convince his')
+        items[20676].pages[0] = items[20676].pages[0].replace("The sing praise", 'They sing praise')
+        items[23798].pages[0] = items[23798].pages[0].replace("their whips or goring", 'their whips, or goring')
+        items[24237].pages[1] = items[24237].pages[1].replace("consciousness The torture", 'consciousness. The torture')
+
+    if expansion == WRATH:
+        items[2154].pages[2] = items[2154].pages[2].replace("cemetary near Raven's Hill", "cemetery near Raven Hill")
+        items[2154].pages[3] = items[2154].pages[3].replace("cemetary", "cemetery")
+        items[2154].pages[4] = items[2154].pages[4].replace("cemetary", "cemetery")
+        items[2154].pages[6] = items[2154].pages[6].replace("cemetary", "cemetery")
+        items[2154].pages[6] = items[2154].pages[6].replace("the chests of", "the chest of")
+        items[2154].pages[7] = items[2154].pages[7].replace("cemetary", "cemetery")
+        items[9559].pages[0] = items[9559].pages[0].replace("we posses no magical", 'we possess no magical')
+        items[18664].pages[0] = items[18664].pages[0].replace('with the ranks of each listed in descending order from highest to lowest. Long live the Alliance!', 'with the ranks\nof each listed in descending order from highest to lowest.\nLong live the Alliance!')
+        items[18675].pages[0] = items[18675].pages[0].replace('As is fitting, the strongest are listed at the top, with the weaker listed below them.', 'As is\nfitting, the strongest are listed at the top, with the weaker\nlisted below them.')
+        items[20676].pages[0] = items[20676].pages[0].replace("The sing praise", 'They sing praise')
+        items[23798].pages[0] = items[23798].pages[0].replace("their whips or goring", 'their whips, or goring')
+        items[24237].pages[1] = items[24237].pages[1].replace("consciousness The torture", 'consciousness. The torture')
+
+    if expansion == CATA:
+        items[18664].pages[0] = items[18664].pages[0].replace('with the ranks of each listed in descending order from highest to lowest. Long live the Alliance!', 'with the ranks\nof each listed in descending order from highest to lowest.\nLong live the Alliance!')
+        items[18675].pages[0] = items[18675].pages[0].replace('As is fitting, the strongest are listed at the top, with the weaker listed below them.', 'As is\nfitting, the strongest are listed at the top, with the weaker\nlisted below them.')
+
+
+def retrieve_item_data() -> tuple[dict[int, dict[str, ItemData]], dict[str, dict[int, ReadableItem]]]:
     wowhead_md = dict()
     wowhead_items = dict()
+    readable_items = dict()
     all_items = dict()
+    all_readable_items = dict()
 
     for expansion, expansion_properties in expansion_data.items():
         wowhead_md[expansion] = get_wowhead_items_metadata(expansion)
+        for ignore_id in expansion_properties[IGNORES]:
+            del wowhead_md[expansion][ignore_id]
         for force_id in expansion_properties[FORCE_DOWNLOAD]:
             wowhead_md[expansion][force_id] = ItemMD(force_id, "FORCE LOAD", expansion)
         save_xmls_from_wowhead(expansion, set(wowhead_md[expansion].keys()))
-        wowhead_items[expansion] = parse_wowhead_pages(expansion, wowhead_md[expansion])
+        wowhead_items[expansion] = parse_wowhead_xml_pages(expansion, set(wowhead_md[expansion].keys()))
+        readable_items_ids = {item_id for item_id, item in wowhead_items[expansion].items() if item.readable} # filter readable items
+        save_htmls_from_wowhead(expansion, readable_items_ids)
+        readable_items[expansion] = parse_wowhead_html_pages(expansion, readable_items_ids)
+        fix_readables(expansion, readable_items[expansion])
+        # populate_book_text(wowhead_items[expansion], readable_items[expansion])
         print(f'Merging with {expansion}')
         all_items = merge_expansions(all_items, wowhead_items[expansion])
+        all_readable_items = merge_readable_items(all_readable_items, readable_items[expansion])
 
     # translations = load_item_lua_names('input/entries/item.lua')
     # translations_sod = load_item_lua_names('input/entries/item_sod.lua')
@@ -568,7 +860,7 @@ def retrieve_item_data():
     #     if not wowhead_items[key].name_ua:
     #         wowhead_items[key].name_ua = 'questie'
 
-    return all_items
+    return all_items, all_readable_items
 
 
 def __try_cast_str_to_int(value: str, default=None):
@@ -1054,10 +1346,57 @@ def filter_latest_untranslated(items: dict[int, dict[str, ItemData]]) -> dict[in
     return result
 
 
+def __book_filename(book_id, book_title):
+    valid_chars = frozenset("-.() abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789")
+    return ''.join(c for c in book_title if c in valid_chars) + '_' + str(book_id)
+
+
+def write_xml_book_file(path: str, book: ReadableItem):
+    with open(path, mode='w', encoding='utf-8') as f:
+        f.write('<?xml version="1.0" encoding="utf-8"?>\n')
+        f.write('<resources>\n')
+        for page_no, page_text in enumerate(book.pages, start=1):
+            f.write(f'<string name="PAGE_{page_no}"><![CDATA[{page_text}]]></string>\n')
+        f.write('</resources>\n')
+
+
+def generate_book_sources(readable_items: dict[str, dict[int, ReadableItem]]):
+    import os
+    import shutil
+    from pathlib import Path
+
+    print('Generating book sources...')
+    if os.path.exists('output/source_for_crowdin'):
+        shutil.rmtree('output/source_for_crowdin')
+    count = 0
+    books_by_path: dict[str, ReadableItem] = dict()
+
+    for expansion, items in readable_items.items():
+        for item in items.values():
+            if item.expansion == 'classic':
+                suffix = ''
+            else:
+                suffix = '_' + item.expansion
+
+            book_filename = __book_filename(item.id, item.name)
+            path = f'output/source_for_crowdin/books{suffix}/{book_filename.capitalize()[:1]}/{book_filename}.xml'
+
+            books_by_path[path] = item
+
+    for path, book in books_by_path.items():
+        Path(*Path(path).parts[:-1]).mkdir(parents=True, exist_ok=True)
+        write_xml_book_file(path, book)
+        count += 1
+
+    print(f'Generated {count} book files.')
+
+
 if __name__ == '__main__':
     # parse_wowhead_item_page(CLASSIC, 9328)
+    # parse_wowhead_item_xml_page(CLASSIC, 18664)
+##id in [18664, 20405, 18675, 16785, 17781]
 
-    parsed_items = retrieve_item_data()
+    parsed_items, readable_items = retrieve_item_data()
 
     tsv_translations = read_translations_sheet()
     classicua_translations = read_classicua_translations(r'input\entries', parsed_items)
@@ -1076,8 +1415,12 @@ if __name__ == '__main__':
     # print(len(spells))
     validate_spell_references(parsed_items, spells)
 
-    needs_update = filter_latest_untranslated(parsed_items)
-    create_translation_sheet(needs_update, spells)
-    # create_translation_sheet(parsed_items, spells)
+    # needs_update = filter_latest_untranslated(parsed_items)
+    # create_translation_sheet(needs_update, spells)
+    create_translation_sheet(parsed_items, spells)
 
     convert_translations_to_entries(tsv_translations)
+
+    generate_book_sources(readable_items)
+    diffs, removals, additions = compare_directories('input/source_from_crowdin', 'output/source_for_crowdin')
+    update_on_crowdin(diffs, removals, additions)
