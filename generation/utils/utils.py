@@ -114,21 +114,36 @@ def write_crowdin_xml_file(path: str, content: dict[str, str]) -> None:
 
 
 def __get_crowdin_files(client: CrowdinClient) -> dict[str, int]:
-    print('Getting Crowdin files...', end='')
+    import pickle
     crowdin_files = dict()
-    offset = 0
-    page_size = 500
-    while (True):
-        files = client.source_files.list_files(CROWDIN_PROJECT_ID, offset=offset, limit=page_size)
-        if not files['data']:
-            break
-        for file in files['data']:
-            file_id = file['data']['id']
-            file_path = file['data']['path']
-            crowdin_files[file_path] = file_id
-        offset += page_size
+    if os.path.exists(f'../.cache/crowdin_files.pkl'):
+        print(f'Loading Crowdin files...', end='')
+        with open(f'../.cache/crowdin_files.pkl', 'rb') as f:
+            crowdin_files = pickle.load(f)
+    else:
+        print('Getting Crowdin files...', end='')
+        offset = 0
+        page_size = 500
+        while (True):
+            files = client.source_files.list_files(CROWDIN_PROJECT_ID, offset=offset, limit=page_size)
+            if not files['data']:
+                break
+            for file in files['data']:
+                file_id = file['data']['id']
+                file_path = file['data']['path']
+                crowdin_files[file_path] = file_id
+            offset += page_size
+        with open(f'../.cache/crowdin_files.pkl', 'wb') as f:
+            pickle.dump(crowdin_files, f)
     print(' done')
     return crowdin_files
+
+def __store_crowdin_files(crowdin_files: dict[str, int]) -> None:
+    import pickle
+    with open(f'../.cache/crowdin_files.pkl', 'wb') as f:
+        print('Storing Crowdin files...', end='')
+        pickle.dump(crowdin_files, f)
+        print(' done')
 
 
 def __get_crowdin_directories(client: CrowdinClient) -> dict[str, int]:
@@ -204,6 +219,7 @@ def update_on_crowdin(diffs: list[str], removals: list[str], additions: list[str
             print(f'Removing {file_path}...', end='')
             deleted_file = client.source_files.delete_file(projectId=CROWDIN_PROJECT_ID,
                                                            fileId=crowdin_files[file_path])
+            del crowdin_files[file_path]
             print(' done')
         else:
             print(f'File path "{file_path}" not found')
@@ -221,7 +237,9 @@ def update_on_crowdin(diffs: list[str], removals: list[str], additions: list[str
                                                          storageId=storage['data']['id'],
                                                          directoryId=crowdin_dirs['/' + dir_path.as_posix()],
                                                          name=pathlib.Path(addition).name)
+            crowdin_files[file_path] = uploaded_file['data']['id']
             print(' done')
+    __store_crowdin_files(crowdin_files)
 
 # [!] Any changes made to string_hash() func must be kept in sync with Lua impl
 def string_hash(text: str) -> int:
