@@ -661,7 +661,7 @@ def save_zones_to_db(zones: dict[str, Zone]):
 
 def read_zones_from_glossary() -> dict[str, Zone]:
     import csv
-    all_zones = dict()
+    zones = dict()
     with open('input/glossary.csv', 'r', encoding="utf-8") as input_file:
         reader = csv.reader(input_file)
         for row in reader:
@@ -670,10 +670,14 @@ def read_zones_from_glossary() -> dict[str, Zone]:
             if 'локація' in row[1]:
                 translation = row[3]
                 name = row[0]
-                if name in all_zones:
-                    print(f'Zone "{id}" duplicated')
-                all_zones[name] = Zone(None, name, translation=translation)
-    return all_zones
+                if name in zones.keys():
+                    print(f'Zone "{name}" duplicated')
+                zones[name] = Zone(None, name, translation=translation)
+                if name.startswith('The '):
+                    zones[name[4:]] = Zone(None, name[4:], translation=translation)
+                else:
+                    zones['The ' + name] = Zone(None, 'The ' + name, translation=translation)
+    return zones
 
 
 def generate_glossary_row(translation: Zone, zones: dict[str, Zone]) -> str:
@@ -710,18 +714,18 @@ def save_translations_to_glossary(translated_zones: dict[str, Zone], glossary_zo
     for zone_name in translated_zones.keys() - glossary_zones.keys():
         glossary_import_lines.append(generate_glossary_row(translated_zones[zone_name], merged_zones))
 
-    with open('input/new_zones_dictionary.csv', 'w', encoding="utf-8") as out_file:
+    with open('output/new_zones_dictionary.csv', 'w', encoding="utf-8") as out_file:
         out_file.writelines('\n'.join(glossary_import_lines))
 
 
-def generate_translation_csv(merged_zones: dict[str, Zone]):
+def generate_translation_csv(merged_zones: dict[str, Zone], translated_zones: dict[str, Zone]):
     import csv
 
     feedback_zone_names = set()
     with open('input/missing_zones.tsv', 'r', encoding="utf-8") as input_file:
         reader = csv.reader(input_file, delimiter="\t")
         for row in reader:
-            feedback_zone_names.add(row[0])
+            feedback_zone_names.add(row[0].strip())
 
     result_lines = list()
     result_lines.append('ID\tName(en)\tName (ua)\tParent zone\texpansion\tcategory\tsource')
@@ -730,8 +734,29 @@ def generate_translation_csv(merged_zones: dict[str, Zone]):
         if zone.translation is None:
             result_lines.append(f'{zone.id}\t{zone_name}\t{zone.translation}\t{zone.parent_zone}\t{zone.expansion}\t{zone.category}\t{zone.source}')
 
+    for zone_name in feedback_zone_names - translated_zones.keys() - merged_zones.keys():
+        result_lines.append(f'?\t{zone_name}\t\t\t\t\tfeedback')
+
     with open('output/translate_this.csv', 'w', encoding="utf-8") as out_file:
         out_file.writelines('\n'.join(result_lines))
+
+
+def read_zones_from_lua() -> dict[str, Zone]:
+    from slpp import slpp as lua
+    zones = dict()
+    with open('input/zone.lua', 'r', encoding="utf-8") as lua_file:
+        file_content = lua_file.read()
+        lua_table = file_content[file_content.find(' = { ') + 2:file_content.find('\n}\n') + 2]
+        decoded_items = lua.decode(lua_table)
+        for zone_name, zone_translation in decoded_items.items():
+            if zone_name in zones.keys():
+                print(f'Zone "{zone_name}" duplicated')
+            zones[zone_name] = Zone(None, zone_name, translation=zone_translation)
+            if zone_name.startswith('The '):
+                zones[zone_name[4:]] = Zone(None, zone_name[4:], translation=zone_translation)
+            else:
+                zones['The ' + zone_name] = Zone(None, 'The ' + zone_name, translation=zone_translation)
+    return zones
 
 
 if __name__ == '__main__':
@@ -751,17 +776,18 @@ if __name__ == '__main__':
     # twinhead_zones = parse_twinhead_zone_pages()
     warcraftdb_zones = parse_warcraftdb_zone_pages()
     translated_zones = read_new_translations()  # To generate glossary import rows for Crowdin
-    glossary_zones = read_zones_from_glossary()  # To generate DB with up-to-date translations
+    # glossary_zones = read_zones_from_glossary()  # To generate DB with up-to-date translations
+    classicua_zones = read_zones_from_lua()  # To generate DB with up-to-date translations
 
-    for key in (translated_zones.keys() & glossary_zones.keys()):
-        print(f'Warning: clashing translations for {key}: "{translated_zones[key]}" and "{glossary_zones[key]}"')
-    merged_translations = {**translated_zones, **glossary_zones}
+    for key in (translated_zones.keys() & classicua_zones.keys()):
+        print(f'Warning: clashing translations for {key}: "{translated_zones[key]}" and "{classicua_zones[key]}"')
+    merged_translations = {**translated_zones, **classicua_zones}
 
     save_temp_zones_to_cache_db(wowhead_zones, wowdb_zones, classicdb_zones, evowow_zones, warcraftdb_zones)
 
     merged_zones = merge_zones(wowhead_zones, wowdb_zones, classicdb_zones, evowow_zones, warcraftdb_zones, merged_translations)
     save_zones_to_db(merged_zones)
 
-    save_translations_to_glossary(translated_zones, glossary_zones, merged_zones)
+    save_translations_to_glossary(translated_zones, classicua_zones, merged_zones)
 
-    generate_translation_csv(merged_zones)
+    generate_translation_csv(merged_zones, merged_translations)
