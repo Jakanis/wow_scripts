@@ -36,7 +36,7 @@ expansion_data = {
         NPC_CACHE: 'wowhead_sod_npc_cache',
         METADATA_FILTERS: ('13:', '2:', '11500:'),
         IGNORES: [],
-        FORCE_DOWNLOAD: [207795, 212157, 222231, 222240, 223739]
+        FORCE_DOWNLOAD: [207795, 212157, 222231, 222240, 223739, 242756]
     },
     TBC: {
         WOWHEAD_URL: 'https://www.wowhead.com/tbc',
@@ -652,7 +652,7 @@ def store_npc_quotes():
     wowhead_md = dict()
     wowhead_npcs = dict()
 
-    for expansion in list(expansion_data.keys())[:2]:
+    for expansion in list(expansion_data.keys())[:3]:
         wowhead_md[expansion] = get_wowhead_npc_metadata(expansion)
         save_htmls_from_wowhead(expansion, set(wowhead_md[expansion].keys()))
         wowhead_npcs[expansion] = parse_wowhead_pages(expansion, wowhead_md[expansion])

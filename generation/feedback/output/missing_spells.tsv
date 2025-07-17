@@ -133,10 +133,14 @@
 3604	Tendon Rip
 3635	Crystal Gaze
 3684	Judgement
+3755	Tailoring: Linen Bag
+3757	Tailoring: Woolen Bag
+3758	Tailoring: Green Woolen Bag
 3773	Leatherworking: Guardian Armor
 3776	Leatherworking: Green Leather Bracers
 3777	Leatherworking: Guardian Leather Bracers
 3780	Leatherworking: Heavy Armor Kit
+3813	Tailoring: Small Silk Pack
 3815	Poison Cloud
 3816	Leatherworking: Cured Light Hide
 3817	Leatherworking: Cured Medium Hide
@@ -224,6 +228,10 @@
 6653	Dire Wolf
 6661	Leatherworking: Barbaric Harness
 6685	Piercing Shot
+6686	Tailoring: Red Linen Bag
+6688	Tailoring: Red Woolen Bag
+6693	Tailoring: Green Silk Pack
+6695	Tailoring: Black Silk Pack
 6705	Leatherworking: Murloc Scale Bracers
 6713	Disarm
 6726	Silence
@@ -264,6 +272,7 @@
 7257	Alchemy: Fire Protection Potion
 7258	Alchemy: Frost Protection Potion
 7259	Alchemy: Nature Protection Potion
+7279	Black Sludge
 7289	Shrink
 7295	Soul Drain
 7321	Chilled
@@ -438,9 +447,11 @@
 11020	Petrify
 11201	Crippling Poison
 11350	Fire Shield
+11397	Diseased Shot
 11398	Mind-numbing Poison III
 11428	Knockdown
 11436	Slow
+11442	Withered Touch
 11443	Cripple
 11449	Alchemy: Elixir of Agility
 11450	Alchemy: Elixir of Greater Defense
@@ -463,6 +474,7 @@
 11476	Alchemy: Elixir of Shadow Power
 11478	Alchemy: Elixir of Detect Demon
 11643	Blacksmithing: Golden Scale Gauntlets
+11841	Static Barrier
 11876	War Stomp
 11892	Shrink
 11918	Poison
@@ -849,6 +861,7 @@
 17745	Diseased Spit
 17820	Veil of Shadow
 17831	Call of the Grave
+17843	Flash Heal
 17883	Immolate
 17961	Scarlet Illusion
 17963	Sundering Cleave
@@ -1067,6 +1080,7 @@
 21945	Tailoring: Green Holiday Shirt
 21970	Mark of the Chosen Effect
 22067	Reflection
+22120	Charge
 22127	Entangling Roots
 22247	Suppression Aura
 22274	Greater Polymorph
@@ -1388,6 +1402,8 @@
 26078	Vekniss Catalyst
 26079	Cause Insanity
 26084	Whirlwind
+26085	Tailoring: Soul Pouch
+26086	Tailoring: Felcloth Bag
 26087	Tailoring: Core Felcloth Bag
 26102	Sand Blast
 26143	Mind Flay
@@ -1458,6 +1474,7 @@
 28240	Poison Cloud
 28243	Blacksmithing: Icebane Gauntlets
 28311	Slime Bolt
+28315	Aura of Fear
 28327	Engineering: Steam Tonk Controller
 28335	Whirlwind
 28338	Magnetic Pull
@@ -1696,6 +1713,7 @@
 446100	Inanimate
 446103	Blood Loa's Blessing
 446104	Atal'alarion's Enchanted Boulder
+446105	Summon Skeletal Wind Serpent
 446219	Cries of Corrupted Ancestry
 446226	Alchemy: Flask of Everlasting Nightmares
 446236	Engineering: Void-Powered Invoker's Vambraces
@@ -1718,6 +1736,7 @@
 446731	Headhunter's Barbed Spear
 446851	Alchemy: Flask of Nightmarish Mojo
 447554	Undying Slumber
+447555	Chest Pains
 447591	Undying Fel Fire
 447894	Sting of the Serpent
 448085	Alchemy: Flask of Restless Dreams
@@ -1732,6 +1751,7 @@
 449927	Blood Corruption
 449932	Fiery Strength
 449975	Stalwart Block
+450005	Spare Change
 450084	Rapid Cutting
 450108	Mind Vision
 450600	Hex
@@ -1819,6 +1839,7 @@
 461232	Gehennas' Curse
 461235	Moonstalker Fury
 461252	Shadowflame Fury
+461254	Fury of Stormrage
 461256	Diplomatic Immunity
 461297	Totem of Raging Fire
 461314	Oath of Protection
@@ -1986,6 +2007,7 @@
 1213169	Spore Cloud
 1213170	Noxious Breath
 1213190	Animal Fury
+1213250	Starfall
 1213253	Entangling Roots
 1213254	Curse of Despair
 1213255	Curse of Despair
@@ -2084,6 +2106,7 @@
 1213939	Pack Leader
 1213996	Draw Spirit
 1214001	Scroll: Wrath of the Swarm
+1214002	Draw Spirit
 1214028	Bellowing Roar
 1214136	Divergent Lightning
 1214137	Blacksmithing: Obsidian Heartseeker
@@ -2159,6 +2182,7 @@
 1218366	Living Darkness
 1218485	Draught of the Sands
 1218506	Growl
+1218695	Overclocked
 1218701	Evoker
 1219020	Creeping Darkness
 1219058	Marching Orders
@@ -2237,6 +2261,7 @@
 1223048	Last Rites
 1223264	Rushing Dark Riders
 1223265	Frailty
+1223342	Scarlet Inquisition
 1223348	Seal of the Dawn
 1223367	Seal of the Dawn
 1223379	Seal of the Dawn
@@ -2244,6 +2269,7 @@
 1223459	War Stomp
 1223460	Furious Fists
 1223462	Flamethrower
+1223963	Corruption
 1224428	Authority of the Frozen Wastes
 1224607	Tailoring: Scarlet Augur's Hood
 1224608	Tailoring: Scarlet Augur's Mantle
@@ -2253,6 +2279,22 @@
 1224612	Tailoring: Scarlet Augur's Strap
 1224613	Tailoring: Scarlet Augur's Leggings
 1224614	Tailoring: Scarlet Augur's Soles
+1224615	Leatherworking: Scarlet Infiltrator's Bandana
+1224616	Leatherworking: Scarlet Infiltrator's Shoulderpads
+1224617	Leatherworking: Scarlet Infiltrator's Vest
+1224618	Leatherworking: Scarlet Infiltrator's Bracers
+1224619	Leatherworking: Scarlet Infiltrator's Gloves
+1224620	Leatherworking: Scarlet Infiltrator's Belt
+1224621	Leatherworking: Scarlet Infiltrator's Trousers
+1224622	Leatherworking: Scarlet Infiltrator's Shoes
+1224623	Leatherworking: Scarlet Huntsman's Coif
+1224624	Leatherworking: Scarlet Huntsman's Pauldrons
+1224625	Leatherworking: Scarlet Huntsman's Chain
+1224626	Leatherworking: Scarlet Huntsman's Wristguards
+1224627	Leatherworking: Scarlet Huntsman's Handguards
+1224628	Leatherworking: Scarlet Huntsman's Clasp
+1224629	Leatherworking: Scarlet Huntsman's Legguards
+1224630	Leatherworking: Scarlet Huntsman's Boots
 1224631	Blacksmithing: Scarlet Soldier's Helmet
 1224632	Blacksmithing: Scarlet Soldier's Spaulders
 1224633	Blacksmithing: Scarlet Soldier's Chestplate
@@ -2271,6 +2313,10 @@
 1225780	Well Fed
 1225782	Well Fed
 1225841	Curse of Recklessness
+1226035	Swiftbloom
+1226038	Rejuvenating
+1226127	Savage Flurry
+1226136	Wicked Shot
 1226210	Engineering: Tinker: Teleport
 1226211	Engineering: Tinker: Nitro Boosts
 1226218	Mark of Zeliek
@@ -2278,52 +2324,101 @@
 1226220	Mark of Mograine
 1226221	Mark of Korth'azz
 1226282	Shadow Bolt
+1226357	Wicked Fast
 1226396	Apple Scope
 1226529	Fish Barrel
+1226689	Leatherworking: Scarlet Quiver
+1226690	Leatherworking: Scarlet Ammo Pouch
 1226739	Undead Slaying
 1226808	Food
+1227177	Burn
 1227435	Sleep
+1227723	Tailoring: Crusader's Knapsack
+1227724	Tailoring: Crimson Dawnwoven Bag
 1227820	Might of Menethil
 1228049	Shadowflame
+1228374	Oil Spill
 1228463	Cannon Fire
 1228509	Burning Oil
 1229005	Mortal Wound
 1229045	Friend of Pupper
+1229397	Divine Conflagration
+1229409	Overflowing Light
+1229704	Divine Conflagration
+1229730	Blinding Flare
 1229760	Authoritative Slam
 1230200	Enervate
 1230203	Incite Truth
 1230228	Pity
 1230242	Enkindle
+1230283	Entangling Shot
+1230897	Ruinous Presence
 1230990	Molten Armaments
+1231000	Molten Remnant
 1231091	Prototype Nitro Boosts
 1231095	Peeled Secrets
+1231124	Righteous Strength
+1231128	Enchanting: Enchant Weapon - Grand Crusader
+1231138	Righteous Fire
 1231280	Citizen's Arrest
 1231310	Watchman's Mark
+1231317	Rabid Bite
 1231324	Rabies
+1231397	Chew Hamstring
 1231399	Legislate
+1231417	Coup
+1231420	Coup
+1231444	Eat Apple
 1231509	Curse of Shame
 1231579	Rapid Poison
+1231582	Dying Light
+1231587	Tidal Force
 1231592	Drowning Shallows
+1231594	Lure of the Shallows
+1231618	Wake of Ashes
+1231651	Quietus
 1231777	Suppressing Darkness
 1231836	Carrion Swarm
 1231837	Carrion Swarm
 1231844	Circle of Domination
 1231845	Circle of Domination
+1231873	Confession
 1231929	Scarlet Illusion
 1231993	Tarnished Breath
+1231997	Mote of Possibility
+1232004	Mote of Possibility
 1232014	Scarlet Dominion
 1232018	Blistering Vent
 1232030	Mystical Refraction
 1232031	Mystical Refraction
 1232038	Blue Coalescence
+1232039	Red Coalescence
+1232040	Violet Coalescence
+1232051	Ambitious Pursuit
+1232052	Heads!
+1232097	Crimson Flare
 1232141	Green Coalescence
 1232142	Yellow Coalescence
+1232169	Righteous Inquisition
 1232177	Light's Hope
+1232184	Fallen Regality
+1232192	Debilitate
 1232218	Armistice
+1232322	Caladbolg
 1232389	Unwavering Blade
+1232390	Rose's Thorn
+1232762	Fireball
+1233847	Scarlet Grasp
+1233849	Unstable Concoction
+1233883	Intoxicating Venom
+1233901	Noxious Poison
+1234005	Slammin'
 1234320	Epoch's End
+1234347	Ignite Flesh
+1234540	Ignite
 1235119	Ninja Costume
 1235122	Ninja Costume
+1235328	Curse of Impotence
 1236162	Holy Fire
 1236173	Pyroblast
 1236177	Hamstring

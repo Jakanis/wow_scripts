@@ -1037,6 +1037,7 @@ def fix_classic_quests(classic_quests: dict[int, dict[str, QuestEntity]]):
     classic_quests[123][CLASSIC].objective += '.'
     classic_quests[279][CLASSIC].description = classic_quests[279][CLASSIC].description.replace(' Murloc', ' murloc').replace(' Bluegill', ' bluegill')
     classic_quests[345][CLASSIC].description = classic_quests[345][CLASSIC].description.replace('very quickly Unfortunately', 'very quickly. Unfortunately')
+    classic_quests[353][CLASSIC].progress = classic_quests[353][CLASSIC].progress.replace('to prove their worth', 'to prove his worth')
     classic_quests[607][CLASSIC].objective += '.'
     classic_quests[621][CLASSIC].description = classic_quests[621][CLASSIC].description.replace('Jubuwai', 'Jubuwal')
     classic_quests[682][CLASSIC].objective = classic_quests[682][CLASSIC].objective.replace('Bring Stromgarde', 'Bring 15 Stromgarde')
@@ -1232,8 +1233,8 @@ def fix_tbc_quests(tbc_quests: dict[int, dict[str, QuestEntity]]):
     tbc_quests[9315][TBC].description = tbc_quests[9315][TBC].description.replace(" nerubians", " Nerubians")
     tbc_quests[9609][TBC].completion = tbc_quests[9609][TBC].completion.replace(" <race> ", " draenei ")
     tbc_quests[9630][TBC].objective = tbc_quests[9630][TBC].objective.replace(" wants you go into ", " wants you to go into ")
+    tbc_quests[9968][TBC].objective = tbc_quests[9968][TBC].objective.replace(" outside the Cenarion ", " outside of the Cenarion ")
     tbc_quests[9875][TBC].completion = tbc_quests[9875][TBC].completion.replace("Purple Leafed Vêcnarium", "Purple Leafed <name>rium")
-    tbc_quests[9968][TBC].objective = tbc_quests[9875][TBC].objective.replace(" outside the Cenarion ", " outside of the Cenarion ")
     tbc_quests[9998][TBC].objective = tbc_quests[9998][TBC].objective.replace(" at Allerian Post.", " at the Allerian Post.")
     tbc_quests[10037][TBC].objective = tbc_quests[10037][TBC].objective.replace(" in Shattrath.", " in Shattrath City.")
     tbc_quests[10038][TBC].objective = tbc_quests[10038][TBC].objective.replace("Locate and speak with ", "Speak with ")

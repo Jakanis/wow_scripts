@@ -325,6 +325,7 @@
 238681	Mysterious Eidolon
 238682	Mysterious Eidolon
 238715	New Avalon Refugee
+238716	New Avalon Refugee
 238734	Treasure Chest
 238745	Scarlet Infiltrator
 238766	Withering Iris
@@ -355,6 +356,7 @@
 240781	Scarlet Praetorian
 240782	Scarlet Cleric
 240783	Scarlet Curate
+240784	Scarlet Archmage
 240785	Scarlet Alchemist
 240786	Scarlet Medic
 240787	Scarlet Priest
@@ -414,6 +416,7 @@
 241921	Morlune the Mighty
 242010	Pupper
 242019	Leonid Barthalomew the Revered
+242062	Scarlet Martyr
 242106	Eastsea Cannoneer
 242107	Eastsea Dockworker
 242109	Eastsea Swashbuckler
@@ -422,6 +425,8 @@
 242113	First Mate Kip
 242114	Unknown
 242148	Unknown
+242161	Scarlet Miner
+242174	Thisalee Crow
 242183	Abatha Rainwater
 242188	Robin D. Banks
 242214	Scarlet Priest
@@ -429,12 +434,16 @@
 242218	Scarlet Mage
 242224	Cardinal Stiltz
 242296	Bowmaster Puck
+242298	The Ashbringer
 242301	Cannon Mistress Lind
 242304	Knight-Captain Fratley
 242308	Shield Warden Stein
 242310	Arcanist Hilda
 242367	New Avalon Citizen
 242386	Scarlet Firefighter
+242389	Angela Dosantos
+242427	Scarlet Foreman
+242510	Scarlet Hollow
 242547	Scarlet Praetorian
 242605	The Creature
 242751	Viznit the Scoundrel
@@ -445,9 +454,11 @@
 242790	Knight-Captain Fratley
 242791	Shield Warden Stein
 242792	Arcanist Hilda
+242793	Cardinal Stiltz
 242827	Captain Bloodcoin
 242853	Eastsea Scallywag
 242886	Eastsea Long Barrel
+242892	Mirage
 242926	Scarlet Cavalry
 242954	Anvil
 242958	Scarlet Infantry
@@ -456,8 +467,10 @@
 243019	Last Standard
 243023	Inquisitor Jociphine
 243046	Scarlet Captain
+243051	Mote of Possibility
 243056	Knight Farris
 243057	Knight Stearn
+243060	Distracted Scarlet Wizard
 243076	Scarlet Lightbearer
 243086	Eastsea Dockworker
 243087	Eastsea Mercenary
@@ -484,12 +497,15 @@
 243657	Scarlet Crusader Corpse
 243702	Scarlet Paladin
 243737	Scarlet Myrmidon
+243757	Angela Dosantos
+243943	Toxic Pool
 244005	Scarlet Priest
 244006	Scarlet Mage
 244007	Scarlet Infantry
 244008	Scarlet Cavalry
 244009	Scarlet Artillery
 244010	Scarlet Archer
+244013	Scarlet Mage
 244014	Scarlet Priest
 244015	Scarlet Infantry
 244016	Scarlet Cavalry
@@ -508,6 +524,7 @@
 244102	Scarlet Priest
 244103	Scarlet Mage
 244104	Scarlet Infantry
+244105	Scarlet Cavalry
 244106	Scarlet Artillery
 244122	Eastsea Cannoneer
 244131	Scarlet Priest
@@ -515,6 +532,7 @@
 244133	Scarlet Infantry
 244134	Scarlet Cavalry
 244136	Scarlet Archer
+244155	New Avalon Refugee
 244310	Unknown
 244321	Leonid Barthalomew the Revered
 244852	Unknown

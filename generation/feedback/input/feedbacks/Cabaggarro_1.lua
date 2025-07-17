@@ -5389,7 +5389,7 @@ ClassicUA_DevLog = {
 },
 },
 ["missing_zones"] = {
-["Ruins of Eldarath "] = true,
+["Ruins of Eldarath"] = true,
 ["Ahn'Qiraj Temple"] = true,
 ["Engineering Labs "] = true,
 ["Temple Hall"] = true,
