@@ -12,6 +12,7 @@ Warning! Original description for spell#1235351:sod differs:
 - sec.][Chance on hit to cause your next 4 instances of
 - Fire damage to be increased by 20%. Lasts 12 sec.]
 Saving spells to DB
+
 Validating...
 Warning! Newline count doesn't match for spell#17:cata description
 Warning! Newline count doesn't match for spell#66:cata description

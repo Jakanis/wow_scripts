@@ -11,6 +11,7 @@ SOD = 'sod'
 TBC = 'tbc'
 WRATH = 'wrath'
 CATA = 'cata'
+MOP = 'mop'
 WOWHEAD_URL = 'wowhead_url'
 METADATA_CACHE = 'metadata_cache'
 HTML_CACHE = 'html_cache'
@@ -80,6 +81,17 @@ expansion_data = {
         PARENT_EXPANSIONS: [CLASSIC, TBC, WRATH],
         CALCULATE: True,
         IGNORES: []
+    },
+    MOP: {
+        INDEX: 4,
+        WOWHEAD_URL: 'https://www.wowhead.com/mop-classic',
+        METADATA_CACHE: 'wowhead_mop_metadata_cache',
+        HTML_CACHE: 'wowhead_mop_spell_html',
+        SPELL_CACHE: 'wowhead_mop_spell_cache',
+        METADATA_FILTERS: ('', '', ''),
+        PARENT_EXPANSIONS: [CLASSIC, TBC, WRATH, CATA],
+        CALCULATE: True,
+        IGNORES: []
     }
 }
 
@@ -96,6 +108,7 @@ class SpellMD:
         64: 'shaman',
         128: 'mage',
         256: 'warlock',
+        512: 'monk',
         1024: 'druid',
     }
     def __init__(self, id, name, expansion=None, cat=None, level=None, schools=None, rank=None, chrclass=None, reqclass=None, skill=None):
@@ -143,6 +156,11 @@ class SpellData:
         if self.name_ua or self.description_ua or self.aura_ua or self.ref:
             return True
         return False
+
+    def is_equal_ignoring_values_to(self, __other):
+        from generation.utils.utils import are_texts_equal_ignoring_values
+        return are_texts_equal_ignoring_values(self.description, __other.description) and are_texts_equal_ignoring_values(self.aura, __other.aura)
+        pass
 
 
 class SpellTranslation:
@@ -237,7 +255,7 @@ def save_page_calc(expansion, id):
         if os.path.exists(xml_file_path):
             print(f'Warning! Trying to download existing HTML for #{id}')
             # return
-        headers = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/86.0.4240.75 Safari/537.36'}
+        headers = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/135.0.0.0 Safari/537.36 Edg/135.0.0.0'}
         r = session.get(url, headers=headers)
         if not r.ok:
             # raise Exception(f'Wowhead({expansion}) returned {r.status_code} for spell #{id}')
@@ -295,11 +313,11 @@ def save_htmls_from_wowhead(expansion, ids: set[int], render: bool, force: set[i
     if len(redundant_ids) > 0:
         print(f"There's some redundant IDs: {redundant_ids}")
 
-    save_page = save_page_calc if render else save_page_raw
+    save_page_func = save_page_calc if render else save_page_raw
     threads = THREADS // 2 if render else THREADS * 2
     # for id in save_ids:
-    #     save_page(expansion, id)
-    save_func = partial(save_page, expansion)
+    #     save_page_func(expansion, id)
+    save_func = partial(save_page_func, expansion)
     with multiprocessing.Pool(threads) as p:
         p.map(save_func, save_ids)
     # save_pages_async(expansion, list(save_ids)[:100])
@@ -476,56 +494,58 @@ def is_spell_translated(spells: dict[str, SpellData]) -> list[str]:
 
 def populate_similarity(spells: dict[int, dict[str, SpellData]]):
     import re
-    name_to_id: dict[str, dict[str, int]] = dict()
-    description_to_id: dict[str, dict[str, int]] = dict()
-    aura_to_id: dict[str, dict[str, int]] = dict()
+    name_to_spells: dict[str, dict[str, int]] = dict()
+    description_to_spells: dict[str, dict[str, int]] = dict()
+    aura_to_spells: dict[str, dict[str, int]] = dict()
     for expansion in expansion_data.keys():
         for key in [key for key in sorted(spells.keys()) if expansion in spells[key].keys()]:
             spell = spells[key][expansion]
             description = re.sub(r'\d+(\.\d+)?', '{d}', spell.description) if spell.description else None
             aura = re.sub(r'\d+(\.\d+)?', '{d}', spell.aura) if spell.aura else None
 
-            if spell.name in name_to_id.keys():
-                common_parents = name_to_id[spell.name].keys() & set(expansion_data[expansion][PARENT_EXPANSIONS] + [expansion])
-                if len(common_parents) == 1:
-                    common_parent = next(iter(common_parents))
-                    spell.name_ref = name_to_id[spell.name][common_parent]
-                elif len(common_parents) == 0:
-                    if name_to_id[spell.name].keys() != {'sod'}:
+            if spell.name in name_to_spells.keys():
+                common_parent_expansions = name_to_spells[spell.name].keys() & set(expansion_data[expansion][PARENT_EXPANSIONS] + [expansion])
+                if len(common_parent_expansions) == 1:
+                    common_parent = next(iter(common_parent_expansions))
+                    spell.name_ref = name_to_spells[spell.name][common_parent]
+                elif len(common_parent_expansions) == 0:
+                    if name_to_spells[spell.name].keys() != {'sod'}:
                         print(f"Warning. Suspicious name parent situation for {key}:{expansion}.")
-                    name_to_id[spell.name][expansion] = key
+                    name_to_spells[spell.name][expansion] = key
                 else:
                     print(f"Warning! Strange name parent situation for {key}:{expansion}!")
             else:
-                name_to_id[spell.name] = {expansion: key}
+                name_to_spells[spell.name] = {expansion: key}
 
-            if description and description in description_to_id.keys():
-                common_parents = description_to_id[description].keys() & set(expansion_data[expansion][PARENT_EXPANSIONS] + [expansion])
-                if len(common_parents) == 1:
-                    common_parent = next(iter(common_parents))
-                    spell.description_ref = description_to_id[description][common_parent]
-                elif len(common_parents) == 0:
-                    if description_to_id[description].keys() != {'sod'}:
+            if description and description in description_to_spells.keys():
+                common_parent_expansions = description_to_spells[description].keys() & set(expansion_data[expansion][PARENT_EXPANSIONS] + [expansion])
+                if len(common_parent_expansions) == 1:
+                    common_parent = next(iter(common_parent_expansions))
+                    spell.description_ref = description_to_spells[description][common_parent]
+                elif len(common_parent_expansions) == 0:
+                    if description_to_spells[description].keys() != {'sod'}:
                         print(f"Warning. Suspicious description parent situation for {key}:{expansion}.")
-                    description_to_id[description][expansion] = key
+                    description_to_spells[description][expansion] = key
                 else:
                     print(f"Warning! Strange description parent situation for {key}:{expansion}!")
             else:
-                description_to_id[description] = {expansion: key}
+                description_to_spells[description] = {expansion: key}
 
-            if aura and aura in aura_to_id.keys():
-                common_parents = aura_to_id[aura].keys() & set(expansion_data[expansion][PARENT_EXPANSIONS] + [expansion])
-                if len(common_parents) == 1:
-                    common_parent = next(iter(common_parents))
-                    spell.aura_ref = aura_to_id[aura][common_parent]
-                elif len(common_parents) == 0:
-                    if aura_to_id[aura].keys() != {'sod'}:
+            if aura and aura in aura_to_spells.keys():
+                common_parent_expansions = aura_to_spells[aura].keys() & set(expansion_data[expansion][PARENT_EXPANSIONS] + [expansion])
+                if len(common_parent_expansions) == 1:
+                    common_parent = next(iter(common_parent_expansions))
+                    spell.aura_ref = aura_to_spells[aura][common_parent]
+                elif len(common_parent_expansions) == 0:
+                    if aura_to_spells[aura].keys() != {'sod'}:
                         print(f"Warning. Suspicious aura parent situation for {key}:{expansion}.")
-                    aura_to_id[aura][expansion] = key
+                    aura_to_spells[aura][expansion] = key
                 else:
                     print(f"Warning! Strange aura parent situation for {key}:{expansion}!")
             else:
-                aura_to_id[aura] = {expansion: key}
+                aura_to_spells[aura] = {expansion: key}
+
+
 
 def __to_tsv_val(value) -> str:
     if value:
@@ -558,10 +578,10 @@ def create_translation_sheet(spells: dict[int, dict[str, SpellData]], feedback_i
                 # if getattr(spell.spell_md, 'chrclass') in SpellMD._classes.keys() and spell.expansion == SOD and spell.name_ua is None and spell.description_ua is None and spell.aura_ua is None and spell.ref is None:
 
                 ## Feedback translations:
-                feedback_ids = [483, 825, 2152, 2153, 2165, 2166, 2169, 2329, 2331, 2333, 2334, 2335, 2392, 2393, 2394, 2396, 2406, 2538, 2540, 2544, 2546, 2547, 2549, 2657, 2658, 2659, 2661, 2662, 2663, 2664, 2665, 2666, 2668, 2672, 2673, 2674, 2675, 2741, 2881, 2963, 2964, 3117, 3170, 3171, 3172, 3173, 3174, 3175, 3176, 3177, 3188, 3230, 3275, 3276, 3277, 3278, 3293, 3294, 3295, 3304, 3307, 3308, 3319, 3320, 3321, 3323, 3324, 3325, 3326, 3328, 3330, 3331, 3333, 3334, 3336, 3337, 3366, 3370, 3371, 3372, 3373, 3376, 3377, 3397, 3398, 3399, 3400, 3448, 3449, 3450, 3451, 3452, 3453, 3454, 3498, 3500, 3501, 3502, 3503, 3504, 3505, 3506, 3507, 3508, 3511, 3513, 3515, 3569, 3684, 3753, 3761, 3762, 3763, 3767, 3768, 3769, 3772, 3773, 3774, 3775, 3776, 3777, 3778, 3779, 3780, 3816, 3817, 3818, 3839, 3842, 3865, 3866, 3869, 3871, 3873, 3914, 3915, 3918, 3919, 3922, 3923, 3924, 3925, 3926, 3928, 3929, 3931, 3932, 3933, 3934, 3936, 3937, 3938, 3939, 3940, 3941, 3944, 3946, 3947, 3949, 3950, 3954, 3956, 3957, 3959, 3960, 3961, 3963, 3965, 3966, 3967, 3968, 3971, 3972, 3973, 4094, 4096, 4097, 4942, 5412, 5414, 6413, 6418, 6419, 6458, 6500, 6501, 6618, 6624, 6661, 6703, 6704, 6705, 6742, 7133, 7135, 7147, 7149, 7151, 7153, 7179, 7181, 7183, 7213, 7221, 7222, 7223, 7224, 7255, 7256, 7257, 7258, 7259, 7418, 7420, 7421, 7426, 7428, 7443, 7454, 7457, 7745, 7748, 7751, 7752, 7753, 7766, 7771, 7776, 7779, 7782, 7786, 7788, 7793, 7795, 7817, 7818, 7836, 7837, 7841, 7845, 7857, 7859, 7861, 7863, 7867, 7892, 7928, 7929, 7934, 7935, 8238, 8240, 8243, 8322, 8334, 8339, 8483, 8489, 8607, 8768, 8895, 9059, 9060, 9064, 9065, 9068, 9147, 9178, 9193, 9194, 9195, 9196, 9197, 9201, 9202, 9271, 9273, 9513, 9811, 9813, 9814, 9818, 9820, 9916, 9920, 9921, 9926, 9928, 9931, 9933, 9935, 9937, 9939, 9945, 9950, 9952, 9954, 9957, 9961, 9964, 9966, 9970, 9980, 9987, 9993, 9995, 10011, 10013, 10097, 10098, 10482, 10487, 10499, 10509, 10516, 10520, 10529, 10542, 10544, 10548, 10560, 10562, 10572, 10574, 10619, 10621, 10632, 10647, 10833, 10840, 10841, 10861, 10906, 11448, 11449, 11450, 11451, 11452, 11453, 11454, 11456, 11457, 11458, 11459, 11460, 11461, 11464, 11465, 11466, 11467, 11468, 11472, 11473, 11476, 11478, 11643, 12044, 12046, 12055, 12056, 12060, 12061, 12064, 12065, 12069, 12073, 12075, 12079, 12080, 12082, 12085, 12088, 12089, 12259, 12260, 12585, 12587, 12589, 12590, 12591, 12594, 12595, 12596, 12599, 12603, 12607, 12609, 12614, 12615, 12617, 12618, 12619, 12621, 12622, 12715, 12717, 12718, 12754, 12758, 12760, 12895, 12897, 12903, 12905, 12907, 13378, 13380, 13419, 13421, 13464, 13485, 13501, 13503, 13522, 13529, 13536, 13538, 13607, 13612, 13617, 13620, 13622, 13626, 13628, 13631, 13635, 13637, 13640, 13642, 13644, 13646, 13648, 13653, 13655, 13657, 13659, 13661, 13663, 13687, 13689, 13693, 13695, 13698, 13700, 13702, 13746, 13794, 13815, 13817, 13822, 13836, 13841, 13846, 13858, 13868, 13882, 13887, 13890, 13898, 13905, 13915, 13917, 13931, 13933, 13935, 13937, 13939, 13941, 13943, 13945, 13947, 13948, 14379, 14380, 14891, 14930, 14932, 15255, 15293, 15294, 15596, 15628, 15633, 15833, 15853, 15855, 15856, 15861, 15863, 15865, 15906, 15910, 15915, 15933, 15972, 15973, 16153, 16639, 16640, 16645, 16648, 16650, 16651, 16653, 16654, 16655, 16656, 16659, 16661, 16662, 16724, 16725, 16726, 16728, 16741, 16746, 16969, 16970, 16971, 16991, 16994, 16995, 17180, 17181, 17288, 17398, 17551, 17552, 17553, 17554, 17555, 17556, 17557, 17570, 17571, 17572, 17573, 17574, 17575, 17576, 17577, 17578, 17580, 17632, 17634, 17635, 17636, 17637, 17638, 18238, 18239, 18240, 18241, 18242, 18243, 18244, 18245, 18246, 18247, 18401, 18403, 18404, 18405, 18421, 18423, 18442, 18445, 18446, 18450, 18451, 18455, 18560, 18629, 18630, 18789, 18995, 19047, 19052, 19058, 19059, 19061, 19062, 19064, 19065, 19067, 19068, 19071, 19072, 19073, 19074, 19076, 19078, 19080, 19081, 19082, 19083, 19086, 19090, 19091, 19093, 19095, 19097, 19098, 19101, 19102, 19103, 19104, 19567, 19666, 19667, 19668, 19788, 19790, 19791, 19792, 19794, 19795, 19796, 19799, 19800, 19814, 19815, 19819, 19825, 19830, 19831, 19833, 20008, 20009, 20010, 20011, 20012, 20013, 20014, 20015, 20016, 20017, 20020, 20023, 20024, 20025, 20026, 20028, 20029, 20030, 20031, 20032, 20033, 20034, 20035, 20036, 20051, 20201, 20512, 20648, 20649, 20650, 20824, 20854, 20872, 20873, 20876, 20897, 21143, 21161, 21175, 21913, 21923, 21940, 21945, 22331, 22480, 22704, 22727, 22732, 22749, 22750, 22757, 22761, 22795, 22797, 22808, 22868, 22893, 22920, 22921, 22926, 22927, 22928, 22967, 23069, 23070, 23071, 23080, 23082, 23096, 23129, 23151, 23190, 23399, 23628, 23629, 23633, 23637, 23639, 23653, 23703, 23706, 23707, 23708, 23709, 23710, 23787, 23799, 23800, 23801, 23802, 23803, 23804, 24092, 24121, 24123, 24124, 24125, 24137, 24138, 24266, 24356, 24357, 24365, 24366, 24367, 24368, 24418, 24654, 24655, 24703, 24801, 24847, 24857, 24901, 24912, 24940, 25072, 25073, 25074, 25078, 25079, 25080, 25081, 25082, 25083, 25084, 25086, 25124, 25125, 25126, 25127, 25128, 25129, 25130, 25659, 25701, 25704, 25887, 25954, 26011, 26087, 26233, 27586, 27588, 27589, 27658, 27659, 27660, 27724, 27725, 27829, 27837, 28090, 28219, 28221, 28223, 28243, 28265, 28281, 28299, 28327, 28462, 28474, 423212, 424641, 426607, 430409, 431362, 435205, 435481, 435819, 435903, 435904, 435908, 435910, 435956, 435958, 435960, 435964, 435966, 435969, 435971, 436513, 439110, 439112, 439114, 439116, 439120, 439122, 439124, 439126, 439130, 439132, 439134, 439156, 439960, 441453, 446179, 446191, 446226, 446236, 446237, 446238, 446243, 446851, 448085, 448624, 456397, 456403, 460460, 461645, 461647, 461649, 461653, 461655, 461657, 461659, 461661, 461663, 461665, 461667, 461669, 461671, 461673, 461675, 461677, 461690, 461706, 461708, 461710, 461712, 461714, 461716, 461718, 461720, 461722, 461724, 461730, 461733, 461735, 461737, 461739, 461743, 461747, 461750, 461752, 461754, 462227, 462282, 463866, 463869, 463871, 467891, 470370, 473687, 473869, 473871, 473874, 474146, 474564, 1213176, 1213481, 1213484, 1213490, 1213492, 1213498, 1213500, 1213502, 1213504, 1213506, 1213513, 1213519, 1213521, 1213523, 1213525, 1213527, 1213530, 1213532, 1213534, 1213536, 1213538, 1213540, 1213544, 1213546, 1213548, 1213552, 1213559, 1213563, 1213565, 1213571, 1213573, 1213576, 1213578, 1213586, 1213588, 1213593, 1213595, 1213598, 1213600, 1213603, 1213607, 1213610, 1213616, 1213622, 1213626, 1213628, 1213633, 1213635, 1213638, 1213643, 1213646, 1213709, 1213711, 1213715, 1213717, 1213720, 1213723, 1213728, 1213731, 1213734, 1213736, 1213738, 1213740, 1213742, 1213744, 1213746, 1213748, 1213751, 1213915, 1214137, 1214145, 1214173, 1214257, 1214270, 1214274, 1214303, 1214306, 1214307, 1214309, 1215507, 1216005, 1216007, 1216010, 1216014, 1216016, 1216018, 1216020, 1216022, 1216024, 1216033, 1216049, 1216928, 1216932, 1216982, 1217189, 1217203, 1217207, 1217724, 1217775, 1217844, 1217959, 1218038, 1218154, 1218366, 1219571, 1219577, 1219578, 1219579, 1219580, 1219581, 1219586, 1219587, 1220623, 1220836, 1220845, 1220926, 1220928, 1220938, 1221278, 1221322, 1221577, 1221578, 1221797, 1222097, 1222578, 1222772, 1222932, 1222939, 1222942, 1222951, 1222989, 1223048, 1223265, 1224315, 1224428]
+                # feedback_ids = [468275, 1221337, 1225769, 1225771, 1225772, 1225906, 1225907, 1225960, 1225987, 1226007, 1226396, 1226800, 1226810, 1227369, 1229305, 1229308, 1229340, 1230942, 1230944, 1230980, 1231091, 1231254, 1231258, 1231267, 1231289, 1231330, 1231382, 1231402, 1231417, 1231547, 1231548, 1231550, 1231551, 1231553, 1231554, 1231578, 1231586, 1231604, 1231605, 1231612, 1231620, 1231624, 1231656, 1231681, 1231694, 1231698, 1231874, 1231904, 1232044, 1232057, 1232066, 1232103, 1232150, 1232153, 1232157, 1232158, 1232162, 1232167, 1232181, 1232312, 1232322, 1232477, 1232479, 1232896, 1232946, 1234033, 1234040, 1234085, 1234299, 1234326, 1234792, 1234805, 1235011, 1235320, 1235351, 1235681, 1237064]
                 # if spell.expansion in [CLASSIC, SOD] and (spell.description is not None or spell.aura is not None) and spell.name_ua is None and spell.description_ua is None and spell.aura_ua is None and spell.ref is None and spell.spell_md.cat in (9, 11) and spell.id in feedback_ids: # Review manually. Skip recipes (for now, me may want to translate trainer interface)
-                # if spell.expansion in [CLASSIC, SOD] and spell.name_ua is None and spell.description_ua is None and spell.aura_ua is None and spell.ref is None and spell.spell_md.cat in (7, 5, 0, -2, -3, -4, -8, -11, -13, -25, -26) and spell.id in feedback_ids:
-                # if spell.expansion in [CLASSIC, SOD] and spell.name_ua is None and spell.description_ua is None and spell.aura_ua is None and spell.ref is None and spell.spell_md.cat in (-8, 0) and spell.id in feedback_ids: # Massive
+                if spell.expansion in [CLASSIC, SOD] and spell.name_ua is None and spell.description_ua is None and spell.aura_ua is None and spell.ref is None and spell.spell_md.cat in (7, 5, 0, -2, -3, -4, -8, -11, -13, -25, -26) and spell.id in feedback_ids:
+                # if spell.expansion in [CLASSIC, SOD] and spell.name_ua is None and spell.description_ua is None and spell.aura_ua is None and spell.ref is None and spell.id in feedback_ids: # Massive
 
                 ## Autotranslation:
                 # if spell.expansion in [CLASSIC, SOD] and spell.name_ua is None and spell.description_ua is None and spell.aura_ua is None and spell.ref is None and (
@@ -575,7 +595,8 @@ def create_translation_sheet(spells: dict[int, dict[str, SpellData]], feedback_i
                 ## For missing referenced spells
                 # force_translate = (1220635, 1220642, 1220645, 1220650, 1220651, 1220653, 1220654, 1220655, 1220656, 1220657, 1220666, 1220668, 1220700, 1220702, 1220707, 1220708, 1220711, 28800, 1220738, 1220741, 1220756, 1220770, 1222974, 1222994, 1223010, 1220980, 1219019, 1219043, 1219083, 1223262, 1223341, 1223348, 1223349, 1223350, 1223351, 1223352, 1223353, 1223354, 1223355, 1223357, 1223367, 1223368, 1223370, 1223371, 1223372, 1223373, 1223374, 1223375, 1223376, 1223379, 1223380, 1223381, 1223382, 1223383, 1223384, 1223385, 1223386, 1223387, 1223455, 1219415, 1219500, 1219501, 1219503, 1219506, 1219507, 1219510, 1219511, 1219512, 1219513, 1219515, 1219519, 1219520, 1219521, 1219522, 1219539, 1219548, 1219552, 1219553, 1219557, 1219558, 1223689, 1223795, 1219740, 1219742, 1219743, 1219745, 1219747, 1219748, 1219749, 1219751, 1219752, 1219753, 1219754, 1219755, 1219756, 1219757, 1219758, 1219760, 1219762, 1219763, 1219764, 1219766, 1219767, 1219768, 1219769, 1219770, 1219771, 1219772, 1219773, 1219774, 1219775, 1219776, 1219777, 1219778, 1219779, 1219780, 1219781, 1219782, 1219783, 1219784, 1219785, 1219786, 1219787, 1219788, 1219789, 1219790, 1219791, 1219792, 1219793, 1219794, 1219795, 1219796, 1219797, 1219798, 1219799, 1219800, 1219801, 1219802, 1219803, 1219804, 1219805, 1219806, 1219807, 1219808, 1219809, 1219810, 1219811, 1219812, 1219813, 1219815, 1219816, 1219818, 1219819, 1219820, 1219821, 1219822, 1219823, 1219824, 1219825, 1219826, 1219827, 1219828, 1219829, 1219830, 1219831, 1219832, 1219833, 1219834, 1219835, 1219836, 1219837, 1219838, 1219839, 1219840, 1219841, 1219842, 1219843, 1219844, 1219845, 1219846, 1219847, 1219848, 1219849, 1219850, 1219851, 1219852, 1219853, 1219854, 1219855, 1219856, 1219857, 1219858, 1219859, 1219860, 1219861, 1219862, 1219863, 1219864, 1219865, 1219866, 1219867, 1219868, 1219869, 1219870, 1219871, 1219872, 1219873, 1219874, 1219875, 1219876, 1219877, 1219878, 1219879, 1219880, 1219881, 1219882, 1219883, 1219884, 1219885, 1219886, 1219887, 1219888, 1219889, 1219890, 1219891, 1219892, 1219893, 1219894, 1219895, 1219896, 1219897, 1219898, 1219899, 1219900, 1219901, 1219902, 1219903, 1219904, 1219905, 1219906, 1219907, 1219908, 1219909, 1219910, 1219911, 1219912, 1219913, 1219914, 1219915, 1219916, 1219917, 1219918, 1219919, 1219920, 1219921, 1219922, 1219923, 1219924, 1219925, 1219926, 1219927, 1219928, 1219929, 1219930, 1219931, 1219932, 1219933, 1219934, 1219935, 1219936, 1219937, 1219938, 1219939, 1219940, 1219941, 1219942, 1219943, 1219944, 1219945, 1219946, 1219947, 1219948, 1219949, 1219950, 1219951, 1219952, 1219953, 1219954, 28148, 1213971, 28282, 1222393, 1222394, 1218367, 1220418, 1220514, 1220521, 1214381, 1220533, 1220536, 1220538, 1220540, 1214407, 1214409, 1220560, 1220561, 1220563, 1220564, 1220565, 1220566, 1220567, 1220568)
                 # if spell.expansion in [CLASSIC, SOD] and spell.name_ua is None and spell.description_ua is None and spell.aura_ua is None and spell.ref is None and spell.id in force_translate:
-                if True:
+
+                # if True:
                     class_name = SpellMD._classes[getattr(spell.spell_md, 'chrclass')] if getattr(spell.spell_md, 'chrclass') in SpellMD._classes else ''
                     spell_description = spell.description
                     if spell_description and spell_description.startswith('+'):  # In case of '+123 Attack Power' etc
@@ -596,13 +617,7 @@ def merge_spell(id: int, old_spells: dict[str, SpellData], new_spell: SpellData)
     if len(old_spells) == 1:
         old_spell = next(iter(old_spells.values()))
 
-        if (old_spell.name != new_spell.name
-                or old_spell.description != new_spell.description
-                or old_spell.aura != new_spell.aura):
-                # or (not old_spell.description and new_spell.description) or (old_spell.description and not new_spell.description)
-                # or (not old_spell.aura and new_spell.aura) or (old_spell.aura and not new_spell.aura)
-                # or (old_spell.description and new_spell.description and re.sub(r'\d+(\.\d+)?', '{d}', old_spell.description) != re.sub(r'\d+(\.\d+)?', '{d}', new_spell.description))
-                # or (old_spell.aura and new_spell.aura and re.sub(r'\d+(\.\d+)?', '{d}', old_spell.aura) != re.sub(r'\d+(\.\d+)?', '{d}', new_spell.aura))):
+        if old_spell.name != new_spell.name or not old_spell.is_equal_ignoring_values_to(new_spell):
             return {**old_spells, **{new_spell.expansion: new_spell}}
         else:
             return old_spells
@@ -1225,6 +1240,6 @@ if __name__ == '__main__':
 
     convert_translations_to_entries(tsv_translations)
 
-    needs_update = filter_latest_untranslated(all_spells)
-    create_translation_sheet(needs_update, missing_spells)
-    # create_translation_sheet(all_spells, missing_spells)
+    # needs_update = filter_latest_untranslated(all_spells)
+    # create_translation_sheet(needs_update, missing_spells)
+    create_translation_sheet(all_spells, missing_spells)

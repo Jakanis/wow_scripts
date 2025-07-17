@@ -312,3 +312,16 @@ def get_text_code(text) -> (str, str):
             break
 
     return ''.join(result), None
+
+
+def are_texts_equal_ignoring_values(text1: str, text2: str) -> bool:
+    if text1 == text2:
+        return True
+    if text1 is None or text2 is None:
+        return False
+    # Remove numeric values from both texts. Removes all numeric values, including decimal numbers.
+
+    text1_cleaned = re.sub(r'\d+\.?\d*', '', text1)
+    text2_cleaned = re.sub(r'\d+\.?\d*', '', text2)
+
+    return text1_cleaned.strip() == text2_cleaned.strip()
