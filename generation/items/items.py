@@ -336,20 +336,22 @@ def parse_wowhead_item_xml_page(expansion, id) -> ItemData:
     item_name = soup.find('name').text
 
     tooltip = soup.find('htmlTooltip')
-    tooltip_soup = BeautifulSoup(tooltip.text, 'xml')
+    xml_tooltip_soup = BeautifulSoup(tooltip.text, 'xml')
+    tooltip_text = tooltip.text.replace('&nbsp;', '')  # remove NBSPs
+    html_tooltip_soup = BeautifulSoup(tooltip_text, 'lxml')
 
     flavor = None
-    flavor_tags = tooltip_soup.find_all('span', {"class": "q"})
+    flavor_tags = html_tooltip_soup.find_all('span', {"class": "q"})
     for flavor_tag in flavor_tags:
         if flavor_tag.find('br') or flavor_tag.find('a'):
             # There is another span with same class. It contains item level, damage, durability, etc
             continue
         if flavor:
             print(f'Warning! Setting flavor text more than one time for item #{id}')
-        flavor = flavor_tag.text
+        flavor = flavor_tag.text[1:-1]
 
     effects = list()
-    effect_tags = tooltip_soup.find_all('span')
+    effect_tags = xml_tooltip_soup.find_all('span')
     random_enchantment = True if "Random enchantment" in tooltip.text else False
     readable = True if "Right Click to Read" in tooltip.text else False
     for effect_tag in effect_tags:
@@ -1392,10 +1394,6 @@ def generate_book_sources(readable_items: dict[str, dict[int, ReadableItem]]):
 
 
 if __name__ == '__main__':
-    # parse_wowhead_item_page(CLASSIC, 9328)
-    # parse_wowhead_item_xml_page(CLASSIC, 18664)
-##id in [18664, 20405, 18675, 16785, 17781]
-
     parsed_items, readable_items = retrieve_item_data()
 
     tsv_translations = read_translations_sheet()
