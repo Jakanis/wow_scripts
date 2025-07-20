@@ -492,7 +492,7 @@ def is_spell_translated(spells: dict[str, SpellData]) -> list[str]:
     return translated_expansions
 
 
-def populate_similarity(spells: dict[int, dict[str, SpellData]]):
+def populate_similarities_across_expansions(spells: dict[int, dict[str, SpellData]]):
     import re
     name_to_spells: dict[str, dict[str, int]] = dict()
     description_to_spells: dict[str, dict[str, int]] = dict()
@@ -618,7 +618,8 @@ def merge_spell(id: int, old_spells: dict[str, SpellData], new_spell: SpellData)
     if len(old_spells) == 1:
         old_spell = next(iter(old_spells.values()))
 
-        if old_spell.name != new_spell.name or not old_spell.is_equal_ignoring_values_to(new_spell):
+        if (old_spell.name != new_spell.name or not old_spell.is_equal_ignoring_values_to(new_spell)
+                or old_spell.name_ref != new_spell.name_ref or old_spell.description_ref != new_spell.description_ref or old_spell.aura_ref != new_spell.aura_ref):
             return {**old_spells, **{new_spell.expansion: new_spell}}
         else:
             return old_spells
@@ -669,8 +670,36 @@ def store_raw_spells(expansion, fresh_spells: dict[int, SpellData]):
         pickle.dump(fresh_spells, f)
 
 
+def populate_similarities(spells: dict[int, SpellData]):
+    import re
+    name_to_spell_id: dict[str, int] = dict()
+    description_to_spell_id: dict[str, int] = dict()
+    aura_to_spell_id: dict[str, int] = dict()
+    for key in sorted(spells.keys()):
+        spell = spells[key]
+        name = re.sub(r'(?<!\w)\d+(\.\d+)?(?!\w)', '{d}', spell.name)
+        description = re.sub(r'\d+(\.\d+)?', '{d}', spell.description) if spell.description else None
+        aura = re.sub(r'\d+(\.\d+)?', '{d}', spell.aura) if spell.aura else None
+
+        if name in name_to_spell_id.keys():
+            spell.name_ref = name_to_spell_id[name]
+        else:
+            name_to_spell_id[name] = key
+
+        if description and description in description_to_spell_id.keys():
+            spell.description_ref = description_to_spell_id[description]
+        else:
+            description_to_spell_id[description] = key
+
+        if aura and aura in aura_to_spell_id.keys():
+            spell.aura_ref = aura_to_spell_id[aura]
+        else:
+            aura_to_spell_id[aura] = key
+
+
 def retrieve_spell_data() -> dict[int, dict[str, SpellData]]:
     all_spells = dict()
+    stored_classic_spells = None
     for expansion, expansion_properties in expansion_data.items():
         wowhead_md = get_wowhead_spell_metadata(expansion)
 
@@ -683,6 +712,14 @@ def retrieve_spell_data() -> dict[int, dict[str, SpellData]]:
 
         store_raw_spells(expansion, wowhead_spells_raw) # Store current raw pages as 'tmp/wowhead_<expansion>_spell_cache_raw_stored'
 
+        if expansion == CLASSIC:
+            stored_classic_spells = wowhead_spells_rendered.copy()
+
+        if expansion == SOD:
+            # populating refs including classic spells, as they don't overlap with SoD
+            populate_similarities({**stored_classic_spells, **wowhead_spells_rendered})
+        else:
+            populate_similarities(wowhead_spells_rendered)
         print(f'Merging with {expansion}')
         all_spells = merge_expansions(all_spells, wowhead_spells_rendered)
 
@@ -1232,10 +1269,31 @@ def compare_refs(spells: dict[int, dict[str, SpellData]], translations: dict[int
             if ((translation.name_ref and spell.name_ref != translation.name_ref)
                     or (translation.description_ref and spell.description_ref != translation.description_ref)
                     or (translation.aura_ref and spell.aura_ref != translation.aura_ref)):
-                print(f'Warning! Spell#{key}:{expansion} refs differ:\n'
+                print(f'Warning! Refs differ for spell#{key}:{expansion}:\n'
                       f'Generated: {spell.name_ref}\t{spell.description_ref}\t{spell.aura_ref}\n'
                       f'Translated: {translation.name_ref}\t{translation.description_ref}\t{translation.aura_ref}')
 
+
+def remove_refs(remove_refs: set[tuple[int, str]]):
+    # Remove values from google sheet if their ID and expansion are in remove_refs. Was used once, can be finished to update more fields
+    import gspread
+    from oauth2client.service_account import ServiceAccountCredentials
+    sheet_id = '1xwoaO6U-jXQChHecEzzqG-leESTmRKm2WXHev4GOFho'
+    print('Removing refs from Google Sheet... ', end='')
+    scope = ['https://spreadsheets.google.com/feeds', 'https://www.googleapis.com/auth/drive']
+    creds = ServiceAccountCredentials.from_json_keyfile_name('input/credentials.json', scope)
+    client = gspread.authorize(creds)
+    sheet = client.open_by_key(sheet_id).worksheet('Spells')
+    rows = sheet.get_all_records()
+    updates = []
+    for i, row in enumerate(rows, start=2):  # Start from row 2 to skip header
+        row_id = row.get('ID')
+        row_expansion = row.get('expansion')
+        if (row_id, row_expansion) in remove_refs:
+            updates.append({'range': f'I{i}:K{i}', 'values': [['', '', '']]})
+    if updates:
+        sheet.batch_update(data=updates, value_input_option='RAW')
+    print("Refs removed successfully.")
 
 
 if __name__ == '__main__':
@@ -1243,12 +1301,11 @@ if __name__ == '__main__':
 
     # loaded_spells = load_spells_from_db()
     all_spells = retrieve_spell_data()
-    populate_similarity(all_spells)
+    # populate_similarities_across_expansions(all_spells)
 
     tsv_translations = read_translations_sheet()
     classicua_translations = read_classicua_translations(r'input\entries', all_spells)
 
-    # apply_translations_to_data(all_spells, classicua_translations)
     compare_refs(all_spells, tsv_translations) # Temp? method to compare generated refs and refs in sheet
     apply_translations_to_data(all_spells, tsv_translations)
 
