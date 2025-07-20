@@ -238,6 +238,7 @@ Warning! Newline count doesn't match for spell#349981:classic aura
 Warning!! Numbers don't match for spell spell#407632
 Warning!! Numbers don't match for spell spell#424799
 Warning!! Numbers don't match for spell spell#424800
+Warning!! Numbers don't match for spell spell#425013
 Warning! Template failed for spell#440672:sod
 Warning! Template failed for spell#444165:sod
 Warning! Template failed for spell#467823:sod

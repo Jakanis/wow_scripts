@@ -500,22 +500,23 @@ def populate_similarity(spells: dict[int, dict[str, SpellData]]):
     for expansion in expansion_data.keys():
         for key in [key for key in sorted(spells.keys()) if expansion in spells[key].keys()]:
             spell = spells[key][expansion]
+            name = re.sub(r'(?<!\w)\d+(\.\d+)?(?!\w)', '{d}', spell.name)
             description = re.sub(r'\d+(\.\d+)?', '{d}', spell.description) if spell.description else None
             aura = re.sub(r'\d+(\.\d+)?', '{d}', spell.aura) if spell.aura else None
 
-            if spell.name in name_to_spells.keys():
-                common_parent_expansions = name_to_spells[spell.name].keys() & set(expansion_data[expansion][PARENT_EXPANSIONS] + [expansion])
+            if name in name_to_spells.keys():
+                common_parent_expansions = name_to_spells[name].keys() & set(expansion_data[expansion][PARENT_EXPANSIONS] + [expansion])
                 if len(common_parent_expansions) == 1:
                     common_parent = next(iter(common_parent_expansions))
-                    spell.name_ref = name_to_spells[spell.name][common_parent]
+                    spell.name_ref = name_to_spells[name][common_parent]
                 elif len(common_parent_expansions) == 0:
-                    if name_to_spells[spell.name].keys() != {'sod'}:
+                    if name_to_spells[name].keys() != {'sod'}:
                         print(f"Warning. Suspicious name parent situation for {key}:{expansion}.")
-                    name_to_spells[spell.name][expansion] = key
+                    name_to_spells[name][expansion] = key
                 else:
                     print(f"Warning! Strange name parent situation for {key}:{expansion}!")
             else:
-                name_to_spells[spell.name] = {expansion: key}
+                name_to_spells[name] = {expansion: key}
 
             if description and description in description_to_spells.keys():
                 common_parent_expansions = description_to_spells[description].keys() & set(expansion_data[expansion][PARENT_EXPANSIONS] + [expansion])
@@ -1220,8 +1221,7 @@ if __name__ == '__main__':
     # print(spell2)
     # print(spell3)
 
-    # load_spells_from_db()
-
+    # loaded_spells = load_spells_from_db()
     all_spells = retrieve_spell_data()
     populate_similarity(all_spells)
 
@@ -1229,6 +1229,7 @@ if __name__ == '__main__':
     classicua_translations = read_classicua_translations(r'input\entries', all_spells)
 
     # apply_translations_to_data(all_spells, classicua_translations)
+    compare_refs(all_spells, tsv_translations) # Temp? method to compare generated refs and refs in sheet
     apply_translations_to_data(all_spells, tsv_translations)
 
     save_spells_to_db(all_spells)
