@@ -1209,17 +1209,37 @@ def filter_latest_untranslated(spells: dict[int, dict[str, SpellData]]) -> dict[
     return result
 
 
+def download_csv_from_google_sheet():
+    import requests
+    output_file = 'input/translations.csv'
+    sheet_id = '1xwoaO6U-jXQChHecEzzqG-leESTmRKm2WXHev4GOFho'
+    url = f'https://docs.google.com/spreadsheets/d/{sheet_id}/gviz/tq?tqx=out:csv&sheet=Spells'
+    print('Downloading translations from Google Sheet... ', end='')
+    response = requests.get(url)
+    if response.status_code == 200:
+        with open(output_file, 'w', encoding='utf-8') as file:
+            file.write(response.text.replace('\r\n', '\n'))
+        print('Done!')
+    else:
+        print(f'Error downloading sheet: {response.status_code} - {response.text}')
+
+
+def compare_refs(spells: dict[int, dict[str, SpellData]], translations: dict[int, dict[str, SpellData]]):
+    for key in sorted(spells.keys() & translations.keys()):
+        for expansion in spells[key].keys() & translations[key].keys():
+            spell = spells[key][expansion]
+            translation = translations[key][expansion]
+            if ((translation.name_ref and spell.name_ref != translation.name_ref)
+                    or (translation.description_ref and spell.description_ref != translation.description_ref)
+                    or (translation.aura_ref and spell.aura_ref != translation.aura_ref)):
+                print(f'Warning! Spell#{key}:{expansion} refs differ:\n'
+                      f'Generated: {spell.name_ref}\t{spell.description_ref}\t{spell.aura_ref}\n'
+                      f'Translated: {translation.name_ref}\t{translation.description_ref}\t{translation.aura_ref}')
+
+
+
 if __name__ == '__main__':
-    # save_pages_async(SOD, [427717])
-    # save_page_calc(CLASSIC, 1459)
-    # spell1 = parse_wowhead_spell_page(CLASSIC, 1459)
-    # save_page_raw(CLASSIC, 1460)
-    # spell2 = parse_wowhead_spell_page(CLASSIC, 1460)
-    # save_page_calc(SOD, 427717)
-    # spell3 = parse_wowhead_spell_page(SOD, 427717)
-    # print(spell1)
-    # print(spell2)
-    # print(spell3)
+    download_csv_from_google_sheet()
 
     # loaded_spells = load_spells_from_db()
     all_spells = retrieve_spell_data()
