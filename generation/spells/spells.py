@@ -11,7 +11,7 @@ SOD = 'sod'
 TBC = 'tbc'
 WRATH = 'wrath'
 CATA = 'cata'
-MOP = 'mop'
+MISTS = 'mists'
 WOWHEAD_URL = 'wowhead_url'
 METADATA_CACHE = 'metadata_cache'
 HTML_CACHE = 'html_cache'
@@ -82,12 +82,12 @@ expansion_data = {
         CALCULATE: True,
         IGNORES: []
     },
-    MOP: {
+    MISTS: {
         INDEX: 4,
         WOWHEAD_URL: 'https://www.wowhead.com/mop-classic',
-        METADATA_CACHE: 'wowhead_mop_metadata_cache',
-        HTML_CACHE: 'wowhead_mop_spell_html',
-        SPELL_CACHE: 'wowhead_mop_spell_cache',
+        METADATA_CACHE: 'wowhead_mists_metadata_cache',
+        HTML_CACHE: 'wowhead_mists_spell_html',
+        SPELL_CACHE: 'wowhead_mists_spell_cache',
         METADATA_FILTERS: ('', '', ''),
         PARENT_EXPANSIONS: [CLASSIC, TBC, WRATH, CATA],
         CALCULATE: True,
@@ -124,11 +124,7 @@ class SpellMD:
         self.skill = skill
 
     def get_class(self):
-        if not self.chrclass and not self.reqclass:
-            return None
-        if self.chrclass == self.reqclass:
-            return self._classes.get(self.chrclass) if self.chrclass in self._classes else 'unknown'
-        return 'ERROR'
+        return self._classes.get(self.chrclass, None)
 
 
 class SpellData:
@@ -417,16 +413,16 @@ def save_spells_to_db(spells: dict[int, dict[str, SpellData]]):
                         description_ua TEXT,
                         aura TEXT,
                         aura_ua TEXT,
+                        ref INT,
+                        name_ref INT,
+                        desc_ref INT,
+                        aura_ref INT,
+                        class INT,
                         rank TEXT,
                         cat INT,
                         level INT,
                         schools INT,
-                        class INT,
-                        skill TEXT,
-                        ref INT,
-                        name_ref INT,
-                        desc_ref INT,
-                        aura_ref INT
+                        skill TEXT
                 )''')
     conn.commit()
     with (conn):
@@ -449,15 +445,14 @@ def save_spells_to_db(spells: dict[int, dict[str, SpellData]]):
                     continue
                 md_skill = str(spell.spell_md.skill) if spell.spell_md.skill else None
                 conn.execute(
-                    'INSERT INTO spells(id, expansion, name, name_ua, description, description_ua, aura, aura_ua, rank, cat, level, schools, class, skill, ref, name_ref, desc_ref, aura_ref) VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
-                    (spell.id, spell.expansion, spell.name, spell.name_ua, spell.description, spell.description_ua,
-                     spell.aura, spell.aura_ua,
-                     spell.spell_md.rank, spell.spell_md.cat, spell.spell_md.level, spell.spell_md.schools,
-                     spell.spell_md.get_class(), md_skill,
-                     spell.ref, spell.name_ref, spell.description_ref, spell.aura_ref))
+                    'INSERT INTO spells(id, expansion, name, name_ua, description, description_ua, aura, aura_ua, ref, name_ref, desc_ref, aura_ref, class, rank, cat, level, schools, skill) VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+                    (spell.id, spell.expansion,
+                     spell.name, spell.name_ua, spell.description, spell.description_ua, spell.aura, spell.aura_ua,
+                     spell.ref, spell.name_ref, spell.description_ref, spell.aura_ref, spell.spell_md.get_class(),
+                     spell.spell_md.rank, spell.spell_md.cat, spell.spell_md.level, spell.spell_md.schools, md_skill))
 
 
-def load_spells_from_db(db_path = 'cache/spells.db') -> dict[int, dict[str, SpellData]]:
+def load_spells_from_db(db_path='cache/spells.db') -> dict[int, dict[str, SpellData]]:
     import sqlite3
     conn = sqlite3.connect(db_path)
     spells: dict[int, dict[str, SpellData]] = dict()
@@ -475,7 +470,7 @@ def load_spells_from_db(db_path = 'cache/spells.db') -> dict[int, dict[str, Spel
             description_ua = row[5]
             aura = row[6]
             aura_ua = row[7]
-            ref = row[14]
+            ref = row[8]
             spell = SpellData(spell_id, expansion, name, description, aura, name_ua=name_ua, description_ua=description_ua, aura_ua=aura_ua, ref=ref)
             spells[spell_id] = spells.get(spell_id, dict())
             spells[spell_id][expansion] = spell
@@ -714,7 +709,6 @@ def retrieve_spell_data() -> dict[int, dict[str, SpellData]]:
 
         if expansion == CLASSIC:
             stored_classic_spells = wowhead_spells_rendered.copy()
-
         if expansion == SOD:
             # populating refs including classic spells, as they don't overlap with SoD
             populate_similarities({**stored_classic_spells, **wowhead_spells_rendered})
@@ -983,17 +977,17 @@ def read_translations_sheet() -> dict[int, dict[str, SpellData]]:
             if not spell_id:
                 print(f'Skipping: {row}')
                 continue
-            name_en = row[1] if row[1] != '' else None
-            name_ua = row[2] if row[2] != '' else None
-            description_en = row[3] if row[3] != '' else None
-            description_ua = row[4] if row[4] != '' else None
-            aura_en = row[5] if row[5] != '' else None
-            aura_ua = row[6] if row[6] != '' else None  # if len(row) >= 8 else None
-            ref = __try_cast_str_to_int(row[7], None)
-            name_ref = __try_cast_str_to_int(row[8], None)
-            desc_ref = __try_cast_str_to_int(row[9], None)
-            aura_ref = __try_cast_str_to_int(row[10], None)
-            expansion = row[11] if len(row) > 11 and row[11] != '' else None
+            expansion = row[1]
+            name_en = row[2]
+            name_ua = row[3] if row[3] != '' else None
+            description_en = row[4] if row[4] != '' else None
+            description_ua = row[5] if row[5] != '' else None
+            aura_en = row[6] if row[6] != '' else None
+            aura_ua = row[7] if row[7] != '' else None  # if len(row) >= 8 else None
+            ref = __try_cast_str_to_int(row[8], None)
+            name_ref = __try_cast_str_to_int(row[9], None)
+            desc_ref = __try_cast_str_to_int(row[10], None)
+            aura_ref = __try_cast_str_to_int(row[11], None)
             category = row[12] if len(row) > 12 and row[12] != '' else None
             group = row[13] if len(row) > 13 and row[13] != '' else None
             all_translations[spell_id] = all_translations.get(spell_id, dict())
@@ -1077,9 +1071,9 @@ def apply_translations_to_data(spell_data: dict[int, dict[str, SpellData]], tran
             translation = translations[key][expansion]
             if orig_spell.name != translation.name:
                 print(f'Warning! Original name for spell#{key}:{expansion} differs:\n{__diff_fields(translation.name, orig_spell.name)}')
-            if translation.description and orig_spell.description != translation.description:
+            if orig_spell.description and orig_spell.description != translation.description:
                 print(f'Warning! Original description for spell#{key}:{expansion} differs:\n{__diff_fields(translation.description, orig_spell.description)}')
-            if translation.aura and orig_spell.aura != translation.aura:
+            if orig_spell.aura and orig_spell.aura != translation.aura:
                 print(f'Warning! Original aura for spell#{key}:{expansion} differs:\n{__diff_fields(translation.aura, orig_spell.aura)}')
             orig_spell.name_ua = translation.name_ua
             orig_spell.description_ua = translation.description_ua
@@ -1154,19 +1148,82 @@ def __validate_spell_numbers(spell: SpellData):
     if spell.aura_ua and spell.aura and not '#' in spell.aura_ua:
         __validate_numbers(spell.id, spell.aura, spell.aura_ua)
 
-def __validate_references(spells: dict[int, dict[str, SpellData]], spell: SpellData):
+
+def __resolve_spell_references(spell: SpellData, spells: dict[int, dict[str, SpellData]]):
+    import copy
+    spell_copy = copy.deepcopy(spell)
+    if not spell_copy.ref:
+        return spell_copy
+
+    parent_expansions = expansion_data[spell_copy.expansion][PARENT_EXPANSIONS]
+    reffed_spell = None
+    for expansion in reversed([*parent_expansions, spell_copy.expansion]):
+        if expansion in spells.get(spell_copy.ref, {}):
+            reffed_spell = spells[spell_copy.ref][expansion]
+            if reffed_spell.ref != reffed_spell.id:
+                break
+    if not reffed_spell:
+        print(f'Warning!! Non-existent ref#{spell_copy.ref} for spell#{spell_copy.id}')
+        return
+
+    if reffed_spell.ref:
+        # print(f'Reresolving reference for spell#{reffed_spell.id}:{reffed_spell.expansion}')
+        reffed_spell = __resolve_spell_references(reffed_spell, spells)
+
+    if not spell_copy.name_ua and reffed_spell.name_ua:
+        spell_copy.name_ua = reffed_spell.name_ua
+        # spell_copy.name = reffed_spell.name
+
+    if not spell_copy.description_ua and reffed_spell.description_ua:
+        spell_copy.description_ua = reffed_spell.description_ua
+        # spell_copy.description = reffed_spell.description
+
+    if not spell_copy.aura_ua and reffed_spell.aura_ua:
+        spell_copy.aura_ua = reffed_spell.aura_ua
+        # spell_copy.aura = reffed_spell.aura
+
+    return spell_copy
+
+
+def __validate_references(spells: dict[int, dict[str, SpellData]], spell: SpellData, depth=0):
+    from generation.utils.utils import are_texts_equal_ignoring_values
+
     if spell.ref == spell.id:
         return
+    if depth > 2:
+        print(f'Warning!! Too deep reference chain at spell#{spell.id}:{spell.expansion}')
+        return
     if spell.ref:
-        if not spell.ref in spells.keys() or len(spells[spell.ref]) == 0:
-            print(f'Warning! Non-existent ref#{spell.ref} for spell#{spell.id}')
-        else:
-            reffed_spells = spells[spell.ref]
-            for expansion, ref_spell in reffed_spells.items():
-                if ref_spell.ref:
-                    print(f'Warning! Double ref in ref_spell#{ref_spell.id}:{ref_spell.expansion} from spell#{spell.id}:{spell.expansion}')
-                if (ref_spell.name_ua or ref_spell.description_ua or ref_spell.aura_ua):
-                    __validate_translation_completion(ref_spell)
+        parent_expansions = expansion_data[spell.expansion][PARENT_EXPANSIONS]
+        reffed_spell = None
+        for expansion in reversed([*parent_expansions, spell.expansion]):
+            if expansion in spells.get(spell.ref, {}):
+                reffed_spell = spells[spell.ref][expansion]
+                break
+        if not reffed_spell:
+            print(f'Warning!! Non-existent ref#{spell.ref} for spell#{spell.id}')
+            return
+
+        resolved_spell = __resolve_spell_references(spell, spells)
+
+        # __validate_translation_completion(spell) # reuse with different error message?
+        if spell.name and not resolved_spell.name_ua:
+            print(f"Warning!! There's no translation for resolved spell#{spell.id}:{spell.expansion} name")
+        if spell.description and not resolved_spell.description_ua:
+            print(f"Warning!! There's no translation for resolved spell#{spell.id}:{spell.expansion} description")
+        if spell.aura and not resolved_spell.aura_ua:
+            print(f"Warning!! There's no translation for resolved spell#{spell.id}:{spell.expansion} aura")
+
+        if not spell.description and resolved_spell.description_ua:
+            print(f"Warning!! Redundant translation for resolved spell#{spell.id}:{spell.expansion} description")
+        if not spell.aura and resolved_spell.aura_ua:
+            print(f"Warning!! Redundant translation for resolved spell#{spell.id}:{spell.expansion} aura")
+
+        # __validate_templates(resolved_spell) # there were 30 verified warnings, but it'd be better to use some different error messages
+        # __validate_spell_numbers(resolved_spell) # there were 1 verified warning, but it'd be also better to use some different error messages
+
+        if reffed_spell.ref:
+            __validate_references(spells, reffed_spell, depth+1)
 
 def validate_translations(spells: dict[int, dict[str, SpellData]]):
     print("Validating...")
@@ -1177,7 +1234,7 @@ def validate_translations(spells: dict[int, dict[str, SpellData]]):
             if (spell.name_ua or spell.description_ua or spell.aura_ua) and not spell.ref:
                 __validate_translation_completion(spell)
             __validate_spell_numbers(spell)
-            # __validate_references(spells, spell)
+            __validate_references(spells, spell)
 
     # check if spell was updated in next expansion but has no translation
 

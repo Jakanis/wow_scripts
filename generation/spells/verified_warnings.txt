@@ -4,13 +4,6 @@ Warning! Original description for spell#1231417:sod differs:
 Warning! Original description for spell#1235320:sod differs:
 - [Chance on hit to cause your next 4 instances of Nature damage to be increased by 20%. Lasts 12 sec.][Chance on hit to cause your next 2 instances of Raptor Strike damage to be increased by 20%. Lasts 12 sec.][Chance on hit to cause your next 2 instances of Cleave damage to be increased by 20%. Lasts 12 sec.][Chance on hit to cause your next 2 instances of Holy damage to be increased by 20%. Lasts 12 sec.][The Crimson Cleaver does not respond to your presence, maybe another class could benefit from this?]
 + The Crimson Cleaver does not respond to your presence, maybe another class could benefit from this?
-Warning! Original description for spell#1235351:sod differs:
-- [Chance on hit to cause your next 2 instances of
-- damage from your pet's special abilities to be
-- increased by 20%. Lasts 12 sec.][Chance on hit to cause your next 2 instances of
-- Whirlwind damage to be increased by 20%. Lasts 12
-- sec.][Chance on hit to cause your next 4 instances of
-- Fire damage to be increased by 20%. Lasts 12 sec.]
 Saving spells to DB
 
 Validating...
@@ -235,6 +228,8 @@ Warning! Template failed for spell#88751:cata
 Warning! Template failed for spell#348459:wrath
 Warning!! Numbers don't match for spell spell#348704
 Warning! Newline count doesn't match for spell#349981:classic aura
+Warning! Template failed for spell#400614:sod
+Warning! Template failed for spell#400614:sod
 Warning!! Numbers don't match for spell spell#407632
 Warning!! Numbers don't match for spell spell#424799
 Warning!! Numbers don't match for spell spell#424800
