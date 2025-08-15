@@ -5,6 +5,8 @@ from typing import Dict, Any
 import requests
 from bs4 import BeautifulSoup, CData
 
+from generation.utils.utils import ValidationError
+
 THREADS = os.cpu_count()
 CLASSIC = 'classic'
 SOD = 'sod'
@@ -1085,75 +1087,96 @@ def apply_translations_to_data(spell_data: dict[int, dict[str, SpellData]], tran
             translation.spell_md = orig_spell.spell_md
 
 
-def __validate_template(spell_id: int, expansion: str, value: str, translation: str):
+def __validate_template(spell: SpellData, fields: tuple[str, str]) -> list[ValidationError]:
     import re
+    errors = list()
+    value = getattr(spell, fields[0])
+    translation = getattr(spell, fields[1])
+    if not value or not translation:
+        return errors
     translation = re.sub(r'\nspell#\d+', '', translation)
     translation = re.sub(r'\[.+?#.+?]', '', translation, flags=re.DOTALL)
     template_start = translation.find('#')
     if template_start == -1:
         if len(re.findall(r'{\d+}', translation)) != 0:
-            print(f"Warning!! Template not described for spell#{spell_id}:{expansion}")
-        return
+            print(f"Warning!! Template not described for spell#{spell.id}:{spell.expansion}")
+            errors.append(ValidationError(spell.id, spell.expansion, 'spell', 'Warning', fields[1], f"Warning!! Template not described for spell#{spell.id}:{spell.expansion}"))
+        return errors
     translation_templates = re.findall(r'{\d+}', translation[:template_start])
     orig_templates = re.findall(r'{\d+}', translation[template_start + 1:])
     if set(translation_templates) != set(orig_templates):
-        print(f"Warning! Templates numbers doesn't match for spell#{spell_id}:{expansion}")
+        print(f"Warning! Templates numbers doesn't match for spell#{spell.id}:{spell.expansion}")
+        errors.append(ValidationError(spell.id, spell.expansion, 'spell', 'Warning', fields[1],f"Warning! Templates numbers doesn't match for spell#{spell.id}:{spell.expansion}"))
     templates = translation[template_start + 1:].split('#')
     for template in templates:
         template = template.replace('.', '\\.').replace('(', r'\(').replace(')', r'\)').replace('+', r'\+')
         pattern = re.sub(r'{\d+}', r'(\\d+|\\d+\.\\d+|\.\\d+|\[.+?\]|\(.+?\))', template).replace('\\\\', '\\')
         matches = re.findall(pattern, value)
         if len(matches) != 1:
-            print(f'Warning! Template failed for spell#{spell_id}:{expansion}')
+            errors.append(ValidationError(spell.id, spell.expansion, 'spell', 'Warning', fields[1], f'Warning! Template failed for spell#{spell.id}:{spell.expansion}'))
+    return errors
 
-def __validate_templates(spell: SpellData):
+def __validate_templates(spell: SpellData) -> list[ValidationError]:
+    errors = list()
     if spell.name_ua:
-        __validate_template(spell.id, spell.expansion, spell.name, spell.name_ua)
+        errors.extend(__validate_template(spell, ('name', 'name_ua')))
     if spell.description_ua and not spell.description_ua.startswith('ref='):
-        __validate_template(spell.id, spell.expansion, spell.description, spell.description_ua)
+        errors.extend(__validate_template(spell, ('description', 'description_ua')))
     if spell.aura_ua:
-        __validate_template(spell.id, spell.expansion, spell.aura, spell.aura_ua)
+        errors.extend(__validate_template(spell, ('aura', 'aura_ua')))
+    return errors
 
 
-def __validate_newlines(spell: SpellData):
+def __validate_newlines(spell: SpellData) -> list[ValidationError]:
     import re
+    errors = list()
     if spell.description_ua and not spell.description_ua.startswith('ref='):
         if not f'spell#' in spell.description_ua:
             if re.findall("\n\n", spell.description) != re.findall("\n\n", spell.description_ua):
-                print(f"Warning! Newline count doesn't match for spell#{spell.id}:{spell.expansion} description")
-        # else:
-        #     if len(re.findall("spell#", spell.description_ua)) > 1:
-        #         print(f"Warning! Check spell#{spell.id} manually")
+                errors.append(ValidationError(spell.id, spell.expansion, 'spell', 'Warning', 'description_ua', f"Warning! Newline count doesn't match for spell#{spell.id}:{spell.expansion} description"))
     if spell.aura_ua and spell.aura:
         if re.findall("\n\n", spell.aura_ua) != re.findall("\n\n", spell.aura):
-            print(f"Warning! Newline count doesn't match for spell#{spell.id}:{spell.expansion} aura")
+            errors.append(ValidationError(spell.id, spell.expansion, 'spell', 'Warning', 'aura_ua', f"Warning! Newline count doesn't match for spell#{spell.id}:{spell.expansion} aura"))
+    return errors
 
-def __validate_translation_completion(spell: SpellData):
+def __validate_translation_completion(spell: SpellData) -> list[ValidationError]:
+    errors = list()
     if spell.name and not spell.name_ua:
         print(f"Warning!! There's no translation for spell#{spell.id}:{spell.expansion} name")
+        errors.append(ValidationError(spell.id, spell.expansion, 'spell', 'Warning', 'name_ua', f"Warning!! There's no translation for spell#{spell.id}:{spell.expansion} name"))
     if spell.description and not spell.description_ua:
         print(f"Warning!! There's no translation for spell#{spell.id}:{spell.expansion} description")
+        errors.append(ValidationError(spell.id, spell.expansion, 'spell', 'Warning', 'description_ua', f"Warning!! There's no translation for spell#{spell.id}:{spell.expansion} description"))
     if spell.aura and not spell.aura_ua:
         print(f"Warning!! There's no translation for spell#{spell.id}:{spell.expansion} aura")
+        errors.append(ValidationError(spell.id, spell.expansion, 'spell', 'Warning', 'aura_ua', f"Warning!! There's no translation for spell#{spell.id}:{spell.expansion} aura"))
+    return errors
 
 
-def __validate_numbers(spell_id: int, value: str, translation: str):
+def __validate_numbers(spell: SpellData, fields: tuple[str, str]) -> list[ValidationError]:
     import re
+    errors = list()
+    value = getattr(spell, fields[0])
+    translation = getattr(spell, fields[1])
     if set(re.findall(r'\d+', value)) != set(re.findall(r'\d+', translation)):
-        print(f"Warning!! Numbers don't match for spell spell#{spell_id}")
+        errors.append(ValidationError(spell.id, spell.expansion, 'spell', 'Warning', fields[1], f"Warning!! Numbers don't match for spell spell#{spell.id}"))
+    return errors
 
-def __validate_spell_numbers(spell: SpellData):
+def __validate_spell_numbers(spell: SpellData) -> list[ValidationError]:
+    errors = list()
     if spell.description and spell.description_ua and not spell.description_ua.startswith('ref=') and not '#' in spell.description_ua:
-        __validate_numbers(spell.id, spell.description, spell.description_ua)
+        errors.extend(__validate_numbers(spell, ('description', 'description_ua')))
     if spell.aura_ua and spell.aura and not '#' in spell.aura_ua:
-        __validate_numbers(spell.id, spell.aura, spell.aura_ua)
+        errors.extend(__validate_numbers(spell, ('aura', 'aura_ua')))
+    return errors
 
 
-def __resolve_spell_references(spell: SpellData, spells: dict[int, dict[str, SpellData]]):
+def __resolve_spell_references(spell: SpellData, spells: dict[int, dict[str, SpellData]]) -> tuple[SpellData | None, list[ValidationError]]:
     import copy
+    errors = []
     spell_copy = copy.deepcopy(spell)
     if not spell_copy.ref:
-        return spell_copy
+        return spell_copy, errors
 
     parent_expansions = expansion_data[spell_copy.expansion][PARENT_EXPANSIONS]
     reffed_spell = None
@@ -1164,11 +1187,15 @@ def __resolve_spell_references(spell: SpellData, spells: dict[int, dict[str, Spe
                 break
     if not reffed_spell:
         print(f'Warning!! Non-existent ref#{spell_copy.ref} for spell#{spell_copy.id}')
-        return
+        errors.append(ValidationError(spell_copy.id, spell_copy.expansion, 'spell', 'Warning', 'ref', f'Warning!! Non-existent ref#{spell_copy.ref} for spell#{spell_copy.id}'))
+        return None, errors
 
     if reffed_spell.ref:
         # print(f'Reresolving reference for spell#{reffed_spell.id}:{reffed_spell.expansion}')
-        reffed_spell = __resolve_spell_references(reffed_spell, spells)
+        reffed_spell, new_errors = __resolve_spell_references(reffed_spell, spells)
+        errors.extend(new_errors)
+        if not reffed_spell:
+            return None, errors
 
     if not spell_copy.name_ua and reffed_spell.name_ua:
         spell_copy.name_ua = reffed_spell.name_ua
@@ -1182,17 +1209,19 @@ def __resolve_spell_references(spell: SpellData, spells: dict[int, dict[str, Spe
         spell_copy.aura_ua = reffed_spell.aura_ua
         # spell_copy.aura = reffed_spell.aura
 
-    return spell_copy
+    return spell_copy, errors
 
 
-def __validate_references(spells: dict[int, dict[str, SpellData]], spell: SpellData, depth=0):
-    from generation.utils.utils import are_texts_equal_ignoring_values
+def __validate_references(spells: dict[int, dict[str, SpellData]], spell: SpellData, depth=0) -> list[ValidationError]:
+    errors = list()
 
     if spell.ref == spell.id:
-        return
+        return errors
     if depth > 2:
         print(f'Warning!! Too deep reference chain at spell#{spell.id}:{spell.expansion}')
-        return
+        errors.append(ValidationError(spell.id, spell.expansion, 'spell', 'Warning', 'ref', f'Warning!! Too deep reference chain at spell#{spell.id}:{spell.expansion}'))
+        return errors
+
     if spell.ref:
         parent_expansions = expansion_data[spell.expansion][PARENT_EXPANSIONS]
         reffed_spell = None
@@ -1202,40 +1231,57 @@ def __validate_references(spells: dict[int, dict[str, SpellData]], spell: SpellD
                 break
         if not reffed_spell:
             print(f'Warning!! Non-existent ref#{spell.ref} for spell#{spell.id}')
-            return
+            errors.append(ValidationError(spell.id, spell.expansion, 'spell', 'Warning', 'ref',f'Warning!! Non-existent ref#{spell.ref} for spell#{spell.id}'))
+            return errors
 
-        resolved_spell = __resolve_spell_references(spell, spells)
+        resolved_spell, res_errors = __resolve_spell_references(spell, spells)
+        errors.extend(res_errors)
 
         # __validate_translation_completion(spell) # reuse with different error message?
         if spell.name and not resolved_spell.name_ua:
             print(f"Warning!! There's no translation for resolved spell#{spell.id}:{spell.expansion} name")
+            errors.append(ValidationError(spell.id, spell.expansion, 'spell', 'Warning', 'name_ua',f"Warning!! There's no translation for resolved spell#{spell.id}:{spell.expansion} name"))
         if spell.description and not resolved_spell.description_ua:
             print(f"Warning!! There's no translation for resolved spell#{spell.id}:{spell.expansion} description")
+            errors.append(ValidationError(spell.id, spell.expansion, 'spell', 'Warning', 'description_ua',f"Warning!! There's no translation for resolved spell#{spell.id}:{spell.expansion} description"))
         if spell.aura and not resolved_spell.aura_ua:
             print(f"Warning!! There's no translation for resolved spell#{spell.id}:{spell.expansion} aura")
+            errors.append(ValidationError(spell.id, spell.expansion, 'spell', 'Warning', 'aura_ua',f"Warning!! There's no translation for resolved spell#{spell.id}:{spell.expansion} aura"))
 
         if not spell.description and resolved_spell.description_ua:
             print(f"Warning!! Redundant translation for resolved spell#{spell.id}:{spell.expansion} description")
+            errors.append(ValidationError(spell.id, spell.expansion, 'spell', 'Warning', 'description_ua',f"Warning!! Redundant translation for resolved spell#{spell.id}:{spell.expansion} description"))
+
         if not spell.aura and resolved_spell.aura_ua:
             print(f"Warning!! Redundant translation for resolved spell#{spell.id}:{spell.expansion} aura")
+            errors.append(ValidationError(spell.id, spell.expansion, 'spell', 'Warning', 'aura_ua',f"Warning!! Redundant translation for resolved spell#{spell.id}:{spell.expansion} aura"))
 
         # __validate_templates(resolved_spell) # there were 30 verified warnings, but it'd be better to use some different error messages
         # __validate_spell_numbers(resolved_spell) # there were 1 verified warning, but it'd be also better to use some different error messages
 
         if reffed_spell.ref:
             __validate_references(spells, reffed_spell, depth+1)
+    return errors
 
-def validate_translations(spells: dict[int, dict[str, SpellData]]):
+
+def validate_translations(spells: dict[int, dict[str, SpellData]]) -> list[ValidationError]:
     print("Validating...")
+    validation_errors = list()
     for key in sorted(spells.keys()):
         for spell in spells[key].values():
-            __validate_templates(spell)
-            __validate_newlines(spell)
+            validation_errors.extend(__validate_templates(spell))
+            validation_errors.extend(__validate_newlines(spell))
             if (spell.name_ua or spell.description_ua or spell.aura_ua) and not spell.ref:
-                __validate_translation_completion(spell)
-            __validate_spell_numbers(spell)
-            __validate_references(spells, spell)
+                validation_errors.extend(__validate_translation_completion(spell))
+            validation_errors.extend(__validate_spell_numbers(spell))
+            validation_errors.extend(__validate_references(spells, spell))
 
+    # NOTE: Some validations are still printed into console. As I am lazy guy, I didn't wanted to test these.
+    # Print statements are removed for verified errors, so if something new appears - it will be additionally printed.
+    print("Validated.")
+    for validation_error in validation_errors:
+        print(validation_error.error_message)
+    return validation_errors
     # check if spell was updated in next expansion but has no translation
 
 
@@ -1334,6 +1380,7 @@ def compare_refs(spells: dict[int, dict[str, SpellData]], translations: dict[int
 def remove_refs(remove_refs: set[tuple[int, str]]):
     # Remove values from google sheet if their ID and expansion are in remove_refs. Was used once, can be finished to update more fields
     import gspread
+    from gspread.utils import ValueInputOption
     from oauth2client.service_account import ServiceAccountCredentials
     sheet_id = '1xwoaO6U-jXQChHecEzzqG-leESTmRKm2WXHev4GOFho'
     print('Removing refs from Google Sheet... ', end='')
@@ -1349,7 +1396,7 @@ def remove_refs(remove_refs: set[tuple[int, str]]):
         if (row_id, row_expansion) in remove_refs:
             updates.append({'range': f'I{i}:K{i}', 'values': [['', '', '']]})
     if updates:
-        sheet.batch_update(data=updates, value_input_option='RAW')
+        sheet.batch_update(data=updates, value_input_option=ValueInputOption.raw)
     print("Refs removed successfully.")
 
 

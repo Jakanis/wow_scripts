@@ -6,6 +6,20 @@ from crowdin_api import CrowdinClient
 
 CROWDIN_PROJECT_ID = 393919
 
+
+class ValidationError:
+    def __init__(self, id: int, expansion: str, entry_type: str, severity: str, field: str, error_message: str):
+        self.id = id
+        self.expansion = expansion
+        self.entry_type = entry_type
+        self.severity = severity
+        self.field = field
+        self.error_message = error_message
+
+    def __str__(self):
+        return f'[{self.severity}] {self.entry_type}#{self.id}:{self.expansion} - {self.field}: {self.error_message}'
+
+
 def gather_files_in_subfolders(parent_dir: str) -> list[str]:
     file_list = []
     for dirpath, _, filenames in os.walk(parent_dir):

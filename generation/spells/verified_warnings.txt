@@ -7,6 +7,7 @@ Warning! Original description for spell#1235320:sod differs:
 Saving spells to DB
 
 Validating...
+Validated.
 Warning! Newline count doesn't match for spell#17:cata description
 Warning! Newline count doesn't match for spell#66:cata description
 Warning! Newline count doesn't match for spell#100:cata description
