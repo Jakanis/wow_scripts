@@ -157,8 +157,9 @@ class SpellData:
 
     def is_equal_ignoring_values_to(self, __other):
         from generation.utils.utils import are_texts_equal_ignoring_values
-        return are_texts_equal_ignoring_values(self.description, __other.description) and are_texts_equal_ignoring_values(self.aura, __other.aura)
-        pass
+        return (are_texts_equal_ignoring_values(self.name, __other.name)
+                and are_texts_equal_ignoring_values(self.description, __other.description)
+                and are_texts_equal_ignoring_values(self.aura, __other.aura))
 
 
 class SpellTranslation:
@@ -419,7 +420,7 @@ def save_spells_to_db(spells: dict[int, dict[str, SpellData]]):
                         name_ref INT,
                         desc_ref INT,
                         aura_ref INT,
-                        class INT,
+                        class TEXT,
                         rank TEXT,
                         cat INT,
                         level INT,
@@ -547,17 +548,21 @@ def populate_similarities_across_expansions(spells: dict[int, dict[str, SpellDat
 
 def __to_tsv_val(value) -> str:
     if value:
-        return '"' + str(value).replace('"', '""') + '"'
+        value_str = str(value).replace('"', '""')
+        if value_str.startswith('+'):
+            value_str = "'" + value_str
+        return f'"{value_str}"'
     else:
         return ''
 
-def create_translation_sheet(spells: dict[int, dict[str, SpellData]], feedback_ids: list[int]):
+def create_translation_sheet(spells: dict[int, dict[str, SpellData]]):
     with (open(f'translate_this.tsv', mode='w', encoding='utf-8') as f):
-        f.write('ID\tName(EN)\tName(UA)\tDescription(EN)\tDescription(UA)\tAura(EN)\tAura(UA)\tref\tname_ref\tdesc_ref\taura_ref\texpansion\tcategory\tgroup\n')
+        f.write('ID\texpansion\tName(EN)\tName(UA)\tDescription(EN)\tDescription(UA)\tAura(EN)\tAura(UA)\tref\tname_ref\tdesc_ref\taura_ref\tcategory\tgroup\tNote\tNote 2\n')
         count = 0
         for key in sorted(spells.keys()):
             # for expansion, spell in list(spells[key].items())[-1:]:
-            for spell in sorted(set([list(spells[key].values())[0], list(spells[key].values())[-1]]), key=lambda x: expansion_data[x.expansion][INDEX]):
+            # for spell in sorted(set([list(spells[key].values())[0], list(spells[key].values())[-1]]), key=lambda x: expansion_data[x.expansion][INDEX]):
+            for spell in sorted(spells[key].values(), key=lambda x: expansion_data[x.expansion][INDEX]):
                 if ('[DNT]' in spell.name.upper() or
                         'DND' in spell.name or
                         '(DND)' in spell.name.upper() or
@@ -578,7 +583,7 @@ def create_translation_sheet(spells: dict[int, dict[str, SpellData]], feedback_i
                 ## Feedback translations:
                 # feedback_ids = [468275, 1221337, 1225769, 1225771, 1225772, 1225906, 1225907, 1225960, 1225987, 1226007, 1226396, 1226800, 1226810, 1227369, 1229305, 1229308, 1229340, 1230942, 1230944, 1230980, 1231091, 1231254, 1231258, 1231267, 1231289, 1231330, 1231382, 1231402, 1231417, 1231547, 1231548, 1231550, 1231551, 1231553, 1231554, 1231578, 1231586, 1231604, 1231605, 1231612, 1231620, 1231624, 1231656, 1231681, 1231694, 1231698, 1231874, 1231904, 1232044, 1232057, 1232066, 1232103, 1232150, 1232153, 1232157, 1232158, 1232162, 1232167, 1232181, 1232312, 1232322, 1232477, 1232479, 1232896, 1232946, 1234033, 1234040, 1234085, 1234299, 1234326, 1234792, 1234805, 1235011, 1235320, 1235351, 1235681, 1237064]
                 # if spell.expansion in [CLASSIC, SOD] and (spell.description is not None or spell.aura is not None) and spell.name_ua is None and spell.description_ua is None and spell.aura_ua is None and spell.ref is None and spell.spell_md.cat in (9, 11) and spell.id in feedback_ids: # Review manually. Skip recipes (for now, me may want to translate trainer interface)
-                if spell.expansion in [CLASSIC, SOD] and spell.name_ua is None and spell.description_ua is None and spell.aura_ua is None and spell.ref is None and spell.spell_md.cat in (7, 5, 0, -2, -3, -4, -8, -11, -13, -25, -26) and spell.id in feedback_ids:
+                # if spell.expansion == CLASSIC and spell.is_translated() and spell.description_ua is None and spell.aura_ua is None and spell.ref is None and spell.spell_md.cat in (7, 5, 0, -2, -3, -4, -8, -11, -13, -25, -26) and spell.id in feedback_ids:
                 # if spell.expansion in [CLASSIC, SOD] and spell.name_ua is None and spell.description_ua is None and spell.aura_ua is None and spell.ref is None and spell.id in feedback_ids: # Massive
 
                 ## Autotranslation:
@@ -593,13 +598,11 @@ def create_translation_sheet(spells: dict[int, dict[str, SpellData]], feedback_i
                 ## For missing referenced spells
                 # force_translate = (1220635, 1220642, 1220645, 1220650, 1220651, 1220653, 1220654, 1220655, 1220656, 1220657, 1220666, 1220668, 1220700, 1220702, 1220707, 1220708, 1220711, 28800, 1220738, 1220741, 1220756, 1220770, 1222974, 1222994, 1223010, 1220980, 1219019, 1219043, 1219083, 1223262, 1223341, 1223348, 1223349, 1223350, 1223351, 1223352, 1223353, 1223354, 1223355, 1223357, 1223367, 1223368, 1223370, 1223371, 1223372, 1223373, 1223374, 1223375, 1223376, 1223379, 1223380, 1223381, 1223382, 1223383, 1223384, 1223385, 1223386, 1223387, 1223455, 1219415, 1219500, 1219501, 1219503, 1219506, 1219507, 1219510, 1219511, 1219512, 1219513, 1219515, 1219519, 1219520, 1219521, 1219522, 1219539, 1219548, 1219552, 1219553, 1219557, 1219558, 1223689, 1223795, 1219740, 1219742, 1219743, 1219745, 1219747, 1219748, 1219749, 1219751, 1219752, 1219753, 1219754, 1219755, 1219756, 1219757, 1219758, 1219760, 1219762, 1219763, 1219764, 1219766, 1219767, 1219768, 1219769, 1219770, 1219771, 1219772, 1219773, 1219774, 1219775, 1219776, 1219777, 1219778, 1219779, 1219780, 1219781, 1219782, 1219783, 1219784, 1219785, 1219786, 1219787, 1219788, 1219789, 1219790, 1219791, 1219792, 1219793, 1219794, 1219795, 1219796, 1219797, 1219798, 1219799, 1219800, 1219801, 1219802, 1219803, 1219804, 1219805, 1219806, 1219807, 1219808, 1219809, 1219810, 1219811, 1219812, 1219813, 1219815, 1219816, 1219818, 1219819, 1219820, 1219821, 1219822, 1219823, 1219824, 1219825, 1219826, 1219827, 1219828, 1219829, 1219830, 1219831, 1219832, 1219833, 1219834, 1219835, 1219836, 1219837, 1219838, 1219839, 1219840, 1219841, 1219842, 1219843, 1219844, 1219845, 1219846, 1219847, 1219848, 1219849, 1219850, 1219851, 1219852, 1219853, 1219854, 1219855, 1219856, 1219857, 1219858, 1219859, 1219860, 1219861, 1219862, 1219863, 1219864, 1219865, 1219866, 1219867, 1219868, 1219869, 1219870, 1219871, 1219872, 1219873, 1219874, 1219875, 1219876, 1219877, 1219878, 1219879, 1219880, 1219881, 1219882, 1219883, 1219884, 1219885, 1219886, 1219887, 1219888, 1219889, 1219890, 1219891, 1219892, 1219893, 1219894, 1219895, 1219896, 1219897, 1219898, 1219899, 1219900, 1219901, 1219902, 1219903, 1219904, 1219905, 1219906, 1219907, 1219908, 1219909, 1219910, 1219911, 1219912, 1219913, 1219914, 1219915, 1219916, 1219917, 1219918, 1219919, 1219920, 1219921, 1219922, 1219923, 1219924, 1219925, 1219926, 1219927, 1219928, 1219929, 1219930, 1219931, 1219932, 1219933, 1219934, 1219935, 1219936, 1219937, 1219938, 1219939, 1219940, 1219941, 1219942, 1219943, 1219944, 1219945, 1219946, 1219947, 1219948, 1219949, 1219950, 1219951, 1219952, 1219953, 1219954, 28148, 1213971, 28282, 1222393, 1222394, 1218367, 1220418, 1220514, 1220521, 1214381, 1220533, 1220536, 1220538, 1220540, 1214407, 1214409, 1220560, 1220561, 1220563, 1220564, 1220565, 1220566, 1220567, 1220568)
                 # if spell.expansion in [CLASSIC, SOD] and spell.name_ua is None and spell.description_ua is None and spell.aura_ua is None and spell.ref is None and spell.id in force_translate:
-
-                # if True:
+                if not spell.is_translated():
                     class_name = SpellMD._classes[getattr(spell.spell_md, 'chrclass')] if getattr(spell.spell_md, 'chrclass') in SpellMD._classes else ''
-                    spell_description = spell.description
-                    if spell_description and spell_description.startswith('+'):  # In case of '+123 Attack Power' etc
-                        spell_description = "'" + spell_description
-                    fields = [spell.id, spell.name, spell.name_ua, spell_description, spell.description_ua, spell.aura, spell.aura_ua, spell.ref, spell.name_ref, spell.description_ref, spell.aura_ref, spell.expansion, class_name, spell.group]
+                    note = 'ALREADY TRANSLATED' if spell.is_translated() else 'NOT TRANSLATED'
+                    note_2 = ''
+                    fields = [spell.id, spell.expansion, spell.name, spell.name_ua, spell.description, spell.description_ua, spell.aura, spell.aura_ua, spell.ref, spell.name_ref, spell.description_ref, spell.aura_ref, class_name, spell.group, note, note_2]
                     f.write(f'{'\t'.join(map(lambda x: __to_tsv_val(x), fields))}\n')
                     count += 1
         if count > 0:
@@ -615,8 +618,10 @@ def merge_spell(id: int, old_spells: dict[str, SpellData], new_spell: SpellData)
     if len(old_spells) == 1:
         old_spell = next(iter(old_spells.values()))
 
-        if (old_spell.name != new_spell.name or not old_spell.is_equal_ignoring_values_to(new_spell)
-                or old_spell.name_ref != new_spell.name_ref or old_spell.description_ref != new_spell.description_ref or old_spell.aura_ref != new_spell.aura_ref):
+        if (not old_spell.is_equal_ignoring_values_to(new_spell)
+                or old_spell.name_ref != new_spell.name_ref
+                or old_spell.description_ref != new_spell.description_ref
+                or old_spell.aura_ref != new_spell.aura_ref):
             return {**old_spells, **{new_spell.expansion: new_spell}}
         else:
             return old_spells
@@ -992,6 +997,9 @@ def read_translations_sheet() -> dict[int, dict[str, SpellData]]:
             aura_ref = __try_cast_str_to_int(row[11], None)
             category = row[12] if len(row) > 12 and row[12] != '' else None
             group = row[13] if len(row) > 13 and row[13] != '' else None
+            note = row[14] if len(row) > 14 and row[14] != '' else None
+            if note == 'NOT TRANSLATED':
+                continue
             all_translations[spell_id] = all_translations.get(spell_id, dict())
             if expansion in all_translations[spell_id]:
                 print(f'Warning! Duplicate for {spell_id}:{expansion}')
@@ -1008,13 +1016,14 @@ def read_classicua_translations(spells_root_path: str, spell_data: dict[int, dic
     file_contents = list()
     for foldername, subfolders, filenames in os.walk(spells_root_path):
         for filename in filenames:
-            # Construct the full path to the file
-            file_path = foldername + '\\' + filename
+            if filename.startswith('spell') and filename.endswith('.lua'):
+                # Construct the full path to the file
+                file_path = foldername + '\\' + filename
 
-            # Read the contents of the file
-            with open(file_path, 'r', encoding="utf-8") as file:
-                file_content = file.read()
-                file_contents.append((file_path, file_content))
+                # Read the contents of the file
+                with open(file_path, 'r', encoding="utf-8") as file:
+                    file_content = file.read()
+                    file_contents.append((file_path, file_content))
 
     all_spells: dict[int, dict[str, SpellData]] = dict()
 
@@ -1142,13 +1151,10 @@ def __validate_newlines(spell: SpellData) -> list[ValidationError]:
 def __validate_translation_completion(spell: SpellData) -> list[ValidationError]:
     errors = list()
     if spell.name and not spell.name_ua:
-        print(f"Warning!! There's no translation for spell#{spell.id}:{spell.expansion} name")
         errors.append(ValidationError(spell.id, spell.expansion, 'spell', 'Warning', 'name_ua', f"Warning!! There's no translation for spell#{spell.id}:{spell.expansion} name"))
     if spell.description and not spell.description_ua:
-        print(f"Warning!! There's no translation for spell#{spell.id}:{spell.expansion} description")
         errors.append(ValidationError(spell.id, spell.expansion, 'spell', 'Warning', 'description_ua', f"Warning!! There's no translation for spell#{spell.id}:{spell.expansion} description"))
     if spell.aura and not spell.aura_ua:
-        print(f"Warning!! There's no translation for spell#{spell.id}:{spell.expansion} aura")
         errors.append(ValidationError(spell.id, spell.expansion, 'spell', 'Warning', 'aura_ua', f"Warning!! There's no translation for spell#{spell.id}:{spell.expansion} aura"))
     return errors
 
@@ -1159,7 +1165,7 @@ def __validate_numbers(spell: SpellData, fields: tuple[str, str]) -> list[Valida
     value = getattr(spell, fields[0])
     translation = getattr(spell, fields[1])
     if set(re.findall(r'\d+', value)) != set(re.findall(r'\d+', translation)):
-        errors.append(ValidationError(spell.id, spell.expansion, 'spell', 'Warning', fields[1], f"Warning!! Numbers don't match for spell spell#{spell.id}"))
+        errors.append(ValidationError(spell.id, spell.expansion, 'spell', 'Warning', fields[1], f"Warning!! Numbers don't match for spell#{spell.id}:{spell.expansion}"))
     return errors
 
 def __validate_spell_numbers(spell: SpellData) -> list[ValidationError]:
@@ -1239,21 +1245,16 @@ def __validate_references(spells: dict[int, dict[str, SpellData]], spell: SpellD
 
         # __validate_translation_completion(spell) # reuse with different error message?
         if spell.name and not resolved_spell.name_ua:
-            print(f"Warning!! There's no translation for resolved spell#{spell.id}:{spell.expansion} name")
             errors.append(ValidationError(spell.id, spell.expansion, 'spell', 'Warning', 'name_ua',f"Warning!! There's no translation for resolved spell#{spell.id}:{spell.expansion} name"))
         if spell.description and not resolved_spell.description_ua:
-            print(f"Warning!! There's no translation for resolved spell#{spell.id}:{spell.expansion} description")
             errors.append(ValidationError(spell.id, spell.expansion, 'spell', 'Warning', 'description_ua',f"Warning!! There's no translation for resolved spell#{spell.id}:{spell.expansion} description"))
         if spell.aura and not resolved_spell.aura_ua:
-            print(f"Warning!! There's no translation for resolved spell#{spell.id}:{spell.expansion} aura")
             errors.append(ValidationError(spell.id, spell.expansion, 'spell', 'Warning', 'aura_ua',f"Warning!! There's no translation for resolved spell#{spell.id}:{spell.expansion} aura"))
 
         if not spell.description and resolved_spell.description_ua:
-            print(f"Warning!! Redundant translation for resolved spell#{spell.id}:{spell.expansion} description")
             errors.append(ValidationError(spell.id, spell.expansion, 'spell', 'Warning', 'description_ua',f"Warning!! Redundant translation for resolved spell#{spell.id}:{spell.expansion} description"))
 
         if not spell.aura and resolved_spell.aura_ua:
-            print(f"Warning!! Redundant translation for resolved spell#{spell.id}:{spell.expansion} aura")
             errors.append(ValidationError(spell.id, spell.expansion, 'spell', 'Warning', 'aura_ua',f"Warning!! Redundant translation for resolved spell#{spell.id}:{spell.expansion} aura"))
 
         # __validate_templates(resolved_spell) # there were 30 verified warnings, but it'd be better to use some different error messages
@@ -1335,7 +1336,7 @@ def check_feedback_spells(spells: dict[int, dict[str, SpellData]]) -> list[int]:
     return sorted(missed_spells)
 
 
-def filter_latest_untranslated(spells: dict[int, dict[str, SpellData]]) -> dict[int, dict[str, SpellData]]:
+def filter_not_updated(spells: dict[int, dict[str, SpellData]]) -> dict[int, dict[str, SpellData]]:
     result = dict()
     for key in spells.keys():
         spell_by_expansion = spells[key]
@@ -1343,9 +1344,13 @@ def filter_latest_untranslated(spells: dict[int, dict[str, SpellData]]) -> dict[
         if len(expansions) > 1:
             first_expansion_spell = spell_by_expansion[expansions[0]]
             last_expansion_spell = spell_by_expansion[expansions[-1]]
-            if first_expansion_spell.is_translated() and not last_expansion_spell.is_translated():
-                result[key] = dict()
-                result[key][last_expansion_spell.expansion] = last_expansion_spell
+            # check if any spell is translated, but not all
+            any_translated = any(spell.is_translated() for spell in spell_by_expansion.values())
+            all_translated = all(spell.is_translated() for spell in spell_by_expansion.values())
+            if any_translated and not all_translated:
+            # if any_translated and not all_translated and last_expansion_spell.is_translated():
+            # if first_expansion_spell.is_translated() and last_expansion_spell and not last_expansion_spell.is_translated():
+                result[key] = spells[key]
     return result
 
 
@@ -1422,6 +1427,5 @@ if __name__ == '__main__':
 
     convert_translations_to_entries(tsv_translations)
 
-    # needs_update = filter_latest_untranslated(all_spells)
-    # create_translation_sheet(needs_update, missing_spells)
-    create_translation_sheet(all_spells, missing_spells)
+    needs_update = filter_not_updated(all_spells)
+    create_translation_sheet(needs_update)
