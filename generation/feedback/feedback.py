@@ -9,11 +9,11 @@ def merge_dicts(a: dict, b: dict):
     return a
 
 
-def load_feedbacks() -> dict:
+def load_feedbacks(folder: str) -> dict:
     import os
     from slpp import slpp as lua
     feedbacks = dict()
-    for foldername, subfolders, filenames in os.walk('./input/feedbacks'):
+    for foldername, subfolders, filenames in os.walk(folder):
         for filename in filenames:
             # Construct the full path to the file
             file_path = foldername + '/' + filename
@@ -96,6 +96,7 @@ def pickle_missings(feedback: dict, name: str) -> set[int]:
     feedback_values = feedback.get(name)
     with open(f'output/{name}.pkl', 'wb') as f:
         pickle.dump(feedback_values, f)
+    print(f'{name} keys: {len(feedback_values)}')
     return feedback_values
 
 
@@ -155,7 +156,7 @@ def cleanup_objects(missing_objects: set[str]):
 
 
 if __name__ == '__main__':
-    feedbacks = load_feedbacks()
+    feedbacks = load_feedbacks('./input/feedbacks')
 
     store_missings(feedbacks, 'missing_spells')  # Check in corresponding folder
     store_missings(feedbacks, 'missing_npcs')  # Check in corresponding folder
