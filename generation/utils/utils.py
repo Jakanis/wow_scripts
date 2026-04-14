@@ -343,3 +343,13 @@ def are_texts_equal_ignoring_values(text1: str, text2: str) -> bool:
     text2_cleaned = re.sub(r'\d+\.?\d*', '', text2)
 
     return text1_cleaned.strip() == text2_cleaned.strip()
+
+
+def __to_tsv_val(value) -> str:
+    if value:
+        value_str = str(value).replace('"', '""')
+        if value_str.startswith('+'):
+            value_str = "'" + value_str
+        return f'"{value_str}"'
+    else:
+        return ''
