@@ -1,10 +1,11 @@
 import json
 import os
+import re
 
 import requests
 from bs4 import BeautifulSoup, CData
 from generation.spells.spells import SpellData, load_spells_from_db, is_spell_translated
-from generation.utils.utils import compare_directories, update_on_crowdin
+from generation.utils.utils import compare_directories, update_on_crowdin, __to_tsv_val
 
 THREADS = 16
 CLASSIC = 'classic'
@@ -13,6 +14,7 @@ SOD_PTR = 'sod_ptr'
 TBC = 'tbc'
 WRATH = 'wrath'
 CATA = 'cata'
+MISTS = 'mists'
 WOWHEAD_URL = 'wowhead_url'
 METADATA_CACHE = 'metadata_cache'
 XML_CACHE = 'xml_cache'
@@ -95,6 +97,18 @@ expansion_data = {
         METADATA_FILTERS: ('', '', ''),
         IGNORES: [],
         FORCE_DOWNLOAD: [16785, ]
+    },
+    MISTS: {
+        INDEX: 4,
+        WOWHEAD_URL: 'https://www.wowhead.com/mop-classic',
+        METADATA_CACHE: 'wowhead_mists_metadata_cache',
+        XML_CACHE: 'wowhead_mists_item_xml',
+        HTML_CACHE: 'wowhead_mists_item_html',
+        ITEM_CACHE: 'wowhead_mists_item_cache',
+        BOOK_CACHE: 'wowhead_mists_book_cache',
+        METADATA_FILTERS: ('', '', ''),
+        IGNORES: [],
+        FORCE_DOWNLOAD: [16785, ]
     }
 }
 
@@ -136,7 +150,7 @@ class ItemEffect:
             return res + f'#{self.effect_id}'
         if self.effect_type == 'Rune':
             return res + f'#{self.effect_id}'
-        res += f'#{self.effect_id}' if self.effect_text is None and self.effect_id else ''
+        res += f'#{self.effect_id}' if self.effect_id and not self.effect_text else ''
         res += f': {self.effect_text}' if self.effect_text else ''
         res += f':#{self.rune_spell_id}' if self.rune_spell_id else ''
         return res
@@ -150,31 +164,37 @@ class ItemEffect:
 
 
 class ItemData:
-    def __init__(self, id, expansion, name: str = None, effects: list[ItemEffect] = [], readable=None, random_enchantment=False, name_ua=None, effects_ua: list[ItemEffect]=None, ref=None, raw_effects=None, readable_pages: list[str] = None):
+    def __init__(self, id, expansion, name: str = None, effects: list[ItemEffect] = None, readable=None,
+                 random_enchantment=False, name_ua=None, effects_ua: list[ItemEffect]=None, ref=None, raw_effects=None,
+                 readable_pages: list[str] = None, notes: list[str] = None):
         self.id = id
         self.name = name
         self.expansion = expansion
-        self.effects = effects
+        self.effects = effects if effects is not None else []
         self.readable = readable
         self.random_enchantment = random_enchantment
         self.name_ua = name_ua
         self.effects_ua = effects_ua
         self.ref = ref
         self.raw_effects = raw_effects
-        self.readable_pages = readable_pages
+        self.readable_pages = readable_pages if readable_pages is not None else []
+        self.notes = notes if notes is not None else []
 
     def is_translated(self) -> bool:
         if self.name_ua or self.effects_ua:
             return True
         return False
 
+    def __str__(self):
+        return f"{self.id}#{self.expansion}: {self.name}"
+
 
 class ReadableItem:
-    def __init__(self, id, expansion, name: str = None, pages: list[str] = []):
+    def __init__(self, id, expansion, name: str = None, pages: list[str] = None):
         self.id = id
         self.name = name
         self.expansion = expansion
-        self.pages = pages
+        self.pages = pages if pages is not None else []
 
 
 def __get_wowhead_item_search(expansion, start, end=None) -> list[ItemMD]:
@@ -384,7 +404,7 @@ def parse_wowhead_item_xml_page(expansion, id) -> ItemData:
                     print(f'Warning! Unexpected double reference effect for item #{id}:{expansion}!')
             else:
                 effect_text = a_tag.text
-                effect_text = effect_text[:effect_text.find('. (Proc') + 1] if '. (Proc' in effect_text else effect_text # Remove (Proc chance: x%) text
+                effect_text = effect_text[:effect_text.find(' (Proc chance')] if ' (Proc chance' in effect_text else effect_text # Remove (Proc chance: x%) text
                 effect_link = a_tag.get('href')
                 if '/item-set=' in effect_link:  # to prevent fetching next item links
                     break
@@ -564,20 +584,6 @@ def save_items_to_db(items: dict[int, dict[str, ItemData]]):
     with (conn):
         for key in items.keys():
             for expansion, item in items[key].items():
-                if ('OLD' in item.name or
-                    'DEP' in item.name or
-                    '[PH]' in item.name or
-                    '(old)' in item.name or
-                    '(old2)' in item.name or
-                    'QATest' in item.name or
-                    'DEBUG' in item.name or
-                    '(DND)' in item.name or
-                    'QAEnchant' in item.name or
-                    'TEST' in item.name or
-                    'UNUSED' in item.name or
-                    item.name.startswith('Monster - ') or
-                    key in expansion_data[item.expansion][IGNORES]):
-                        continue
                 item_effects = '\n'.join(map(lambda x: str(x), item.effects)) if item.effects else None
                 item_effects_ua = '\n'.join(map(lambda x: str(x), item.effects_ua)) if item.effects_ua else None
                 if item_effects_ua is None and item.ref:
@@ -586,7 +592,21 @@ def save_items_to_db(items: dict[int, dict[str, ItemData]]):
                             (item.id, item.expansion, item.name, item.name_ua, item_effects, item_effects_ua, item.random_enchantment, item.readable, item.raw_effects))
 
 
-def __merge_item_effects(old_item: ItemData, new_item: ItemData):
+def is_equal_ignoring_symbols(s1: str, s2: str) -> bool:
+    import string
+    if s1 == s2:
+        return True
+    if s1 is None or s2 is None:
+        return False
+    remove = string.punctuation + string.whitespace + string.digits
+    mapping = {ord(c): None for c in remove}
+    # mirror s1
+    s1 = re.sub(r'^\).?nwodlooc .*?\(', '', s1[::-1])[::-1]
+    s2 = re.sub(r'^\).?nwodlooc .*?\(', '', s2[::-1])[::-1]
+    return s1.translate(mapping) == s2.translate(mapping)
+
+
+def __merge_item_effects(old_item: ItemData, new_item: ItemData, spells: dict[int, dict[str, SpellData]]):
     from collections import defaultdict
     from functools import cmp_to_key
     old_item.raw_effects = '\n'.join(map(lambda x: str(x), sorted(old_item.effects, key=cmp_to_key(lambda x, y: EFFECT_TYPES.index(x.get_type()) - EFFECT_TYPES.index(y.get_type()))))) if old_item.raw_effects is None else old_item.raw_effects
@@ -602,6 +622,8 @@ def __merge_item_effects(old_item: ItemData, new_item: ItemData):
         new_item_effects_by_type[effect.get_type()].append(effect)
 
     for effect_type in old_item_effects_by_type.keys() & new_item_effects_by_type.keys():
+        if effect_type in {"Item", "Flavor", "Rune"}:
+            continue
         old_effects_group = old_item_effects_by_type[effect_type]
         new_effects_group = new_item_effects_by_type[effect_type]
         if len(old_effects_group) != len(new_effects_group):
@@ -609,9 +631,22 @@ def __merge_item_effects(old_item: ItemData, new_item: ItemData):
         for i in range(len(old_effects_group)):
             old_effect = old_effects_group[i]
             new_effect = new_effects_group[i]
-            if old_effect.effect_id and new_effect.effect_id and old_effect.effect_id == new_effect.effect_id and old_effect.effect_text != new_effect.effect_text:
-                old_effect.effect_text = None
-                new_effect.effect_text = None
+            old_spell = spells.get(int(old_effect.effect_id), {}).get(old_item.expansion, None) if old_effect.effect_id else None
+            new_spell = spells.get(int(new_effect.effect_id), {}).get(new_item.expansion, None) if new_effect.effect_id else None
+
+            if (old_effect.effect_id and new_effect.effect_id and old_effect.effect_id == new_effect.effect_id
+                    and old_effect.effect_text != new_effect.effect_text):
+                if old_spell and old_effect.effect_text and is_equal_ignoring_symbols(old_effect.effect_text, old_spell.description):
+                    old_effect.effect_text = None
+                elif old_effect.effect_text:
+                    # print(f'Warning! Different effect texts with same spell id for old item#{old_item.id}:{old_item.expansion} and spell#{old_effect.effect_id}!')
+                    old_effect.effect_id = None
+                if new_spell and new_effect.effect_text and is_equal_ignoring_symbols(new_effect.effect_text, new_spell.description):
+                    new_effect.effect_text = None
+                elif new_effect.effect_text:
+                    # print(f'Warning! Different effect texts with same spell id for new item#{new_item.id}:{new_item.expansion} and spell#{new_effect.effect_id}!')
+                    new_effect.effect_id = None
+
             if old_effect.effect_id != new_effect.effect_id and old_effect.effect_text == new_effect.effect_text:
                 old_effect.effect_id = None
                 new_effect.effect_id = None
@@ -619,11 +654,11 @@ def __merge_item_effects(old_item: ItemData, new_item: ItemData):
     new_item.effects = sorted(new_item.effects, key=cmp_to_key(lambda x, y: EFFECT_TYPES.index(x.get_type()) - EFFECT_TYPES.index(y.get_type())))
 
 
-def merge_item(id: int, old_items: dict[str, ItemData], new_item: ItemData) -> dict[str, ItemData]:
+def merge_item(id: int, old_items: dict[str, ItemData], new_item: ItemData, spells: dict[int, dict[str, SpellData]]) -> dict[str, ItemData]:
     import re
     if len(old_items) > 1:
         last_old_item_key = list(old_items.keys())[-1]
-        result = merge_item(id, {last_old_item_key: old_items[last_old_item_key]}, new_item)
+        result = merge_item(id, {last_old_item_key: old_items[last_old_item_key]}, new_item, spells)
         del old_items[last_old_item_key]
         return {**old_items, **result}
     if len(old_items) == 1:
@@ -642,7 +677,7 @@ def merge_item(id: int, old_items: dict[str, ItemData], new_item: ItemData) -> d
         #
         # if name differs - merge their effects and return both
 
-        __merge_item_effects(old_item, new_item)
+        __merge_item_effects(old_item, new_item, spells)
         if old_item.name.lower() != new_item.name.lower():
             return {**old_items, **{new_item.expansion: new_item}}
         elif '\n'.join([str(effect) for effect in old_item.effects]) != '\n'.join([str(effect) for effect in new_item.effects]):
@@ -658,7 +693,7 @@ def merge_item(id: int, old_items: dict[str, ItemData], new_item: ItemData) -> d
         print(f'Skip: Item #{id} instance number unexpected')
 
 
-def merge_expansions(old_expansion: dict[int, dict[str, ItemData]], new_expansion: dict[int, ItemData]) -> dict[int, dict[str, ItemData]]:
+def merge_expansions(old_expansion: dict[int, dict[str, ItemData]], new_expansion: dict[int, ItemData], spells: dict[int, dict[str, SpellData]]) -> dict[int, dict[str, ItemData]]:
     result = dict()
 
     for id in old_expansion.keys() - new_expansion.keys():
@@ -669,7 +704,7 @@ def merge_expansions(old_expansion: dict[int, dict[str, ItemData]], new_expansio
         result[id][new_expansion[id].expansion] = new_expansion[id]
 
     for id in old_expansion.keys() & new_expansion.keys():
-        result[id] = merge_item(id, old_expansion[id], new_expansion[id])
+        result[id] = merge_item(id, old_expansion[id], new_expansion[id], spells)
     return result
 
 
@@ -683,14 +718,14 @@ def merge_readable_item(id: int, old_items: dict[str, ReadableItem], new_item: R
         old_item = next(iter(old_items.values()))
 
         if len(old_item.pages) != len(new_item.pages):
-            print(f'Warning! Readable item #{id} changed between {old_item.expansion} and {new_item.expansion}!')
+            # print(f'Warning! Readable item #{id} changed between {old_item.expansion} and {new_item.expansion}!')
             return {**old_items, **{new_item.expansion: new_item}}
 
         for i in range(len(old_item.pages)):
             old_page = old_item.pages[i]
             new_page = new_item.pages[i]
             if old_page != new_page:
-                print(f'Warning! Readable item #{id} changed between {old_item.expansion} and {new_item.expansion} at page #{i+1}!')
+                # print(f'Warning! Readable item #{id} changed between {old_item.expansion} and {new_item.expansion} at page #{i+1}!')
                 return {**old_items, **{new_item.expansion: new_item}}
 
         return old_items
@@ -829,6 +864,7 @@ def retrieve_item_data() -> tuple[dict[int, dict[str, ItemData]], dict[str, dict
     readable_items = dict()
     all_items = dict()
     all_readable_items = dict()
+    raw_spells = load_spells_from_db('../spells/cache/raw_spells.db')
 
     for expansion, expansion_properties in expansion_data.items():
         wowhead_md[expansion] = get_wowhead_items_metadata(expansion)
@@ -844,7 +880,7 @@ def retrieve_item_data() -> tuple[dict[int, dict[str, ItemData]], dict[str, dict
         fix_readables(expansion, readable_items[expansion])
         # populate_book_text(wowhead_items[expansion], readable_items[expansion])
         print(f'Merging with {expansion}')
-        all_items = merge_expansions(all_items, wowhead_items[expansion])
+        all_items = merge_expansions(all_items, wowhead_items[expansion], raw_spells)
         all_readable_items = merge_readable_items(all_readable_items, readable_items[expansion])
 
     # translations = load_item_lua_names('input/entries/item.lua')
@@ -912,19 +948,20 @@ def read_translations_sheet() -> dict[int, dict[str, ItemData]]:
             if not item_id:
                 print(f'Skipping: {row}')
                 continue
-            name_en = row[1] if row[1] else None
-            name_ua = row[2] if row[2] else None
-            effects = str_effects_to_effects(row[3], ignore_desc=True) if row[3] else []
+            expansion = row[1]
+            name_en = row[2] if row[2] else None
+            name_ua = row[3] if row[3] else None
+            effects = str_effects_to_effects(row[4], ignore_desc=True) if row[4] else []
             ref = None
-            effects_ua = str_effects_to_effects(row[4]) if row[4] else []
+            effects_ua = str_effects_to_effects(row[5]) if row[5] else []
+            notes = row[6].split('\n') if row[6] else []
             if effects_ua and effects_ua[0].effect_type == 'Ref':
                 ref = effects_ua[0].effect_id
-            expansion = row[6]
             all_translations[item_id] = all_translations.get(item_id, dict())
             if expansion in all_translations[item_id].keys():
                 print(f'Warning! Duplicate for item#{item_id}:{expansion}')
             all_translations[item_id][expansion] = ItemData(item_id, expansion, name=name_en, name_ua=name_ua,
-                                                            effects=effects, effects_ua=effects_ua, ref=ref)
+                                                            effects=effects, effects_ua=effects_ua, ref=ref, notes=notes)
 
     return all_translations
 
@@ -996,64 +1033,109 @@ def build_name_pretranslation_map(items: dict[int, dict[str, ItemData]]) -> dict
         for expansion, item in sorted(items[key].items()):
             if item.name_ua:
                 if item.name in name_translations and name_translations[item.name] != item.name_ua:
-                    print(f'Warning! Name translation for {item.name} differs: {name_translations[item.name]} <> {item.name_ua}')
+                    print(f'Warning! Name translation for {item.name}#{item.id} differs: {name_translations[item.name]} <> {item.name_ua}')
+                    name_translations[item.name] = name_translations[item.name] + " ???"
                 else:
                     name_translations[item.name] = item.name_ua
     return name_translations
 
-def create_translation_sheet(items: dict[int, dict[str, ItemData]], spells: dict[int, dict[str, SpellData]]):
-    name_pretranslation_map = build_name_pretranslation_map(items)
+effect_pretranslation_map = {
+    r"Improves critical strike rating by (\d+).": "Збільшує показник критичного удару на \\1.",
+    r"Improves hit rating by (\d+).": "Збільшує показник влучності на \\1.",
+    r"Increases your dodge rating by (\d+).": "Збільшує показник ухилення на \\1.",
+    r"Improves haste rating by (\d+).": "Збільшує показник швидкості на \\1.",
+    r"Increases attack power by (\d+).": "Збільшує силу атаки на \\1.",
+    r"Increases spell power by (\d+).": "Збільшує силу заклять на \\1.",
+    r"Increases your parry rating by (\d+).": "Збільшує показник парирування на \\1.",
+    r"Increases your expertise rating by (\d+).": "Збільшує показник вправності на \\1.",
+    r"Improves spell critical strike rating by (\d+).": "Збільшує показник критичного удару заклять на \\1.",
+    r"Increases spell penetration by (\d+).": "Збільшує проникність заклять на \\1.",
+    r"Improves your resilience rating by (\d+).": "Збільшує показник стійкості на \\1.",
+    r"Increases ranged attack power by (\d+).": "Збільшує силу атаки дальнього бою на \\1.",
+    r"Increases your armor penetration by (\d+).": "Збільшує показник пробиття броні на \\1.",
+    r"Increases defense rating by (\d+).": "Збільшує показник захисту на \\1.",
+    r"Improves spell hit rating by (\d+).": "Збільшує показник влучності заклять на \\1.",
+    r"Improves ranged critical strike rating by (\d+).": "Збільшує показник критичного удару дальнього бою на \\1.",
+    r"Increases your shield block rating by (\d+).": "Збільшує показник блокування щитом на \\1.",
+    r"Increases the block value of your shield by (\d+).": "Збільшує показник блокування щитом на \\1.",
+    r"Improves spell haste rating by (\d+).": "Збільшує показник швидкості заклять на \\1.",
+    r"Restores (\d+) mana per (\d+) sec.": "Відновлює \\1 мани кожні \\2 с",
+
+    r"Matches a Red or Yellow Socket.": "Відновлює \\1 мани кожні \\2 с",
+
+
+}
+def pretranslate_effect_text(effect_text):
+    import re
+    for pattern, substitution in effect_pretranslation_map.items():
+        match = re.fullmatch(pattern, effect_text)
+        if match:
+            return re.sub(pattern, substitution, effect_text)
+    return None
+
+
+def pretranslate_items(items: dict[int, dict[str, ItemData]], all_items: dict[int, dict[str, ItemData]], spells: dict[int, dict[str, SpellData]]):
+    name_pretranslation_map = build_name_pretranslation_map(all_items)
+    missing_effect_texts_count: dict[str, int] = dict()
+    missing_spells_count: dict[int, int] = dict()
+    for key in sorted(items.keys()):
+        for expansion, item in sorted(items[key].items()):
+            if not item.name_ua and item.name in name_pretranslation_map.keys():
+                item.name_ua = name_pretranslation_map[item.name]
+
+            effects_ua = list()
+            for original_effect in item.effects:
+                effect_text_ua = None
+                effect_id = int(original_effect.effect_id) if original_effect.effect_id and not original_effect.effect_type == "Item" else None
+                if original_effect.effect_text and not is_spell_translated(spells.get(effect_id)):
+                    pretranslated_effect_text = pretranslate_effect_text(original_effect.effect_text)
+                    if pretranslated_effect_text:
+                        effect_text_ua = pretranslated_effect_text
+                    else:
+                        if not original_effect.effect_id:
+                            cleaned_effect_text = f"{original_effect.effect_type}: {re.sub(r'\d+', 'XXX', original_effect.effect_text)}"
+                            missing_effect_texts_count[cleaned_effect_text] = missing_effect_texts_count.get(cleaned_effect_text, 0) + 1
+                        elif effect_id:
+                            missing_spells_count[effect_id] = missing_spells_count.get(effect_id, 0) + 1
+                        effect_text_ua = "TRANSLATE"
+                effects_ua.append(ItemEffect(original_effect.effect_type, original_effect.effect_id, effect_text_ua))
+            item.effects_ua = effects_ua
+
+    missing_effect_texts_count = dict(sorted(missing_effect_texts_count.items(), key=lambda x: x[1], reverse=True))
+    if missing_effect_texts_count:
+        print("Missing effect texts for pretranslation:")
+        for effect_text, count in missing_effect_texts_count.items():
+            if count > 1:
+                print(f'"{effect_text}": {count}')
+
+    missing_spells_count = dict(sorted(missing_spells_count.items(), key=lambda x: x[1], reverse=True))
+    if missing_spells_count:
+        print("Missing spells for pretranslation:")
+        for spell_id, count in missing_spells_count.items():
+            if count > 1:
+                print(f'#{spell_id}: {count}')
+
+
+def create_translation_sheet(filtered_items: dict[int, dict[str, ItemData]], all_items: dict[int, dict[str, ItemData]], spells: dict[int, dict[str, SpellData]]):
     with open(f'output/translate_this.tsv', mode='w', encoding='utf-8') as f:
-        f.write('ID\tName(EN)\tName(UA)\tDescription(EN)\tDescription(UA)\tNote\texpansion\n')
+        f.write('ID\texpansion\tName(EN)\tName(UA)\tDescription(EN)\tDescription(UA)\tNotes\n')
         count = 0
-        missing_spell_ids = set()
-        for key in sorted(items.keys()):
-            for expansion, item in sorted(items[key].items()):
-                if ('OLD' in item.name or
-                        'DEP' in item.name or
-                        '[PH]' in item.name or
-                        '(old)' in item.name or
-                        '(old2)' in item.name or
-                        'QATest' in item.name or
-                        'DEBUG' in item.name or
-                        '(DND)' in item.name or
-                        'QAEnchant' in item.name or
-                        'TEST' in item.name or
-                        'UNUSED' in item.name or
-                        item.name.startswith('Monster - ') or
-                        item.id in expansion_data[item.expansion][IGNORES]):
-                    continue
-
-                # if item.expansion == 'sod' and not item.is_translated():
-                if item.expansion in (SOD, SOD_PTR) and not item.is_translated():
-                # if not item.is_translated():
-                    item_name_ua = item.name_ua if item.name_ua else ''
-                    if item_name_ua == '' and item.name in name_pretranslation_map.keys():
-                        item_name_ua = name_pretranslation_map[item.name] + ' ???'
-                    effects_ua_text = list()
-                    # pretranslation = False
-                    for original_effect in item.effects:
-                        effect_id = int(original_effect.effect_id) if original_effect.effect_id and not original_effect.effect_type == "Item" else None
-                        if effect_id and is_spell_translated(spells.get(effect_id)):
-                            effects_ua_text.append(original_effect.spell_ref_str())
-                            # pretranslation = True
-                        else:
-                            effect_text_ua = original_effect.effect_type
-                            if original_effect.effect_id:
-                                effect_text_ua = effect_text_ua + "#" + original_effect.effect_id
-                            if original_effect.effect_text and not original_effect.effect_type == "Item":
-                                effect_text_ua = effect_text_ua + ": TRANSLATE"
-                            effects_ua_text.append(effect_text_ua)
-
-                    effects_text = '\n'.join(map(lambda x: str(x), item.effects)).replace('"', '""') if item.effects else ''
-                    # effects_ua_text = '\n'.join(map(lambda x: str(x), item.effects_ua)).replace('"', '""') if item.effects_ua else ''
-                    effects_ua_text = '\n'.join(effects_ua_text).replace('"', '""') #if pretranslation else ''
-                    f.write(f'{item.id}\t{item.name}\t{item_name_ua}\t"{effects_text}"\t"{effects_ua_text}"\t\t{item.expansion}\n')
-                    count += 1
+        for key in sorted(filtered_items.keys()):
+            for item in sorted(filtered_items[key].values(), key=lambda x: expansion_data[x.expansion][INDEX]):
+                effects_text = '\n'.join(map(lambda x: str(x), item.effects)) if item.effects else ''
+                effects_ua_text = '\n'.join(map(lambda x: str(x), item.effects_ua)) if item.effects_ua else ''
+                if 'TRANSLATE' in effects_ua_text or not item.name_ua or (item.name_ua and ' ???' in item.name_ua):
+                    item.notes.append('NOT TRANSLATED')
+                elif item.name_ua:
+                    item.notes.append('PRETRANSLATED')
+                else:
+                    item.notes.append('UNKNOWN')
+                notes = '\n'.join(item.notes) if item.notes else ''
+                fields = [item.id, item.expansion, item.name, item.name_ua, effects_text, effects_ua_text, notes]
+                f.write(f'{'\t'.join(map(lambda x: __to_tsv_val(x), fields))}\n')
+                count += 1
         if count > 0:
             print(f"Added {count} items for translation")
-        if len(missing_spell_ids) > 0:
-            print(f'Consider translating next {len(missing_spell_ids)} spells: {missing_spell_ids}')
 
 
 def __effects_eq(effects1: list[ItemEffect], effects2: list[ItemEffect]) -> bool:
@@ -1091,8 +1173,8 @@ def __diff_fields(field1, field2):
 
 def compare_tsv_and_classicua(tsv_translations: dict[int, dict[str, ItemData]], classicua_translations):
     from functools import cmp_to_key
-    for key in tsv_translations.keys() - classicua_translations.keys():
-        print(f"Warning! Item#{key} doesn't exist in ClassicUA")
+    # for key in tsv_translations.keys() - classicua_translations.keys():
+    #     print(f"Warning! Item#{key} doesn't exist in ClassicUA")
     for key in classicua_translations.keys() - tsv_translations.keys():
         print(f"Warning! Item#{key} doesn't exist in sheet")
     for key in tsv_translations.keys() & classicua_translations.keys():
@@ -1334,19 +1416,6 @@ def check_feedback_items(all_items: dict[int, dict[str, ItemData]]):
 
     print(f'Missed IDs: {sorted(missed_items)}')
 
-def filter_latest_untranslated(items: dict[int, dict[str, ItemData]]) -> dict[int, dict[str, ItemData]]:
-    result = dict()
-    for key in items.keys():
-        item_by_expansion = items[key]
-        expansions = sorted(list(item_by_expansion.keys()), key=lambda x: expansion_data[x][INDEX])
-        if len(expansions) > 1:
-            first_expansion_item = item_by_expansion[expansions[0]]
-            last_expansion_item = item_by_expansion[expansions[-1]]
-            if first_expansion_item.is_translated() and not last_expansion_item.is_translated():
-                result[key] = dict()
-                result[key][last_expansion_item.expansion] = last_expansion_item
-    return result
-
 
 def __book_filename(book_id, book_title):
     valid_chars = frozenset("-.() abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789")
@@ -1393,7 +1462,78 @@ def generate_book_sources(readable_items: dict[str, dict[int, ReadableItem]]):
     print(f'Generated {count} book files.')
 
 
+def filter_not_updated(items: dict[int, dict[str, ItemData]]) -> dict[int, dict[str, ItemData]]:
+    result = dict()
+    for key in items.keys():
+        item_by_expansion = items[key]
+        expansions = sorted(list(item_by_expansion.keys()), key=lambda x: expansion_data[x][INDEX])
+        if len(expansions) > 1:
+            # check if any item is translated, but not all
+            any_translated = any(item.is_translated() for item in item_by_expansion.values())
+            all_translated = all(item.is_translated() for item in item_by_expansion.values())
+            if any_translated and not all_translated:
+                result[key] = {expansion: item for expansion, item in item_by_expansion.items() if not item.is_translated()}
+    return result
+
+
+def download_csv_from_google_sheet():
+    import requests
+    output_file = 'input/translations.csv'
+    sheet_id = '1xwoaO6U-jXQChHecEzzqG-leESTmRKm2WXHev4GOFho'
+    url = f'https://docs.google.com/spreadsheets/d/{sheet_id}/gviz/tq?tqx=out:csv&sheet=Items'
+    print('Downloading translations from Google Sheet... ', end='')
+    response = requests.get(url)
+    if response.status_code == 200:
+        with open(output_file, 'w', encoding='utf-8') as file:
+            file.write(response.text.replace('\r\n', '\n'))
+        print('Done!')
+    else:
+        print(f'Error downloading sheet: {response.status_code} - {response.text}')
+
+
+def filter_out_deprecated_items(items: dict[int, dict[str, ItemData]]) -> dict[int, dict[str, ItemData]]:
+    result = dict()
+    for key in sorted(items.keys()):
+        for expansion, item in sorted(items[key].items()):
+            if ('OLD' in item.name or
+                    'DEP' in item.name or
+                    '[PH]' in item.name or
+                    '(old)' in item.name or
+                    '(old2)' in item.name or
+                    'QATest' in item.name or
+                    'DEBUG' in item.name or
+                    '(DND)' in item.name or
+                    'QAEnchant' in item.name or
+                    'TEST' in item.name or
+                    'UNUSED' in item.name or
+                    item.name.startswith('Monster - ') or
+                    item.id in expansion_data[item.expansion][IGNORES]):
+                continue
+            if key not in result:
+                result[key] = dict()
+            result[key][expansion] = item
+    return result
+
+
+def check_for_translation_redundancies(items: dict[int, dict[str, ItemData]], spells: dict[int, dict[str, SpellData]]):
+    for key in sorted(items.keys()):
+        for item in items[key].values():
+            if item.effects_ua and not (item.effects_ua[0].get_type() == 'Ref'):
+                filtered_original_effects = list(filter(lambda x: x.get_type() not in ['Item', 'Ref', 'Rune', 'Flavor'], item.effects))
+                filtered_ua_effects = list(filter(lambda x: x.get_type() not in ['Item', 'Ref', 'Rune', 'Flavor'], item.effects_ua))
+                for i in range(len(filtered_original_effects)):
+                    orig_effect = filtered_original_effects[i]
+                    ua_effect = filtered_ua_effects[i]
+                    if orig_effect.effect_id and not ua_effect.effect_id and ua_effect.effect_text:
+                        if is_spell_translated(spells.get(int(orig_effect.effect_id))):
+                            print(f'Warning! Redundant translation for item#{item.id}:{item.expansion} effect#{i} - spell#{orig_effect.effect_id} is already translated.')
+                    if orig_effect.effect_id and not orig_effect.effect_text and ua_effect.effect_text:
+                        print(f'Warning! Redundant translation for item#{item.id}:{item.expansion} effect#{i} - original requires spell#{orig_effect.effect_id} reference.')
+
 if __name__ == '__main__':
+    download_csv_from_google_sheet()
+
+    # TODO: compare item effect texts with spell texts to find mismatches
     parsed_items, readable_items = retrieve_item_data()
 
     tsv_translations = read_translations_sheet()
@@ -1403,19 +1543,21 @@ if __name__ == '__main__':
     # apply_translations_to_data(parsed_items, classicua_translations)
     apply_translations_to_data(parsed_items, tsv_translations)
 
-    save_items_to_db(parsed_items)
+    filtered_items = filter_out_deprecated_items(parsed_items)
 
-    validate_translations(parsed_items)
+    save_items_to_db(filtered_items)
 
-    check_feedback_items(parsed_items)
+    validate_translations(filtered_items)
+
+    check_feedback_items(filtered_items)
 
     spells = load_spells_from_db('../spells/cache/spells.db')
-    # print(len(spells))
-    validate_spell_references(parsed_items, spells)
 
-    # needs_update = filter_latest_untranslated(parsed_items)
-    # create_translation_sheet(needs_update, spells)
-    create_translation_sheet(parsed_items, spells)
+    validate_spell_references(filtered_items, spells)
+    check_for_translation_redundancies(filtered_items, spells)
+    needs_update = filter_not_updated(filtered_items)
+    pretranslate_items(needs_update, filtered_items, spells)
+    create_translation_sheet(needs_update, filtered_items, spells)
 
     convert_translations_to_entries(tsv_translations)
 
