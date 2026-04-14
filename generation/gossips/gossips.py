@@ -3,6 +3,33 @@ import os
 from generation.npc.npc import load_npcs_from_db, NPC_MD
 from generation.utils.utils import compare_directories, update_on_crowdin, get_text_code, get_text_hash
 
+CLASSIC = 'classic'
+SOD = 'sod'
+TBC = 'tbc'
+WRATH = 'wrath'
+CATA = 'cata'
+MISTS = 'mists'
+INDEX = 'index'
+expansion_data = {
+    CLASSIC: {
+        INDEX: 0,
+    },
+    SOD: {
+        INDEX: 0,
+    },
+    TBC: {
+        INDEX: 1,
+    },
+    WRATH: {
+        INDEX: 2,
+    },
+    CATA: {
+        INDEX: 3,
+    },
+    MISTS: {
+        INDEX: 4,
+    }
+}
 
 class Gossip:
     def __init__(self, npc_id, text: str, gossip_type = None, gossip_key: str = None, npc_name: str = None, expansion: str = None):
@@ -26,6 +53,7 @@ def __clean_newlines(value: str) -> str:
 
 def load_missing_gossips() -> list[Gossip]:
     import pickle
+    import re
     gossips = list()
 
     feedbacks_folder = 'input/feedbacks'
@@ -44,7 +72,9 @@ def load_missing_gossips() -> list[Gossip]:
                         else:
                             print(f"Warning! Unknown gossip_object type: {type(gossip_object)}")
                             continue
-                        gossip = Gossip(npc_id, __clean_newlines(gossip_text).strip(), gossip_key=gossip_key)
+                        cleaned_text = __clean_newlines(gossip_text)
+                        cleaned_text = re.sub(r'[ \u00A0]+', ' ', cleaned_text)
+                        gossip = Gossip(npc_id, cleaned_text.strip(), gossip_key=gossip_key)
                         if not gossip in gossips:
                             gossips.append(gossip)
     return gossips
@@ -53,12 +83,28 @@ def load_missing_gossips() -> list[Gossip]:
 def populate_npcs(gossips: list[Gossip], npcs: dict[int, dict[str, NPC_MD]]):
     missing_npcs: set[str] = set()
     for gossip in gossips:
-        if npcs.get(gossip.npc_id) is None:
+        npc_by_expansion = npcs.get(gossip.npc_id)
+        if npc_by_expansion is None:
             # print(f'Warning! NPC#{gossip.npc_id} not found in DB!')
             missing_npcs.add(gossip.npc_id)
             continue
-        gossip.npc_name = (npcs[gossip.npc_id].get('classic') or npcs[gossip.npc_id].get('sod')).name
-        gossip.expansion = (npcs[gossip.npc_id].get('classic') or npcs[gossip.npc_id].get('sod')).expansion + '?'
+
+        first_found_npc = None
+        for expansion in sorted(
+            npc_by_expansion.keys(),
+            key=lambda exp: (expansion_data[exp][INDEX], exp)
+        ):
+            npc_md = npc_by_expansion.get(expansion)
+            if npc_md is not None:
+                first_found_npc = npc_md
+                break
+
+        if first_found_npc is None:
+            missing_npcs.add(gossip.npc_id)
+            continue
+
+        gossip.npc_name = first_found_npc.name
+        gossip.expansion = first_found_npc.expansion
 
     if missing_npcs:
         print(f'Next NPCs were not found in DB: {sorted(missing_npcs)}')
@@ -301,7 +347,7 @@ def group_gossips_by_npcs(gossips: list[Gossip]) -> dict[(str, int), list[Gossip
 
 def verify_duplicates(gossips: list[Gossip]):
     gossips_by_npcs = group_gossips_by_npcs(gossips)
-    common_chat_texts = map(lambda x: x.text, gossips_by_npcs.get(('common', 0)))
+    common_chat_texts = set(map(lambda x: x.text, gossips_by_npcs.get(('common', 0))))
     for npc_key, gossips in gossips_by_npcs.items():
         npc_texts = set()
         for gossip in gossips:
