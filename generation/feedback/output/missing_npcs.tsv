@@ -1,4 +1,6 @@
 2673	Target Dummy
+4346	Noxious Flayer
+4347	Noxious Reaver
 6827	Crab
 7376	Sky Shadow
 7379	Deadwind Ogre Mage
@@ -11,9 +13,12 @@
 7545	Emerald Whelpling
 7863	Dream Vision
 8376	Mechanical Chicken
+8937	Unknown
 10980	Umi's Mechanical Yeti
 11200	Summoned Skeleton
 11637	Servant of Alexi Barov
+11980	Zuluhed the Whacked
+12257	Mechanical Yeti
 12380	Unliving Resident
 12381	Ley Sprite
 12382	Mana Sprite
@@ -22,11 +27,2266 @@
 14465	Alliance Battle Standard
 14466	Horde Battle Standard
 14751	Frostwolf Battle Standard
+15241	Gryphon Rider Guard
+15242	Bat Rider Guard
+15284	Matron Arena
+15287	Shara Sunwing
+15289	Raelis Dawnstar
+15291	Jainthess Thelryn
+15292	Faraden Thelryn
+15352	Greater Earth Elemental
+15371	Sunstrider Guardian
 15429	Disgusting Oozeling
+15430	Earth Elemental Totem
+15438	Greater Fire Elemental
+15439	Fire Elemental Totem
+15447	Wrath of Air Totem
+15470	Stoneskin Totem VII
+15474	Stoneskin Totem VIII
+15478	Stoneclaw Totem VII
+15479	Strength of Earth Totem VI
+15480	Searing Totem VII
+15482	Fire Nova Totem VI
+15483	Fire Nova Totem VII
+15484	Magma Totem V
+15485	Flametongue Totem V
+15486	Frost Resistance Totem IV
+15487	Fire Resistance Totem IV
+15488	Healing Stream Totem VI
+15489	Mana Spring Totem V
+15490	Nature Resistance Totem IV
+15494	Yasmine Teli'Larien
+15496	Windfury Totem IV
+15497	Windfury Totem V
+15501	Aleinia
+15547	Spectral Charger
+15548	Spectral Stallion
+15550	Unknown
+15551	Spectral Stable Hand
+15608	Medivh
+15635	Eversong Tender
+15644	Wretched Urchin
+15649	Feral Dragonhawk Hatchling
+15655	Rotlimb Cannibal
+15656	Angershade
+15687	Moroes
+15688	Terestian Illhoof
+15689	Netherspite
+15690	Prince Malchezaar
+15691	The Curator
 15699	Tranquil Mechanical Yeti
 15720	Timbermaw Ancestor
+15958	Gharsul the Remorseless
+15971	Silvermoon Apprentice
 16085	Peddlefeet
+16147	Elisara Sunstriker
+16151	Midnight
+16152	Unknown
+16153	Berthold
+16159	Calliard
+16160	Magistrix Eredania
+16161	Arcanist Sheynathren
+16169	Hastings
+16170	Coldmist Stalker
+16171	Coldmist Widow
+16173	Shadowbat
+16174	Greater Shadowbat
+16175	Vampiric Shadowbat
+16176	Shadowbeast
+16177	Dreadbeast
+16178	Phase Hound
+16179	Hyakiss the Lurker
+16180	Shadikith the Glider
+16181	Rokad the Ravager
+16185	Anathos
+16186	Vara
+16221	Silvermoon Guardian
+16222	Silvermoon City Guardian
+16238	Night Elf Ambusher
+16242	Tranquillien Scout
+16257	Geron
+16258	Farsil
+16259	Sheri
+16260	Areyn
+16261	Sathiel
+16262	Landraelanis
+16263	Paelarin
+16264	Winaestra
+16266	Celoenus
+16267	Daestra
+16269	Garridel
+16270	Hannovia
+16271	Telenus
+16272	Kanaria
+16273	Mathreyn
+16274	Narina
+16277	Quarelestra
+16278	Sathein
+16279	Tannaria
+16280	Perascamin
+16300	Risen Creeper
+16303	Dreadbone Skeleton
+16305	Dreadbone Sentinel
+16307	Deathcage Scryer
+16308	Deathcage Sorcerer
+16311	Phantasmal Watcher
+16316	Stonewing Tracker
+16317	Deatholme Necromancer
+16318	Deatholme Darkmage
+16322	Gangled Flesheater
+16331	Darnassian Druid
+16332	Darnassian Huntress
+16333	Sentinel Infiltrator
+16355	Lesser Scourgebat
+16366	Sempstress Ambershine
+16367	Botanist Tyniarrel
+16388	Koren
+16389	Spectral Apprentice
+16406	Phantom Attendant
+16407	Spectral Servant
+16408	Phantom Valet
+16409	Phantom Guest
+16410	Spectral Retainer
+16411	Spectral Chef
+16412	Ghostly Baker
+16414	Ghostly Steward
+16415	Skeletal Waiter
+16424	Spectral Sentry
+16425	Phantom Guardsman
+16457	Maiden of Virtue
+16459	Wanton Hostess
+16460	Night Mistress
+16461	Zealous Paramour
+16468	Spectral Patron
+16470	Ghostly Philanthropist
+16471	Skeletal Usher
+16472	Phantom Stagehand
+16473	Spectral Performer
+16481	Ghastly Haunt
+16482	Trapped Soul
+16485	Arcane Watchman
+16488	Arcane Anomaly
+16489	Chaotic Sentience
+16491	Mana Feeder
+16492	Syphoner
+16504	Arcane Protector
+16507	Shattered Hand Sentry
+16523	Shattered Hand Savage
+16524	Shade of Aran
+16525	Spell Shade
+16526	Sorcerous Shade
+16528	Provisioner Vredigar
+16529	Magical Horror
+16530	Mana Warp
+16539	Homunculus
+16540	Shadow Pillager
+16541	Ghostlands Guardian
+16542	Innkeeper Kalarin
+16544	Ethereal Thief
+16545	Ethereal Spellfilcher
+16568	Tandrine
+16575	Shadow Hunter Ty'jin
+16576	Overlord Hun Maimfist
+16579	Falcon Watch Sentinel
+16580	Thrallmar Grunt
+16582	Thrallmar Marksman
+16583	Rohok
+16586	Huntsman Torf Angerhoof
+16587	Barley
+16589	Guard Captain Cragtar
+16590	Injured Thrallmar Grunt
+16591	Thrallmar Peon
+16593	Shattered Hand Brawler
+16594	Shadowmoon Acolyte
+16595	Fleshbeast
+16596	Greater Fleshbeast
+16599	Thrallmar Wolf Rider
+16600	Thrallmar Riding Wolf
+16602	Floyd Pinkus
+16603	Farstrider Dusking
+16610	Kredis
+16612	Velanni
+16613	Parnis
+16615	Novia
+16616	Periel
+16617	Daenice
+16618	Innkeeper Velandra
+16619	Celana
+16620	Mathaleron
+16621	Ileda
+16623	Zyandrel
+16624	Gelanthis
+16627	Ithillan
+16628	Caidori
+16629	Tandron
+16631	Andra
+16633	Sedana
+16634	Dolothos
+16635	Lyna
+16636	Zathanna
+16637	Welethelon
+16638	Deynna
+16639	Galana
+16640	Keelen Sheets
+16641	Melaris
+16642	Camberon
+16643	Razia
+16644	Botanist Nathera
+16650	Bithrus
+16651	Zaedana
+16652	Quithas
+16653	Inethven
+16654	Narinth
+16655	Harene Plainwalker
+16656	Shalenn
+16659	Lotheolan
+16660	Belestra
+16662	Alestus
+16663	Belil
+16664	Zelan
+16665	Paniar
+16666	Feledis
+16667	Danwe
+16668	Gloresse
+16670	Eriden
+16671	Mirvedon
+16672	Tana
+16673	Oninath
+16674	Zandine
+16676	Sylann
+16677	Quelis
+16678	Rahein
+16679	Osselan
+16680	Ithelis
+16687	Talmar
+16688	Lynalis
+16689	Zaralda
+16690	Rathin
+16691	Noraelath
+16692	Tyn
+16694	Karen Wentworth
+16695	Gurak
+16696	Krukk
+16699	Shattered Hand Reaver
+16700	Shattered Hand Legionnaire
+16703	Amin
+16704	Shattered Hand Sharpshooter
+16780	Drathen
+16782	Yatheon
+16795	Draenei Prisoner
+16800	Grand Magister Rommath
+16801	Halduron Brightwing
+16804	Night Elf Corpse
+16806	Ebonlocke
+16807	Grand Warlock Nethekurse
+16808	Warchief Kargath Bladefist
+16809	Warbringer O'mrogg
+16811	Sebastian
+16812	Barnes
+16813	Wravien
+16814	Gradav
+16815	Kamsis
+16816	Echo of Medivh
+16831	Nethergarde Infantry
+16838	Honor Hold Miner
+16840	Advisor Sevel
+16842	Honor Hold Defender
+16843	Honor Hold Cavalryman
+16844	Crust Burster
+16848	Provisioner Braknar
+16855	Tregla
+16860	Jilanne
+16863	Deranged Helboar
+16864	Stormwind Infantry
+16879	Starving Helboar
+16896	Honor Hold Archer
+16903	Blistering Oozeling
+16911	Mag'har Watcher
+16912	Mag'har Hunter
+16916	Wretched Captive
+16923	Novice Ranger
+16928	Stonescythe Ambusher
+16932	Razorfang Hatchling
+16933	Razorfang Ravager
+16937	Dreghood Geomancer
+16938	Dreghood Brute
+16943	Cyber-Rage Forgelord
+16944	Mo'arg Doomsmith
+16946	Mo'arg Forgefiend
+16948	Gan'arg Engineer
+16949	Gan'arg Mekgineer
+16950	Netherhound
+16952	Anger Guard
+16954	Forge Camp Legionnaire
+16959	Dread Tactician
+16960	Sister of Grief
+16968	Tunneler
+16996	Draenei Vindicator
+17002	Angela "The Claw" Kestrel
+17004	Jir'see
+17005	Duelist Larenis
+17007	Lady Keira Berrybuck
+17008	Gul'dan
+17023	Shadow Council Enforcer
+17046	Pilgrim Gal'ressa
+17056	Eversong Partygoer
+17067	Unknown
+17083	Fel Orc Convert
+17086	Enraged Wraith
+17096	Astral Flare
+17108	Forsaken Raider
+17139	Windyreed Scavenger
+17141	Windyreed Wretch
+17142	Wrekt Warrior
+17143	Wrekt Seer
+17146	Kil'sorrow Spellbinder
+17147	Kil'sorrow Cultist
+17148	Kil'sorrow Deathsworn
+17149	Vir'aani Raider
+17150	Vir'aani Arcanist
+17158	Dust Howler
+17159	Storm Rager
+17160	Living Cyclone
+17167	Unknown
+17211	Human Footman
+17225	Nightbane
+17229	Kil'rek
+17230	Twinkle
+17248	Unknown
+17250	Jia
+17251	Blackbeak
+17252	Thoodhun
+17256	Hellfire Channeler
+17257	Magtheridon
+17259	Bonechewer Hungerer
+17261	Unknown
+17262	Captive Female Kaliri
+17263	Recovering Pilgrim
+17264	Bonechewer Ravener
+17267	Unknown
+17269	Bleeding Hollow Darkcaster
+17270	Bleeding Hollow Archer
+17271	Bonechewer Destroyer
+17277	Provisioner Valine
+17281	Bonechewer Ripper
+17282	Falcon Watch Ranger
+17283	Unknown
+17294	Drisella
+17301	Shattered Hand Executioner
+17309	Hellfire Watcher
+17356	Creeping Ooze
+17357	Creeping Oozeling
+17370	Laughing Skull Enforcer
+17371	Shadowmoon Warlock
+17377	Keli'dan the Breaker
+17380	Broggok
+17381	The Maker
+17395	Shadowmoon Summoner
+17397	Shadowmoon Adept
+17398	Nascent Fel Orc
+17399	Seductress
+17400	Felguard Annihilator
+17401	Unknown
+17409	Apprentice Boulian
+17412	Phaedra
+17414	Shadowmoon Technician
+17420	Shattered Hand Heathen
+17427	Shattered Hand Archer
+17429	Fel Orc Neophyte
+17454	Burning Abyssal
+17455	Bonechewer Beastmaster
+17461	Shattered Hand Blood Guard
+17462	Shattered Hand Zealot
+17464	Shattered Hand Gladiator
+17465	Shattered Hand Centurion
+17467	Skunk
+17469	Orc Grunt
+17477	Hellfire Imp
+17478	Bleeding Hollow Scryer
+17491	Laughing Skull Rogue
+17503	Woeful Healer
+17517	Hellfire Sentry
+17518	Ythyar
+17521	Unknown
+17533	Unknown
+17534	Julianne
+17535	Dorothee
+17537	Unknown
+17539	Totem of Wrath
+17540	Unknown
+17541	Draenei Quartermaster
+17543	Strawman
+17546	Roar
+17547	Tinhead
+17578	Training Dummy
+17585	Quartermaster Urgronn
+17603	Grandmother
+17613	Archmage Alturus
+17621	Heathen Guard
+17622	Sharpshooter Guard
+17623	Reaver Guard
+17624	Laughing Skull Warden
+17626	Laughing Skull Legionnaire
+17628	Vynna
+17629	Feynna
+17630	Innkeeper Jovia
+17631	Ceera
+17633	Hatheon
+17636	Kalynna Lathred
+17651	Image of Medivh
+17652	Image of Arcanagos
+17653	Shadowmoon Channeler
+17655	Blacksmith Frances
+17656	Heron Skygaze
+17660	Skeletal Gryphon
+17669	Rabid Warhound
+17670	Shattered Hand Houndmaster
+17671	Shattered Hand Champion
+17672	Deadwind Villager
+17694	Shadowmoon Darkcaster
+17695	Shattered Hand Assassin
+17710	Nightseye Panther
+17721	Coilfang Engineer
+17722	Coilfang Sorceress
+17724	Underbat
+17725	Underbog Lurker
+17726	Wrathfin Myrmidon
+17727	Wrathfin Sentry
+17728	Murkblood Tribesman
+17729	Murkblood Spearman
+17730	Murkblood Healer
+17731	Fen Ray
+17732	Lykul Wasp
+17734	Underbog Lord
+17735	Wrathfin Warrior
+17769	Blood Knight Adept
+17771	Murkblood Oracle
+17796	Mekgineer Steamrigger
+17797	Hydromancer Thespia
+17798	Warlord Kalithresh
+17799	Dreghood Slave
+17800	Coilfang Myrmidon
+17801	Coilfang Siren
+17802	Coilfang Warrior
+17803	Coilfang Oracle
+17805	Coilfang Slavemaster
+17814	Lordaeron Watchman
+17815	Lordaeron Sentry
+17819	Durnholde Sentry
+17820	Durnholde Rifleman
+17827	Claw
+17833	Durnholde Warden
+17835	Unknown
+17839	Unknown
+17840	Durnholde Tracking Hound
+17846	Pit Spectator
+17848	Lieutenant Drake
+17855	Expedition Warden
+17860	Durnholde Veteran
+17862	Captain Skarloc
+17870	Angered Nether-wraith
+17871	Underbog Shambler
+17876	Thrall
+17879	Unknown
+17880	Temporus
+17881	Aeonus
+17884	Watcher Jhang
+17885	Earthbinder Rayge
+17890	Weeder Greenthumb
+17892	Infinite Chronomancer
+17893	Naturalist Bite
+17896	Kameel Longstride
+17904	Fedryen Swiftspear
+17917	Coilfang Water Elemental
+17918	Time Keeper
+17938	Coilfang Observer
+17940	Coilfang Technician
+17941	Mennu the Betrayer
+17942	Quagmirran
+17951	Steamrigger Mechanic
+17952	Darkwater Crocolisk
+17953	Buddy
+17954	Naga Distiller
+17955	Hungry Bog Lord
+17957	Coilfang Champion
+17958	Coilfang Defender
+17959	Coilfang Slavehandler
+17960	Coilfang Soothsayer
+17961	Coilfang Enchantress
+17962	Coilfang Collaborator
+17963	Wastewalker Slave
+17964	Wastewalker Worker
+17975	High Botanist Freywinn
+17976	Commander Sarannis
+17977	Warp Splinter
+17978	Thorngrin the Tender
+17980	Laj
+17990	Unknown
+17991	Rokmar the Crackler
+17993	Bloodwarder Protector
+17994	Bloodwarder Falconer
+18033	Dark Worg
+18042	Umbrafen Slavebinder
+18069	Mogor
+18086	Darkcrest Taskmaster
+18087	Darkcrest Siren
+18092	Tarren Mill Guardsman
+18093	Tarren Mill Protector
+18094	Tarren Mill Lookout
+18096	Epoch Hunter
+18101	Aborius
+18102	Kalandrios
+18105	Ghaz'an
+18109	Living Fire
+18122	Dreghood Drudge
+18123	Wrekt Slave
+18139	Sporeggar Preserver
+18140	Sporeggar Harvester
+18146	Champion Vranesh
+18147	Silvermoon Ranger
+18152	Baby Murloc
+18155	Bloodfalcon
+18165	Archmage Cedric
+18168	The Crone
+18170	Infinite Slayer
+18171	Infinite Defiler
+18172	Infinite Saboteur
+18174	Initiate Colin
+18175	Initiate Emeline
+18176	Unknown
+18177	Unknown
+18179	Unknown
+18186	Feralfen Totem
+18187	Cheneta
+18188	Tatai
+18189	Dela Runetotem
+18190	Kristine Denny
+18191	Ambassador Kelemar
+18192	Horde Halaani Guard
+18201	Tamed Sporebat
+18210	Mag'har Captive
+18211	Murkblood Brute
+18230	Trayanise
+18231	Keyanomir
+18232	Nimrida
+18235	Unknown
+18236	Corrupted Air Totem
+18237	Tiny Arcane Construct
+18243	Lorti
+18244	Khalan
+18245	Merajit
+18246	Tayemba
+18247	Farbosi
+18248	Nekthar
+18249	Mokasa
+18253	Archmage Leryda
+18255	Apprentice Darius
+18256	Alliance Halaani Guard
+18272	Consortium Gemcutter
+18274	Consortium Overseer
+18277	Kinamisa
+18289	Bull Elekk
+18292	Bleeding Hollow Refugee
+18293	Sunspring Post Refugee
+18296	Sunspring Post Orphan
+18299	Bleeding Hollow Orphan
+18309	Ethereal Scavenger
+18315	Ethereal Theurgist
+18317	Ethereal Priest
+18318	Sethekk Initiate
+18319	Time-Lost Scryer
+18320	Time-Lost Shadowmage
+18321	Sethekk Talon Lord
+18322	Sethekk Ravenguard
+18323	Sethekk Guard
+18325	Sethekk Prophet
+18326	Sethekk Shaman
+18327	Time-Lost Controller
+18328	Sethekk Oracle
+18331	Ethereal Darkcaster
+18332	Talut
+18336	Silvermoon Magister
+18338	Highlord Kruul
+18340	Steam Pump Overseer
+18341	Pandemonius
+18343	Tavarok
+18346	Consortium Claviger
+18347	Olirea
+18358	Sporeggar Spawn
+18371	Shirrak the Dead Watcher
+18372	Rough Stone Statue
+18382	Mycah
+18391	Giselda the Crone
+18394	Unknown
+18396	Boulderfist Saboteur
+18397	Kil'sorrow Invader
+18404	Bloodwarder Steward
+18405	Tempest-Forge Peacekeeper
+18419	Bloodwarder Greenkeeper
+18420	Sunseeker Geomancer
+18421	Sunseeker Researcher
+18422	Sunseeker Botanist
+18429	Unknown
+18430	Unknown
+18431	Ethereal Beacon
+18440	Warmaul Chef Bufferlo
+18441	Unknown
+18445	Corki
+18454	Shalassi Talonguard
+18455	Shalassi Oracle
+18456	Tuurem Scavenger
+18457	Tuurem Hunter
+18475	Mug'gok
+18478	Unknown
+18483	Empoor's Bodyguard
+18488	Telaari Watcher
+18489	Garadar Defender
+18490	Fallen Druid
+18492	Tavgren's Kodo
+18493	Auchenai Soulpriest
+18495	Auchenai Vindicator
+18497	Auchenai Monk
+18498	Unknown
+18499	Unknown
+18500	Unknown
+18501	Unknown
+18503	Unknown
+18506	Unknown
+18507	Silvermoon Farstrider
+18521	Raging Skeleton
+18524	Angered Skeleton
+18525	G'eras
+18527	Conjurer Tyren
+18542	Alexston Chrome
+18544	Veraku
+18547	Scryer Arcanist
+18549	Aldor Vindicator
+18556	Phasing Soldier
+18557	Phasing Cleric
+18558	Phasing Sorcerer
+18559	Phasing Stalker
+18564	Horde Field Scout
+18568	Scryer Arcane Guardian
+18581	Alliance Field Scout
+18587	Frayer
+18593	Scryer Retainer
+18594	Dathris Sunstriker
+18598	Orc Prisoner
+18600	Injured Refugee
+18622	Iz'zard
+18631	Cabal Cultist
+18632	Cabal Executioner
+18633	Cabal Acolyte
+18634	Cabal Summoner
+18635	Cabal Deathsworn
+18636	Cabal Assassin
+18637	Cabal Shadow Priest
+18638	Cabal Zealot
+18639	Cabal Spellbinder
+18640	Cabal Warlock
+18641	Cabal Familiar
+18642	Fel Guardhound
+18644	Tarren Mill Peasant
+18649	Innkeeper Monica
+18651	Young Blanchy
+18655	Jay Lemieux
+18656	Julie Honeywell
+18658	Kil'sorrow Ritualist
+18660	Subjugator Vaz'shir
+18661	Terrorguard
+18662	Orc Ancestor
+18663	Maiden of Discipline
+18664	Aged Dalaran Wizard
+18666	Dalaran Sorceress
+18667	Blackheart the Inciter
+18672	Thomas Yance
+18673	Pit Announcer
+18684	Bro'Gaz the Clanless
+18700	Reanimated Bones
+18701	Unknown
+18702	Auchenai Necromancer
+18706	Bonechewer Riding Wolf
+18708	Murmur
+18722	Leper Gnome Laborer
+18723	Erozion
+18725	Brazen
+18727	Rarthein
+18730	Sirigna'no
+18731	Ambassador Hellmaw
+18732	Grandmaster Vorpil
+18733	Fel Reaver
+18734	Coarse Stone Statue
+18737	Dense Stone Statue
+18743	Elrodan
+18744	Aurosalia
+18747	Krugosh
+18748	Ruak Stronghorn
+18749	Dalinna
+18751	Kalaen
+18752	Zebig
+18753	Felannia
+18754	Barim Spilthoof
+18755	Moorutu
+18756	Haris Pilton
+18758	Telhamat Protector
+18761	Darise
+18762	Tinkerbell
+18764	Durnholde Armorer
+18790	Gatewatcher Aendor
+18791	Du'ga
+18792	Harassed Citizen
+18794	Cabal Ritualist
+18796	Fel Overseer
+18797	Tortured Skeleton
+18799	Silvermoon Citizen
+18807	Kerna
+18808	Gursha
+18821	Quartermaster Jaffrey Noreliqe
+18822	Quartermaster Davian Vaclav
+18829	Hellfire Warder
+18830	Cabal Fanatic
+18831	High King Maulgar
+18832	Krosh Firehand
+18834	Olm the Summoner
+18835	Kiggler the Crazed
+18836	Blindeye the Seer
+18839	Magical Crawdad
+18845	Benevolent Mr. Pinchy
+18846	Unknown
+18847	Wild Fel Stalker
+18848	Malicious Instructor
+18850	Sunfury Guardsman
+18852	Sunfury Warp-Engineer
+18853	Sunfury Bloodwarder
+18855	Sunfury Magister
+18856	Arcane Annihilator
+18857	Sunfury Warp-Master
+18858	Wrathbringer
+18859	Wrath Priestess
+18860	Daughter of Destiny
+18864	Mana Wraith
+18866	Mageslayer
+18867	Mana Seeker
+18869	Unstable Voidwraith
+18870	Voidshrieker
+18872	Disembodied Vindicator
+18873	Disembodied Protector
+18875	Zaxxis Raider
+18879	Phase Hunter
+18880	Nether Ray
+18881	Sundered Rumbler
+18882	Sundered Thunderer
+18883	Mana Snapper
+18885	Farahlon Giant
+18886	Farahlon Breaker
+18887	Taretha
+18891	Spy To'gun
+18893	Spymistress Mehlisah Highcrown
+18894	Felguard Brute
+18895	Ear-Biter
+18897	"King" Dond
+18898	Explodyne Fizzlespurt
+18905	Innkeeper Bazil Olof'tazun
+18907	Innkeeper Coryth Stoktron
+18909	Zabra'jin Guard
+18910	Swamprat Guard
+18911	Juno Dufrain
+18912	Sporelok
+18913	Matron Tikkit
+18922	Telredor Guard
+18926	Sleyin
+18929	Kyrenna
+18934	Durnholde Mage
+18938	Krexcil
+18940	Nutral
+18942	Innalia
+18943	Orebor Harborage Defender
+18944	Fel Soldier
+18945	Pit Commander
+18946	Infernal Siegebreaker
+18948	Stormwind Soldier
+18949	Stormwind Mage
+18950	Orgrimmar Grunt
+18951	Erilia
+18953	Unoke Tenderhoof
+18954	Sailor Melinan
+18957	Innkeeper Grilka
+18959	Dod'ss
+18960	Rungor
+18962	Bar Talet
+18964	Injured Talbuk
+18965	Darnassian Archer
+18966	Justinius the Harbinger
+18969	Melgromm Highmountain
+18970	Darkspear Axe Thrower
+18971	Undercity Mage
+18972	Orgrimmar Shaman
+18973	Stonebreaker Grunt
+18977	Felguard Destroyer
+18978	Heckling Fel Sprite
+18981	Doomwhisperer
+18982	Sable Jaguar
+18983	Blackfang Tarantula
+18984	Trag
+18988	Baxter
+18991	Aresella
+18993	Naka
+18994	Unknown
+18995	Infinite Vanquisher
+18997	Fallesh Sunfallow
+18998	Lursa Sunfallow
+19002	Gardok Ripjaw
+19005	Wrath Master
+19006	Silvermoon Magister
+19007	Gnomeregan Conjuror
+19011	Osrok the Immovable
+19012	Sparik
+19013	Vanteg
+19015	Mathar G'ochar
+19016	Hellfire Familiar
+19017	Borto
+19018	Wilda Bearmane
+19020	Matron Qualia
+19021	Nancila
+19022	Stabled Panther
+19023	Stabled Tallstrider
+19024	Stabled Boar
+19026	Stabled Raptor
+19033	Nicole Bartlett
+19034	Mendorn
+19043	Ahemen
+19044	Gruul the Dragonkiller
+19046	Minalei
+19047	Lissaf
+19048	Stonebreaker Peon
+19049	Karokka
+19050	Garul
+19051	Araac
+19052	Lorokeem
+19063	Hamanar
+19064	Leatei
+19065	Inessera
+19068	Garadar Wolf Rider
+19071	Telaari Elekk Rider
+19074	Skreah
+19075	Skettis Outcast
+19076	High Elf Refugee
+19077	Dwarf Refugee
+19120	Broken Refugee
+19138	Anchorite Attendant
+19140	Mag'har Pitfighter
+19141	Kurenai Pitfighter
+19142	Aldor Anchorite
+19144	Mag'har Refugee
+19149	Telaari Citizen
+19150	Orc Refugee
+19153	Aldor Neophyte
+19155	Sporeling Refugee
+19157	Captured Halaani Vindicator
+19158	Garadar Guard Captain
+19161	Neophyte Combatant
+19162	Lost One Refugee
+19163	Refugee Kid
+19164	Refugee Child
+19166	Tempest-Forge Patroller
+19167	Bloodwarder Slayer
+19168	Sunseeker Astromage
+19169	Blood Elf Commoner
+19170	Peasant Refugee
+19175	Orc Commoner
+19176	Tauren Commoner
+19177	Troll Commoner
+19178	Forsaken Commoner
+19180	Seymour
+19182	Shaarubo
+19183	Clefthoof Calf
+19184	Mildred Fletcher
+19185	Jack Trapper
+19186	Kylene
+19187	Darmari
+19189	Quillfang Skitterer
+19192	Mistress of Doom
+19194	Ernie Packwell
+19195	Jim Saltit
+19196	Cro Threadstrong
+19197	Eral
+19203	Syth Fire Elemental
+19204	Syth Frost Elemental
+19205	Syth Arcane Elemental
+19206	Unknown
+19207	Infernal Hound
+19208	Summoned Cabal Acolyte
+19209	Summoned Cabal Deathsworn
+19213	Eiin
+19214	Hand of the Highlord
+19217	Ravandwyr
+19218	Gatewatcher Gyro-Kill
+19219	Mechano-Lord Capacitus
+19221	Nethermancer Sepethrea
+19223	Granny Smith
+19226	Unknown
+19227	Griftah
+19228	Perry Gatner
+19232	Innkeeper Haelthol
+19236	Quelama Lightblade
+19238	Urumir Stavebright
+19239	Mahir Redstroke
+19240	Selanam the Blade
+19243	Nalama the Merchant
+19244	Trader Endernor
+19246	Berudan Keysworn
+19248	Enchanter Salias
+19249	Enchantress Metura
+19250	Enchanter Aeldron
+19251	Enchantress Volali
+19252	High Enchanter Bardolan
+19257	Arcanist Torseldori
+19258	Bloodmage
+19259	Infernal Invader
+19270	Shattrath Saul
+19271	Albert Quarksprocket
+19275	Armored Wyvern Destroyer
+19280	Red Hawkstrider
+19281	Swift Pink Hawkstrider
+19283	Vagrant
+19285	Unknown
+19286	Invading Fel Stalker
+19287	Invading Voidwalker
+19289	Vagabond
+19290	Unknown
+19299	Deathwhisperer
+19306	Mana Leech
+19307	Nexus Terror
+19311	Portal Hound
+19314	Supply Officer Shandria
+19315	Supply Officer Isabel
+19317	Drek'Gol
+19318	Gromden
+19319	Innkeeper Darg Bloodclaw
+19320	Argent Protector
+19321	Quartermaster Endarin
+19322	Argent Guardian
+19324	Armored Gryphon Destroyer
+19330	Lisrythe Bloodwatch
+19331	Quartermaster Enuril
+19333	Grokom Deatheye
+19337	Aldor Marksman
+19338	L'lura Goldspun
+19339	Korthul
+19341	Grutah
+19342	Krek Cragcrush
+19343	Trop Rendlimb
+19345	Kalara
+19346	Harbinger Erothem
+19348	Targrom
+19353	Wildhammer Guard
+19355	Shadowmoon Peon
+19362	Kor'kron Defender
+19364	Kor'kron Rider
+19365	Argent Bowman
+19366	Argent Hunter
+19377	Neophyte Nemarn
+19378	Anchorite Nindumen
+19380	Guard Untula
+19383	Captured Gnome
+19389	Lair Brute
+19390	Mounted Neophyte
+19391	Felguard Lieutenant
+19400	Fel Reaver Sentry
+19405	Steam Tonk
+19408	Maiden of Pain
+19419	Unknown
+19423	Bleeding Hollow Worg
+19425	Orgrimmar Peon
+19426	Peon Overseer
+19428	Cobalt Serpent
+19429	Avian Darkhawk
+19432	Injured Grunt
+19435	Dark Cleric Malod
+19436	Supply Master Broog
+19438	Image of Erozion
+19443	Tagar Spinebreaker
+19449	Thunderlord Grunt
+19450	Pol Snowhoof
+19453	Sunfury Captain
+19458	Ripp
+19459	Feng
+19460	Bleeding Hollow Skeleton
+19461	Tamed Ravager
+19466	Exarch Orelis
+19467	Anchorite Karja
+19468	Spymaster Thalodien
+19469	Magistrix Larynna
+19470	Gholah
+19471	Old Orok
+19472	Threlc
+19473	Raiza
+19474	Karnaze
+19476	Lor
+19478	Fera Palerunner
+19479	Orgatha
+19481	Archmage Vargoth
+19482	Sagan
+19486	Sunseeker Chemist
+19488	Custodian Dieworth
+19489	Lieutenant-Sorcerer Morran
+19493	Ekkorash the Inquisitor
+19494	Ar'kelos
+19496	Spy Grik'tha
+19500	Sylvanaar Sentinel
+19501	Lower City Operative
+19502	Lower City Healer
+19503	Cabal Agent
+19504	Scryer Guardian
+19505	Sunseeker Channeler
+19507	Sunseeker Gene-Splicer
+19508	Sunseeker Herbalist
+19509	Sunseeker Harvester
+19510	Bloodwarder Centurion
+19511	Nethervine Inciter
+19512	Nethervine Reaper
+19513	Mutate Fear-Shrieker
+19517	Alorra
+19518	Feranin
+19520	Lelagar
+19521	Arrond
+19526	Dunaman
+19528	Nanomah
+19529	Stormspire Nexus-Guard
+19530	Darmend
+19531	Eyonix
+19532	Dearny
+19533	Dealer Aljaan
+19534	Dealer Digriz
+19535	Dealer Zijaad
+19536	Dealer Jadyan
+19541	Netherstorm Agent
+19542	Field Commander Mahfuun
+19543	Battle-Mage Dathric
+19544	Conjurer Luminrath
+19545	Cohlien Frostweaver
+19546	Abjurist Belmara
+19554	Dimensius the All-Devouring
+19556	Thrall
+19557	Greater Frayer
+19558	Amilya Airheart
+19559	Mondul
+19560	Lukra
+19561	Hagash the Blind
+19562	Peon Bolgar
+19566	Nethergarde Advisor
+19567	Watcher Theronus
+19569	Netherologist Coppernickels
+19571	Innkeeper Remi Dodoso
+19572	Gant
+19573	Dash
+19574	Kizzie
+19575	Qiff 
+19576	Xyrol
+19578	Bot-Specialist Alley
+19581	Maddix
+19582	Maxx A. Million Mk. I
+19583	Grennik
+19588	Maxx A. Million Mk. II
+19589	Maxx A. Million Mk. V
+19592	Kor'kron Warrior
+19593	Spellbinder Maryana
+19598	Mutate Fleshlasher
+19599	Unknown
+19607	Grek's Riding Wolf
+19608	Frayer Wildling
+19610	Irradiated Worker
+19612	Irradiated Manager
+19617	Boots
+19621	Bill
+19623	Doc
+19625	Alorya
+19626	Belanna
+19627	Sulamin
+19628	Furan
+19629	Denath
+19632	Lykul Stinger
+19633	Bloodwarder Mender
+19634	Lead Sapper Blastfizzle
+19635	Captain Arathyn
+19640	Bleeding Hollow Riding Worg
+19641	Warp-Raider Nesaad
+19642	Zaxxis Stalker
+19643	Sunfury Astromancer
+19644	Image of Archmage Vargoth
+19645	Papa Wheeler
+19651	Seasoned Vindicator
+19653	Glacius
+19657	Summoner Kanthin
+19659	Great Elekk
+19661	Viggz Shinesparked
+19662	Aaron Hollman
+19663	Madame Ruby
+19664	Muffin Man Moser
+19665	Ewe
+19666	Shadow Lord Xiraxis
+19667	Consortium Nether Runner
+19668	Shadowfiend
+19669	Mamdy the "Ologist"
+19672	Consortium Laborer
+19673	Consortium Engineer
+19675	Nexus-Prince Haramad
+19676	"Captain" Kaftiz
+19678	Fantei
+19679	"Slim"
+19686	Nether Anomaly
+19687	Shattrath City Peacekeeper
+19689	Draenei Pilgrim
+19690	N. D. Meancamp
+19692	Boom Bot
+19702	Aldor Acolyte
+19705	Master Daellis Dawnstrike
+19706	Marshrock Threshalisk
+19707	Sunfury Archer
+19709	Chief Engineer Trep
+19710	Gatewatcher Iron-Hand
+19712	Mechanar Driller
+19713	Mechanar Wrecker
+19716	Mechanar Tinkerer
+19718	Provisioner Tsaalt
+19728	Mama Wheeler
+19729	Ironspine Threshalisk
+19730	Ironspine Gazer
+19731	Nether Beast
+19734	Fungal Giant
+19735	Tempest-Forge Destroyer
+19737	Engineering Crewmember
+19738	Doomclaw
+19740	Wrathwalker
+19744	Dreadwarden
+19747	Baelmon the Hound-Master
+19754	Deathforge Tinkerer
+19755	Mo'arg Weaponsmith
+19756	Deathforge Smith
+19757	Infernal Soul
+19759	Newly Crafted Infernal
+19760	Cooling Infernal
+19762	Coilskar Defender
+19765	Coilskar Myrmidon
+19767	Coilskar Sorceress
+19768	Coilskar Siren
+19772	Spirit Sage Gartok
+19775	Kalinda
+19776	Experimental Pilot
+19779	Sunfury Geologist
+19780	Off-Duty Engineer
+19781	Astral Flare
+19782	Astral Flare
+19783	Astral Flare
+19784	Coilskar Cobra
+19788	Coilskar Muckwatcher
+19789	Coilskar Waterkeeper
+19792	Eclipsion Centurion
+19795	Eclipsion Blood Knight
+19796	Eclipsion Archmage
+19797	Unknown
+19799	Illidari Dreadbringer
+19800	Illidari Painlasher
+19801	Illidari Agonizer
+19802	Illidari Shocktrooper
+19806	Eclipsion Bloodwarder
+19823	Crazed Colossus
+19824	Son of Corok
+19825	Dark Conclave Talonite
+19826	Dark Conclave Shadowmancer
+19827	Dark Conclave Ravenguard
+19830	Arcanist Ardonis
+19831	Commander Dawnforge
+19832	Doctor Vomisa, Ph.T.
+19833	Venomous Snake
+19836	Mixie Farshot
+19837	Daga Ramba
+19839	Lariel Sunrunner
+19840	Caledis Brightdawn
+19843	Unknown
+19849	Scrap Reaver X6000
+19850	Councilor Arial D'Anastasis
+19851	Negatron
+19852	Unknown
+19853	Felblade Doomguard
+19858	"Lefty" Puddemup
+19859	Max Luna
+19860	Katrina Turner
+19861	Bip Nigstrom
+19863	Vengeful Unyielding
+19864	Vengeful Unyielding Captain
+19865	Mutate Horror
+19872	Lady Catriona Von'Indi
+19873	Lord Crispin Ference
+19874	Baron Rafe Dreuger
+19875	Baroness Dorothea Millstipe
+19876	Lord Robin Daris
+19879	Horvon the Armorer
+19880	Nether-Stalker Khay'ji
+19881	Severed Spirit
+19882	Jero'me
+19905	The Black Bride
+19906	Usha Eyegouge
+19909	Rex Pixem
+19910	Gargok
+19912	Zeggon Botsnap
+19918	Time Watcher
+19919	Unknown
+19920	Thorn Flayer
+19921	Viper
+19923	Bipp Glizzitor
+19926	Spellreaver Marathelle
+19932	Andormu
+19933	Nozari
+19934	Zaladormu
+19935	Soridormi
+19936	Arazmodu
+19938	Image of Commander Sarannis
+19940	Apex
+19943	Lashh'an Talonite
+19944	Lashh'an Wing Guard
+19946	Darkcrest Slaver
+19947	Darkcrest Sorceress
+19948	Bloodmaul Skirmisher
+19949	Unknown
+19950	Custodian of Time
+19951	Warden of Time
+19952	Bloodmaul Geomancer
+19953	Unknown
+19957	Bloodmaul Brewmaster
+19958	Unknown
+19960	Doomforge Engineer
+19961	Doomforge Attendant
+19962	Unknown
+19963	Doomcryer
+19964	Unknown
+19969	Unknown
+19973	Abyssal Flamebringer
+19978	Deathforge Over-Smith
+19979	Deathforge Technician
+19980	Void Terror
+19982	Vekh'nir Keeneye
+19983	Vekh'nir Stormcaller
+19984	Vekh'nir Dreadhawk
+19985	Ruuan'ok Cloudgazer
+19986	Ruuan'ok Skyfury
+19987	Ruuan'ok Ravenguard
+19988	Grishna Falconwing
+19989	Grishna Harbinger
+19990	Grishna Scorncrow
+19991	Bloodmaul Brute
+19992	Bloodmaul Shaman
+19993	Bloodmaul Mauler
+19994	Bloodmaul Warlock
+19995	Bladespire Brute
+19996	Bladespire Battlemage
+19997	Bladespire Enforcer
+19998	Bladespire Shaman
+20058	Bloodmaul Dire Wolf
+20059	Sunseeker Netherbinder
+20066	Gahruj
+20067	Zuben Elgenubi
+20068	Zuben Eschamali
+20071	Wind Trader Marid
+20072	Cobalt War Talbuk
+20078	Unknown
+20079	Darkcrest Sentry
+20080	Galgrom
+20081	Bortega
+20082	Yarley
+20083	Unknown
+20087	Worker Mo'rrisroe
+20092	Dealer Hazzin
+20095	Grimnok Battleborn
+20097	Nula the Butcher
+20098	Jane
+20100	Jessel
+20101	Nether-Stalker
+20102	Goblin Commoner
+20109	Lashh'an Kaliri
+20110	Tyri
+20111	Jorad Mace
+20117	Vengeful Unyielding Knight
+20123	Farmer Griffith
+20124	Kradu Grimblade
+20125	Zula Slagfury
+20129	Custodian of Time
+20130	Andormu
+20131	Nozari
+20134	Sunfury Arcanist
+20135	Sunfury Arch Mage
+20136	Sunfury Researcher
+20137	Vengeful Unyielding Footman
+20138	Culuthas
+20139	Sunfury Conjurer
+20140	Sunfury Centurion
+20141	Hound of Culuthas
+20142	Steward of Time
+20154	Shrouded Figure
+20158	Slime-Covered Corpse
+20160	Unknown
+20161	Vekh'nir Matriarch
+20162	Veronia
+20163	Ambassador Solannas
+20194	Dealer Dunar
+20195	Dagz
+20197	Bogflare Needler
+20199	Ambassador's Honor Guard
+20201	Sa'at
+20202	Cragskaar
+20203	Nether Technician
+20204	Action Jaxon
+20205	Audi the Needle
+20207	Sunfury Bowman
+20208	Unknown
+20210	Shaleskin Flayer
+20211	Ruuan'ok Matriarch
+20214	Arakkoa Egg
+20215	Pentatharon
+20216	Grulloc
+20217	Purple Hawkstrider
+20218	Sunfury Technician
+20220	Blue Hawkstrider
+20221	Sunfury Flamekeeper
+20222	Black Hawkstrider
+20223	Swift Purple Hawkstrider
+20224	Swift Green Hawkstrider
+20241	Provisioner Nasela
+20242	Karaaz
+20243	Scrapped Fel Reaver
+20244	Nova
+20248	Sunfury Nethermancer
+20249	Cymbre Starsong
+20250	Rashere Pridehoof
+20269	Montok Redhands
+20271	Haelga Slatefist
+20272	Lylandor
+20273	Adam Eternum
+20274	Keldor the Lost
+20276	Wolf-Sister Maka
+20278	Vixton Pinchwhistle
+20279	Ragestone Threshalisk
+20280	Ragestone Trampler
+20281	Drijya
+20283	Marshrock Stomper
+20285	Gan'arg Warp-Tinker
+20287	Zaxxis Ambusher
+20290	Lagoon Eel
+20291	Lagoon Walker
+20292	Marsh Baron Brok
+20326	Mo'arg Warp-Master
+20327	Grishna Raven
+20330	Bloodmaul Battle Worg
+20331	G'eras Vindicator
+20332	Nether Dragon
+20334	Bladespire Cook
+20339	Oric Coe
+20340	Fleshfiend
+20341	Nether-Stalker Oazul
+20343	Unknown
+20345	Commander Mograine
+20346	Isillien
+20347	Abbendis
+20348	Fairbanks
+20349	Tirion Fordring
+20350	Kel'Thuzad
+20351	Captain Sanders
+20352	Arcanist Doan
+20353	Helcular
+20354	Nathanos Marris
+20355	Stalvan Mistmantle
+20361	Taelan
+20362	Iravar
+20365	Bartolo Ginsetti
+20370	Phin Odelic
+20372	Jonathan Revah
+20373	Magistrate Henry Maleb
+20376	Jerry Carter
+20377	Barkeep Kelly
+20378	Chef Jessen
+20379	Bilger the Straight-laced
+20380	Raleigh the True
+20384	Yula the Fair
+20385	Andrissa Heartspear
+20386	Lyrlia Blackshield
+20388	Althallen Brightblade
+20389	Lee Sparks
+20390	Duyash the Cruel
+20393	Foreman Sundown
+20394	Eye of Culuthas
+20395	Battle-Tiger
+20397	Overseer Seylanna
+20399	Terror Imp
+20400	Captain Edward Hanes
+20401	Frances Lin
+20402	Legion Shocktrooper
+20403	Unknown
+20404	Warp-Gate Engineer
+20409	Kirin'Var Apprentice
+20410	Rhonsus
+20411	Spectral Bovine
+20415	Bessy
+20416	Overseer Theredis
+20419	Zixil
+20420	Overwatch Mark 0
+20422	Kirin Tor Mage
+20424	Hillsbrad Peasant
+20426	Hillsbrad Citizen
+20427	Unknown
+20428	Hillsbrad Citizen
+20429	Hillsbrad Citizen
+20430	Hillsbrad Citizen
+20435	Overseer Athanel
+20436	Sunfury Protector
+20438	Ara Technician
+20439	Ara Engineer
+20441	Natasha Morris
+20445	Mal'druk the Soulrender
+20447	Protectorate Vanguard
+20448	Commander Ameer
+20449	Researcher Navuud
+20450	Flesh Handler Viridius
+20451	Subservient Flesh Beast
+20452	Ethereum Assassin
+20453	Ethereum Shocktrooper
+20454	Nexus-King Salhadaar
+20455	Terror Totem
+20456	Ethereum Researcher
+20458	Ethereum Archon
+20459	Ethereum Overlord
+20460	Chief Engineer Gork'lonn
+20463	Apprentice Andrethan
+20464	Thadell
+20470	Zephyrion
+20471	Nether-Stalker Nauthis
+20474	Ethereum Nexus-Stalker
+20478	Unknown
+20479	Unstable Shroom
+20481	Unknown
+20482	Image of Commander Ameer
+20483	Naberius
+20484	Area 52 Big Bruiser
+20485	Area 52 Bruiser
+20486	Blue Windrider
+20488	Tawny Windrider
+20489	Swift Green Windrider
+20490	Swift Purple Windrider
+20491	Swift Red Windrider
+20492	Swift Yellow Windrider
+20493	Green Windrider
+20494	Dama Wildmane
+20495	Skeletal Stallion
+20498	Sundered Shard
+20499	Fizim Blastwrench
+20500	Olrokk
+20501	Seeping Sludge
+20502	Eclipsion Dragonhawk
+20512	Tormented Soul
+20514	Searing Elemental
+20515	Harpax
+20516	Warp Monstrosity
+20518	Image of Wind Trader Marid
+20520	Gul'bor
+20551	Agent Araxes
+20552	Agent Ya-six
+20553	Image of Commander Ameer
+20554	Arconus the Insatiable
+20555	Goc
+20561	Withered Corpse
+20563	Grand Commander Ruusk
+20564	Image of Agent Ya-six
+20599	Unknown
+20600	Maggoc
+20601	Razaani Raider
+20603	Reflection of Ya-six
+20607	Craghide Basilisk
+20609	Razaani Nexus Stalker
+20610	Talbuk Doe
+20611	Shimmerwing Moth
+20612	Sorim Lightsong
+20613	Arodis Sunblade
+20614	Razaani Spell-Thief
+20616	Asuur
+20619	Ethereum Relay
+20634	Scythetooth Raptor
+20668	Fiendling Flesh Beast
+20671	Ripfang Lynx
+20672	Royal Guard
+20673	Swiftwing Shredder
+20676	Ethereum Sparring Dummy
+20683	Prophetess Cavrylin
+20684	Lady Shav'rar
+20685	Overseer Azarad
+20713	Fey Drake
+20714	Ridgespine Stalker
+20723	Korgaah
+20727	Captain Zovax
+20728	Bladespire Raptor
+20729	Bladespire Ravager
+20730	Glumdor
+20732	Gorr'Dim
+20747	Silkwing Larva
+20748	Thunderlord Dire Wolf
+20749	Scalewing Serpent
+20751	Daggermaw Lashtail
+20753	Dorgok
+20756	Bladespire Chef
+20757	Fingrom
+20762	Gur'zil
+20763	Captured Protectorate Vanguard
+20765	Bladespire Crusher
+20766	Bladespire Mystic
+20768	Gnosh Brognat
+20770	Warden Icoshock
+20772	Netherock
+20773	Barbscale Crocolisk
+20774	Farahlon Lasher
+20775	Markaru
+20777	Talbuk Sire
+20778	Void Waste
+20779	Congealed Void Horror
+20780	Kaylaan
+20791	Iorioa
+20794	Kaylaan the Lost
+20797	Deviate Coiler Hatchling
+20800	Forgemaster Morug
+20801	Silroth
+20802	Protectorate Demolitionist
+20803	Overmaster Grindgarr
+20805	Void Waste Globule
+20806	Seeping Sludge Globule
+20807	Inscriber Saalyn
+20808	Inscriber Veredis
+20810	Mehrdad
+20811	Ghabar
+20812	Corki
+20825	Ethereum Prisoner (Tyralius)
+20854	Ethereum Gladiator
+20857	Arcatraz Defender
+20859	Arcatraz Warder
+20864	Protean Nightmare
+20865	Protean Horror
+20866	Soul Devourer
+20867	Death Watcher
+20868	Entropic Eye
+20869	Arcatraz Sentinel
+20870	Zereketh the Unbound
+20871	Aurine Moonblaze
+20872	Deathforge Summoner
+20873	Negaton Warp-Master
+20874	Skettis Refugee
+20875	Negaton Screamer
+20876	Human Refugee
+20877	Shattrath Refugee
+20878	Deathforge Guardian
+20879	Eredar Soul-Eater
+20880	Eredar Deathbringer
+20881	Unbound Devastator
+20882	Unknown
+20883	Spiteful Temptress
+20885	Dalliah the Doomsayer
+20886	Wrath-Scryer Soccothrates
+20887	Deathforge Imp
+20889	Ethereum Prisoner (Group Energy Ball)
+20890	Siflaed Coldhammer
+20891	Skraa
+20892	Ruogo
+20893	Morula
+20894	Miihi
+20895	Miiji
+20896	Ethereum Slayer
+20897	Ethereum Wave-Caster
+20898	Gargantuan Abyssal
+20899	Void Conduit
+20900	Unchained Doombringer
+20901	Sargeron Archer
+20902	Sargeron Hellcaller
+20903	Protectorate Nether Drake
+20904	Warden Mellichar
+20905	Unknown
+20906	Unknown
+20907	Professor Dabiri
+20908	Unknown
+20909	Unknown
+20910	Unknown
+20911	Unknown
+20912	Harbinger Skyriss
+20913	Tashar
+20915	Noko Moonwhisper
+20916	Xerintha Ravenoak
+20917	Zinyen Swiftstrider
+20920	Magister Theledorn
+20921	Shauly Pore
+20922	Fallen Vindicator
+20923	Blood Guard Porung
+20924	Grishnath Basilisk
+20925	Scalded Basilisk
+20928	Ironspine Forgelord
+20929	Wrath Lord
+20930	Hatecryer
+20931	Tyrantus
+20934	Severed Defender
+20977	Millhouse Manastorm
+20980	Dealer Rashaad
+20981	Dealer Najeeb
+20984	Protectorate Defender
+20985	Captain Saeed
+20986	Dealer Tariq
+20987	Ruuan Weald Basilisk
+20988	Sunseeker Engineer
+20989	Dealer Sadaqat
+20990	Bloodwarder Physician
+20998	Ridgespine Horror
+21004	Lesser Nether Drake
+21005	Azurebeak
+21021	Scorch Imp
+21022	Grovestalker Lynx
+21023	Stronglimb Deeproot
+21024	Earthmender Torlok
+21026	Earthmender Gorboto
+21027	Earthmender Wilda
+21032	Dreadwing
+21033	Bladewing Bloodletter
+21040	Outraged Raven's Wood Sapling
+21042	Dire Raven
+21045	Hired Bodyguard
+21046	Boulder'mok Brute
+21047	Boulder'mok Shaman
+21048	Boulder'mok Chieftain
+21049	Spirit of the Past
+21050	Enraged Earth Spirit
+21055	Golden Dragonhawk Hatchling
+21058	Disembodied Exarch
+21059	Enraged Water Spirit
+21060	Enraged Air Spirit
+21061	Enraged Fire Spirit
+21062	Nether Wraith
+21063	Silver Dragonhawk Hatchling
+21064	Red Dragonhawk Hatchling
+21065	Tormented Citizen
+21071	Totem of Spirits
+21073	Enraged Earthen Soul
+21078	Farahlon Shardling
+21079	Cragskaar Shardling
+21080	Dormant Infernal
+21081	Mok'Nathal Hunter
+21082	Krugash
+21084	Braagor
+21085	Ragar
+21086	Ruka
+21088	Matron Varah
+21089	Sunfury Blood Knight
+21097	Enraged Fiery Soul
+21102	Uvuros
+21103	Spiritcaller Grakosh
+21104	Unknown
+21105	Spiritcaller Roxnak
+21106	Spiritcaller Skrash
+21108	Spawn of Uvuros
+21109	Enraged Watery Soul
+21114	Station Technician
+21115	Station Guard
+21117	Gor'drek
+21123	Felsworn Scalewing
+21124	Felsworn Daggermaw
+21126	Coilfang Scale-Healer
+21127	Coilfang Tempest
+21128	Coilfang Ray
+21129	Scorned Spirit of Earth
+21130	Scorned Spirit of Fire
+21131	Scorned Spirit of Water
+21132	Scorned Spirit of Air
+21135	Fel Imp
+21136	Unknown
+21137	Unknown
+21138	Unknown
+21139	Unknown
+21140	Unknown
+21147	Tor'chunk Twoclaws
+21148	Unknown
+21152	Station Bot-Jock
+21160	Conjured Water Elemental
+21164	Netharel
+21166	Illidari Dreadlord
+21168	Theras
+21171	Alandien
+21172	Sarinei Whitestar
+21178	Varedis
+21179	Demon Hunter Supplicant
+21180	Demon Hunter Initiate
+21181	Cyrukh the Firelord
+21183	Oronok Torn-heart
+21188	Thadok
+21189	Crystal Flayer
+21192	Kugnar
+21193	Gralga
+21194	Ru'zah
+21195	Domesticated Felboar
+21196	Ravenous Flayer
+21205	Ravenous Flayer Matriarch
+21207	Summoner Skartax
+21233	Legion Fel Cannon
+21235	"Backstab" Bindo Gearbomb
+21238	Bloodmaul Drudger
+21244	Bonechewer Messenger
+21245	Bonechewer Marauder
+21250	Pink Elekk
+21254	Dullgrom Dredger
+21255	Umberhowl
+21259	Crash Bigbomb
+21264	Unknown
+21265	Unknown
+21267	Mana Beast
+21277	Vindicator Vuuleen
+21287	Warbringer Razuun
+21291	Grom'tor, Son of Oronok
+21292	Ar'tor, Son of Oronok
+21293	Borak, Son of Oronok
+21295	Coilskar Commander
+21296	Bladespire Champion
+21300	Fel Corrupter
+21302	Shadow Council Warlock
+21303	Defender Corpse
+21304	Warder Corpse
+21305	Mutant Horror
+21306	Unknown
+21307	Eva
+21309	Painmistress Gabrissa
+21311	Rokgah Bloodgrip
+21314	Terrormaster
+21315	Ruul the Darkener
+21316	Deathforged Infernal
+21317	Aimi
+21318	Spirit of Ar'tor
+21319	Gor Grimgut
+21323	Unknown
+21325	Raven's Wood Stonebark
+21326	Raven's Wood Leafbeard
+21328	Unknown
+21331	Thorny Growth
+21332	Spirit Hunter
+21336	Gedrah
+21337	Illidari Shadowstalker
+21338	Coilfang Leper
+21340	Detrafila
+21346	Unknown
+21349	T'chali the Witch Doctor
+21350	Gronn-Priest
+21365	Floating Skull
+21373	Unknown
+21380	Greater Crust Burster
+21381	Young Crust Burster
+21382	Wyrmcult Zealot
+21383	Wyrmcult Acolyte
+21384	Dark Conclave Harbinger
+21385	Dark Conclave Scorncrow
+21386	Dark Conclave Hawkeye
+21387	Wyrmcult Blackwhelp
+21389	Maxnar the Ashmaw
+21395	Unknown
+21402	Anchorite Ceyla
+21404	Legion Hold Fel Reaver
+21405	Ethereal Arcanist
+21408	Felfire Diemetradon
+21409	Envoy Icarius
+21410	Blood Lord Zarath
+21411	Tobias the Filth Gorger
+21416	Lakaan
+21419	Infernal Attacker
+21420	Corrupt Water Totem
+21425	Nexus-King Salhadaar
+21428	Corrupted Water Elemental
+21432	Almaador
+21434	Gordie
+21435	Unknown
+21446	Unknown
+21448	Gadgetzan Sniper
+21449	Cursed Spirit
+21450	Skethyl Owl
+21452	Bloodmaul Evil Spirit
+21453	Ashtongue Shaman
+21454	Ashtongue Warrior
+21455	Ashtongue Worker
+21462	Greater Felfire Diemetradon
+21465	David Wayne
+21466	Harbinger Skyriss
+21467	Harbinger Skyriss
+21471	Stormer Ewan Wildwing
+21472	Gryphonrider Nordin
+21474	Coreiel
+21475	Scout Zagran
+21476	Mokthar Grimblade
+21477	Rocknail Flayer
+21478	Rocknail Ripper
+21483	Tasaldan
+21484	Embelar
+21485	Aldraan
+21487	Cendrii
+21488	Banro
+21492	Wyrmcult Blessed
+21493	Kablamm Farflinger
+21496	Dertrok
+21497	Blackscale
+21499	Overseer Ripsaw
+21500	Morgroron
+21501	Makazradon
+21502	Image of Warbringer Razuun
+21503	Sunfury Warlock
+21505	Sunfury Summoner
+21506	Azaloth
+21514	Gorgrom the Dragon-Eater
+21516	Death's Watch
+21517	Ilthuril
+21518	Oruhe
+21519	Death's Might
+21520	Illidari Jailor
+21627	Eclipsion Hawkstrider
+21628	Highborne Lamenter
+21633	Deathbringer Jovaan
+21635	Forest Strider
+21636	Vengeful Draenei
+21637	Wyrmcult Scout
+21639	Illidari Slayer
+21643	Alurmi
+21648	Mature Netherwing Drake
+21655	Nakodu
+21656	Illidari Satyr
+21657	Neltharaku
+21660	Cabal Abjurist
+21662	Cabal Tomb-Raider
+21663	Oronu the Elder
+21664	Human Charger
+21682	Human Cleric
+21683	Human Conjurer
+21684	King Llane
+21685	Oronok Torn-heart
+21686	Borak, Son of Oronok
+21687	Grom'tor, Son of Oronok
+21690	R-3D0
+21692	Cansis
+21694	Bog Overlord
+21695	Tidal Surger
+21696	Steam Surger
+21697	Infinite Chrono-Lord
+21698	Infinite Timereaver
+21700	Akama
+21701	Ashtongue Deathsworn
+21702	Ethereum Life-Binder
+21703	Corrupt Fire Totem
+21704	Corrupt Earth Totem
+21705	Corrupt Air Totem
+21706	Unknown
+21707	Unknown
+21708	Unknown
+21709	Eykenen
+21710	Uylaru
+21711	Haalum
+21717	Dragonmaw Wrangler
+21718	Dragonmaw Subjugator
+21719	Dragonmaw Drake-Rider
+21720	Dragonmaw Shaman
+21722	Enslaved Netherwing Drake
+21723	Blackwind Sabercat
+21725	Kagrosh
+21726	Summoned Daemon
+21727	Flanis Swiftwing
+21728	Skettis Surger
+21729	Unknown
+21730	Alluvion
+21733	Karzo
+21734	Zixxy
+21735	Infernal Oversoul
+21736	Wildhammer Defender
+21738	Redeemed Spirit of Air
+21739	Redeemed Spriit of Earth
+21740	Redeemed Spirit of Fire
+21742	Sunfury Eradicator
+21743	Sunfury Blood Lord
+21744	Roldemar
+21747	Orc Necrolyte
+21748	Orc Wolf
+21749	Shadowmoon Scout
+21750	Orc Warlock
+21751	Chubis
+21752	Warchief Blackhand
+21753	Shadow Council Felsworn
+21754	Shadow Council Zealot
+21766	Alieshor
+21767	Harbinger of the Raven
+21768	Vagath
+21769	Overlord Or'barokh
+21770	Researcher Tiorus
+21771	Warcaller Sardon Truslice
+21772	Chief Apothecary Hildagard
+21776	Illidari Temptress
+21779	Doctor Maleficus
+21780	Unknown
+21783	Protectorate Regenerator
+21784	Ghostrider of Karabor
+21788	Shadowmoon Zealot
+21789	Nakansi
+21797	Teron Gorefiend
+21801	Vhel'kur
+21802	Elekk Demolisher
+21803	Ashtongue Handler
+21805	Protectorate Avenger
+21808	Illidari Overseer
+21809	Wyrmcult Poacher
+21810	Wyrmcult Hewer
+21811	Wyrmcult Broodling
+21815	Cleric of Karabor
+21816	Ironspine Chomper
+21818	Infinite Whelp
+21822	Vindicator Aluumen
+21826	Sanoru
+21827	Zandras
+21837	Summoned Wrath Hound
+21839	Mature Silkwing
+21849	Bone Crawler
+21853	Raven's Wood Ent
+21854	Ironspine Petrifier
+21860	Exarch Onaala
+21864	Scorchshell Pincer
+21867	Teron Gorefiend
+21876	Chain of Shadows
+21877	Karsius the Ancient Watcher
+21878	Felboar
+21879	Vilewing Chimaera
+21891	Avian Ripper
+21894	Xeleth
+21895	Taerek
+21896	Silmara
+21897	Felspine the Greater
+21901	Netherskate
+21904	Avian Warhawk
+21908	Spellbound Terrorguard
+21909	Arcano-Scorp
+21923	Terrorguard Protector
+21925	Avatar of Sathal
+21928	Lothros
+21936	Crazed Shardling
+21938	Earthmender Splinthoof
+21941	Unknown
+21949	Fel Reaver Sentinel
+21950	Garm Wolfbrother
+21951	Thunderlord Clan Sub-Chief
+21952	Lobo
+21953	Varen the Reclaimer
+21954	Larissa Sunstrike
+21955	Arcanist Thelis
+21956	Rema
+21960	Gan'arg Technician
+21961	Cataclysm Overseer
+21962	Udalo
+21970	Officer Dawning
+21975	Bladespire Sober Defender
+21979	Val'zareq the Conqueror
+21981	Overseer Nuaar
+21983	Samia Inkling
+21986	Altar of Sha'tar Vindicator
+21998	Kor'kron Wind Rider
+22000	Dragonmaw Nether Drake
+22004	Leoroxx
+22006	Shadowlord Deathwail
+22007	Tree Warden Chawn
+22011	Corok the Mighty
+22012	Chancellor Bloodleaf
+22013	Eye of the Storm Emissary
+22015	Eye of the Storm Envoy
+22016	Eclipsion Soldier
+22017	Eclipsion Spellbinder
+22018	Eclipsion Cavalier
+22019	Kolphis Darkscale
+22020	O'Mally Zapnabber
+22024	Parshah
+22025	Asghar
+22037	Smith Gorlunk
+22043	Sergeant Kargrul
+22044	Cavern Crawler
+22045	Vengeful Husk
+22052	Daggermaw Blackhide
+22053	Mosswood the Ancient
+22059	Wildhammer Gryphon Rider
+22061	Shadowmoon Soulstealer
+22072	Shadowsworn Drakonid
+22073	Marcus Auralion
+22074	Unknown
+22075	Unknown
+22076	Torloth the Magnificent
+22081	Shadowmoon Darkweaver
+22082	Shadowmoon Slayer
+22084	Shadowmoon Chosen
+22093	Illidari Watcher
+22094	Remnant of Hate
+22099	Wyrmcult Provisioner
+22100	Scorpid Bonecrawler
+22102	Shadowmoon Retainer
+22103	Baron Sablemane
+22105	Decrepit Clefthoof
+22106	Unknown
+22108	Blackwhelp
+22110	Tethik
+22112	Karynaku
+22113	Mordenai
+22114	Huffer
+22115	Unknown
+22123	Rip-Blade Ravager
+22127	Wildlord Antelarion
+22130	Baron Sablemane's Blackwhelp
+22132	Mature Cavern Crawler
+22133	Faradrella
+22134	Shadowmoon Eye of Kilrogg
+22135	Tame Clefthoof
+22136	Dubu
+22138	Dark Conclave Ritualist
+22141	Quilbeast
+22142	Zakk
+22143	Gordunni Back-Breaker
+22144	Gordunni Elementalist
+22148	Gordunni Head-Splitter
+22149	Commander Haephus Stonewall
+22150	Lieutenant Fairweather
+22151	Ruuan Weald Sister
+22160	Bloodmaul Taskmaster
+22175	Apexis Flayer
+22180	Shard-Hide Boar
+22189	Marmot
+22199	Slaag
+22204	Fear Fiend
+22208	Nasmara Moonsong
+22209	Unknown
+22211	Battlemage Vyara
+22212	Andrion Darkspinner
+22213	Gidge Spellweaver
+22215	Treebole
+22216	Fhyn Leafshadow
+22225	Reagan Mancuso
+22226	Unknown
+22232	Grishna Arakkoa
+22233	Unsuspecting Leafbeard
+22234	Sinnea Starsong
+22235	Evil Koi-Koi
+22239	Strange Winged Goblin
+22241	Bash'ir Raider
+22242	Bash'ir Spell-Thief
+22243	Bash'ir Arcanist
+22244	Unbound Ethereal
+22252	Dragonmaw Peon
+22253	Dragonmaw Ascendant
+22259	Hellfire Wardling
+22265	Shadowwing Owl
+22268	Leokk
+22273	Fel Warden
+22274	Dragonmaw Skybreaker
+22279	Nadja
+22280	Soren
+22293	Inactive Fel Reaver
+22298	Vile Fire-Soul
+22299	Unknown
+22305	Vekh
+22308	Wyrmcult Hunter
+22310	Storming Wind-Ripper
+22311	Raging Fire-Soul
+22312	Spiritcaller Dohgar
+22313	Rumbling Earth-Heart
+22315	Deathforge Mine
+22318	Spirit Calling Totem
+22323	Incandescent Fel Spark
+22326	Redeemed Avian
+22331	Dragonmaw Elite
+22332	Brood of Neltharaku
+22338	Arcubus Destroyer
+22343	Deathshadow Archon
+22357	Reth'hedron the Subduer
+22363	Deathshadow Warlock
+22369	Dread Relic Thrall
+22378	Cabal Interrogator
+22381	Hathyss the Wicked
+22384	Bloodmaul Soothsayer
+22386	Watcher Moonshade
+22387	Lithic Oracle
+22388	Lithic Talonguard
+22393	Deathshadow Overlord
+22394	Deathshadow Hound
+22396	Draaca Longtail
+22407	Caravan Defender
+22408	Furious Nether-wraith
+22410	Expedition Outrider
+22421	Skar'this the Heretic
+22423	Evergrove Druid
+22427	Zarevhi
+22437	Remnant of Malice
+22438	Remnant of Greed
+22439	Remnant of Corruption
+22440	Remnant of Pride
+22442	Lonika Stillblade
+22443	Death's Door Fel Cannon
+22445	Miniwing
+22448	Rexxar
+22453	Injured Sha'tar Vindicator
+22455	Sky-Master Maxxor
+22463	Wounded Sha'tar Vindicator
+22465	Natasha
+22468	Ogrin
+22474	Unstable Fel-Imp
+22476	Aundro
+22477	Anchorite Ensham
+22478	Evergrove Ancient
+22479	Sab'aoth
+22480	Brown Marmot
+22483	Sand Gnome
+22484	Zeppit
+22489	Grunt Grahk
+22490	Huffer
+22491	Kerpow Blastwrench
+22492	Spirit
+22494	Cosmowrench Bruiser
+22497	V'eru
+22499	Unknown
+22819	Orphan Matron Mercy
+22821	Ethereum Avenger
+22822	Ethereum Nullifier
+22836	Jheel
+22842	Corvax
+22843	Rook
+22857	Illidari Ravager
+22858	Shadowhoof Assassin
+22859	Shadowhoof Summoner
+22861	Lightsworn Vindicator
+22863	Seasoned Magister
+22864	Fyra Dawnstar
+22890	Unknown
+22891	Unknown
+22892	Unknown
+22899	Protectorate Advisor Rahim
+22912	Sundered Spirit
+22919	Image of Commander Ameer
+22922	Innkeeper Aelerya
+22927	Ethereum Prisoner (Dungeon Energy Ball)
+22931	Gorrim
+22940	Grok
+22941	Mog'dorg the Wizened
+22995	Chort
+23007	Paulsta'ats
+23020	Shadow Serpent
+23022	Gordunni Soulreaper
+23026	Twilight Serpent
+23076	Legion Flak Cannon
+23079	Peacekeeper Jadaar
+23094	Minion of Sar'this
+23103	Derek the Undying
+23128	Master Pyreanor
+23131	Blood Knight Honor Guard
+23149	Mistress of the Mines
+23153	Bash'ir Surveyor
+23154	Mana-debt Slave
+23175	Tarren Mill Guardsman
+23176	Unknown
+23177	Tarren Mill Lookout
+23178	Unknown
+23179	Tarren Mill Protector
+23180	Unknown
+23217	Bladespire Agent
+23218	Bloodmaul Agent
+23219	Blackwind Warp Chaser
+23263	Brendan Turner
+23265	Seer Nakha
+23270	Vindicator Aeus
+23271	Vindicator Kaan
+23272	Arcanist Savan
+23273	Arcanist Raestan
+23280	Agadai
+23287	Murkblood Miner
+23373	Mortog Steamhead
+23385	Bash'ir Arcanist
+23396	Krixel Pinchwhistle
+23434	Commander Hobb
+23452	Commander Arcus
+23483	Arcanist Xorith
+23484	Haldor the Compulsive
+23501	Netherwing Ray
+23536	Nagulon
+23571	Razbo Rustgear
+23573	Krixil Slogswitch
+23589	Defias Rummager
+23591	Defias Diver
+23592	Grimtotem Breaker
+23593	Grimtotem Spirit-Shifter
+23612	Dyslix Silvergrub
+23635	Krixx
+23636	Mudsprocket Bruiser
+23699	Kevin Browning
+23713	Kraxx
+23719	Investigator Asric
+23741	Captured Raptor
+23811	Captured Totem
+23948	Apprentice Tasserel
+23988	Michael Schweitzer
+23995	Axle
+24208	"Little" Logok
+24369	Wind Trader Zhareem
+24370	Nether-Stalker Mah'duun
+24392	Leeni "Smiley" Smalls
+24393	The Rokk
+24416	Grisy Spicecrackle
+24436	Gargoth
+24437	Consortium Assistant
+24476	Minor Voidwalker
+24477	Syndicate Thief
+24728	Dusky
+24780	Field Repair Bot 110G
+24818	Anvilrage Taskmaster
+24819	Anvilrage Enforcer
+24830	Stonevault Pillager
+24886	Exorcist Vaisha
+24917	Phase Wyrm
+24918	Felblood Initiate
+24919	Wrath Herald
+24920	Razorthorn Flayer
+24922	Razorthorn Ravager
+24933	Suspended Terrorguard
+24974	Liza Cutlerflix
+24977	Warpy
+25040	Unknown
+25099	Jonathan Garrett
+25109	Rocket Chicken
+25148	Bergrisst
+25149	Chief Thunder-Skins
+25150	Mai'Kyl
+25151	Samuro
+25152	Sig Nicious
+25176	Grikkin Copperspring
+25177	Evee Copperspring
+25178	Ecton Brasstumbler
+25196	Archer Delvinar
+25200	Steven Thomas
+25202	Arcanist Myndimendez
+25207	Roitau
+25354	Unknown
+25580	Old Man Barlo
+25991	Kixi the Shiv
+25992	Big Bruiser
+26111	Unknown
+26352	Big Zokk Torquewrench
+27668	Ontok Shatterhorn
+27705	Lorrin Foxfire
+27711	Technician Halmaha
+27721	Drelik Blastpipe
+27722	Drolig Blastpipe
+27946	Silvermoon Dragonhawk
+28067	Dark Iron Brewer
+28126	Don Carlos
+28132	Don Carlos
+28163	Guerrero
+28267	Coyote Spirit
+28343	Meeda
+28344	Blazzle
+178420	Magister Astalor Bloodsworn
+181760	Arena Bulletin Board
 184208	Soul Fragment
+184259	Night Lord
+184261	Wanton Host
+184263	Zealous Consort
 202387	Eye of the Void
 202390	Homunculus
 202391	Homunculus
@@ -169,6 +2429,7 @@
 232104	Bronze Whelp
 232105	Red Whelp
 232190	Spawn of Shadra
+232223	Frost Tomb
 232309	Highlord Demitrian
 232335	Enslaved Spawn of Mar'li
 232380	Weaver
@@ -464,6 +2725,11 @@
 242958	Scarlet Infantry
 243007	Screeching Terror
 243011	Infernal
+243012	Strong Bear
+243013	Observant Owl
+243015	Agile Raptor
+243016	Powerful Gorilla
+243017	Ferocious Crocolisk
 243019	Last Standard
 243023	Inquisitor Jociphine
 243046	Scarlet Captain
@@ -531,6 +2797,7 @@
 244132	Scarlet Mage
 244133	Scarlet Infantry
 244134	Scarlet Cavalry
+244135	Scarlet Artillery
 244136	Scarlet Archer
 244155	New Avalon Refugee
 244310	Unknown
@@ -543,3 +2810,5 @@
 245340	Moogul the Sly
 245342	Jubei
 245343	Tojara
+255820	Starshard Whelpling
+255994	Exodar Replica

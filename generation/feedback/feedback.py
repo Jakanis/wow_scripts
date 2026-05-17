@@ -56,6 +56,8 @@ def __detect_redundant_feedbacks(feedbacks: dict[str, dict]):
         absent_keys = set(previous_feedback.keys()) - set(feedback.keys())
         if absent_keys:
             print(f'[!] Previous feedback ({previous_filename}) contains more keys ({sorted(previous_feedback.keys())}) than {filename} ({sorted(feedback.keys())}). Diff: {sorted(absent_keys)}')
+            previous_feedback = feedback
+            previous_filename = filename
             continue
 
         is_redundant = True
