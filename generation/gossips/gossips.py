@@ -120,22 +120,29 @@ def is_value_regex_in_set(gossip: Gossip, collection: set[str], result: list[Gos
     for key in collection:
         re_template = r'.+?'
         if "<" in key:
-            key_pattern = '^' + re.sub('<.+?>', re_template, re.escape(key)) + '$'
+            key_pattern = '^' + re.sub(r'<.+?>', re_template, re.escape(key)) + '$'
             if key_pattern != r'^.+?$' and re.match(key_pattern, gossip.text):
                 return True
-        if "<" in gossip.text:
-            chat_pattern = '^' + re.sub('<.+?>', re_template, re.escape(gossip.text)) + '$'
-            if re.match(chat_pattern, key):
-                collection.remove(key)
-                if result and gossip in result:
-                    result.remove(gossip)
-                collection.add(key)
-                return False
+        if "{" in key:
+            key_pattern = '^' + re.sub(r'{\d+?}', re_template, key) + '$'
+            if re.match(key_pattern, gossip.text):
+                return True
+        # if "<" in gossip.text:
+        #     chat_pattern = '^' + re.sub('<.+?>', re_template, re.escape(gossip.text)) + '$'
+        #     if chat_pattern != r'^.+?$' and re.match(chat_pattern, key):
+        #         print("Warning! Some strange shit here with:")
+        #         print(f"key: {key}")
+        #         print(f"gossip.text: {gossip.text}")
+                # collection.remove(key)
+                # if result and gossip in result:
+                #     result.remove(gossip)
+                # collection.add(key)
+                # return False
 
     return False
 
-
 def cleanup_gossips(gossips: list[Gossip]):
+    # We further assume that approved data goes first. Hence, if there is a duplication - new entry will be ignored
     existing_gossips = set()
     existing_common_texts = set()
     existing_texts: dict[str, int] = dict()
