@@ -75,10 +75,11 @@ expansion_data = {
 }
 
 class ObjectData:
-    def __init__(self, id, expansion, name, type=None, text: list[str] = []):
+    def __init__(self, id, expansion, name, name_ua=None, type=None, text: list[str] = []):
         self.id = id
         self.expansion = expansion
         self.name = name
+        self.name_ua = name_ua
         self.type = type
         self.text = text
 
@@ -127,21 +128,13 @@ def __get_wowhead_search(expansion, start, end=None) -> list[ObjectData]:
         url = base_url + f"/objects?filter={metadata_filters[0]}15;{metadata_filters[1]}2;{metadata_filters[2]}{start}"
     r = requests.get(url)
     soup = BeautifulSoup(r.text, 'html.parser')
-    pre_script_div = soup.find('div', id='lv-objects')
-    if not pre_script_div:
-        return []
-    script_tag = pre_script_div.next_element
-    if script_tag:
-        script_content = script_tag.text
-        start = script_content.find('new Listview(') + 13
-        start = script_content.find('"data":[', start) + 7
-        end = script_content.rfind('}],"') + 2
-        json_data = script_content[start:end]
+    script_div = soup.find('script', id='data.page.listPage.listviews').text
+    if script_div:
         return list(map(lambda md: ObjectData(id=md.get('id'),
                                               expansion=expansion,
                                               name=md.get('name').strip(),
                                               type=md.get('type')),
-                        json.loads(json_data)))
+                        json.loads(script_div)[0].get('data')))
     else:
         return []
 
@@ -371,12 +364,6 @@ def merge_metadata(expansion, wowhead_objects, wowhead_md):
         wowhead_objects[id].type = wowhead_md[id].type
 
 
-def fix_objects(all_objects):
-    all_objects[175755][CLASSIC] = all_objects[175755][SOD]
-    all_objects[175755][CLASSIC].expansion = CLASSIC
-    del all_objects[175755][SOD]
-
-
 def retrieve_object_data() -> dict[int, dict[str, ObjectData]]:
     all_objects = dict()
     for expansion, expansion_properties in expansion_data.items():
@@ -387,8 +374,6 @@ def retrieve_object_data() -> dict[int, dict[str, ObjectData]]:
         print(f'Merging with {expansion}')
         fix_expansion_objects(expansion, wowhead_objects)
         all_objects = merge_expansions(all_objects, wowhead_objects)
-
-    fix_objects(all_objects)
 
     return all_objects
 
@@ -410,8 +395,9 @@ def save_objects_to_db(objects: dict[int, dict[str, ObjectData]]):
     with (conn):
         for key in objects.keys():
             for expansion, object in objects[key].items():
+                name_ua = object.__dict__.get('name_ua') # TODO: regenerate data to store new model with name_ua field
                 conn.execute('INSERT INTO objects(id, expansion, name, name_ua, text_pages, type) VALUES(?, ?, ?, ?, ?, ?)',
-                            (object.id, object.expansion, object.name, None, len(object.text), object.get_type_str()))
+                            (object.id, object.expansion, object.name, name_ua, len(object.text), object.get_type_str()))
 
 
 def __object_filename(book_id, book_title):
@@ -461,9 +447,42 @@ def generate_crowdin_sources(readable_objects: dict[int, dict[str, ObjectData]])
     print(f'Generated {count} book files.')
 
 
+def read_classicua_translations(objects_root_path: str) -> dict[str, str]:
+    from slpp import slpp as lua
+    file_contents = list()
+    for foldername, subfolders, filenames in os.walk(objects_root_path):
+        for filename in filenames:
+            if filename.startswith('object') and filename.endswith('.lua'):
+                # Construct the full path to the file
+                file_path = foldername + '\\' + filename
+
+                # Read the contents of the file
+                with open(file_path, 'r', encoding="utf-8") as file:
+                    file_content = file.read()
+                    file_contents.append((file_path, file_content))
+
+    all_translations: dict[str, str] = dict()
+
+    for file_path, lua_file in file_contents:
+        lua_table = lua_file[lua_file.find(' = {') + 2:lua_file.find('\n}\n') + 2]
+        decoded_objects = lua.decode(lua_table)
+        for object_name, object_translation in decoded_objects.items():
+            all_translations[object_name] = object_translation
+    return all_translations
+
+
+def apply_translations_to_data(objects: dict[int, dict[str, ObjectData]], translations: dict[str, str]):
+    for object_id, object_expansions in objects.items():
+        for expansion, object in object_expansions.items():
+            if object.name in translations:
+                object.name_ua = translations[object.name]
+
 
 if __name__ == '__main__':
     all_objects = retrieve_object_data()
+
+    object_translations = read_classicua_translations('input/entries')
+    apply_translations_to_data(all_objects, object_translations)
 
     save_objects_to_db(all_objects)
 
