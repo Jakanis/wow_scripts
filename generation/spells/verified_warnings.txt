@@ -15,7 +15,6 @@ Warning! Template failed for spell#100:mists
 Warning! Template failed for spell#100:mists
 Warning! Newline count doesn't match for spell#100:mists description
 Warning! Newline count doesn't match for spell#118:cata description
-Warning! Template failed for spell#133:cata
 Warning! Newline count doesn't match for spell#324:cata description
 Warning! Template failed for spell#331:cata
 Warning! Newline count doesn't match for spell#331:cata description
@@ -194,6 +193,8 @@ Warning! Newline count doesn't match for spell#23588:mists description
 Warning! Template failed for spell#23881:cata
 Warning! Newline count doesn't match for spell#23881:cata description
 Warning! Newline count doesn't match for spell#23922:classic description
+Warning! Template failed for spell#27042:classic
+Warning! Template failed for spell#27208:classic
 Warning! Newline count doesn't match for spell#27243:mists description
 Warning! Template failed for spell#27580:mists
 Warning! Template failed for spell#27580:mists

@@ -5,7 +5,7 @@ from typing import Dict, Any
 import requests
 from bs4 import BeautifulSoup, CData
 
-from generation.utils.utils import ValidationError
+from generation.utils.utils import ValidationError, __to_tsv_val
 
 THREADS = os.cpu_count()
 CLASSIC = 'classic'
@@ -160,6 +160,9 @@ class SpellData:
         return (are_texts_equal_ignoring_values(self.name, __other.name)
                 and are_texts_equal_ignoring_values(self.description, __other.description)
                 and are_texts_equal_ignoring_values(self.aura, __other.aura))
+
+    def __str__(self):
+        return f"{self.id}#{self.expansion}: {self.name}"
 
 
 class SpellTranslation:
@@ -402,10 +405,10 @@ def parse_wowhead_pages(expansion, metadata: dict[int, SpellMD], render: bool) -
     return wowhead_spells
 
 
-def save_spells_to_db(spells: dict[int, dict[str, SpellData]]):
+def save_spells_to_db(spells: dict[int, dict[str, SpellData]], db_path='cache/spells.db'):
     import sqlite3
     print('Saving spells to DB')
-    conn = sqlite3.connect('cache/spells.db')
+    conn = sqlite3.connect(db_path)
     conn.execute('DROP TABLE IF EXISTS spells')
     conn.execute('''CREATE TABLE spells (
                         id INT NOT NULL,
@@ -480,14 +483,11 @@ def load_spells_from_db(db_path='cache/spells.db') -> dict[int, dict[str, SpellD
 
     return spells
 
-def is_spell_translated(spells: dict[str, SpellData]) -> list[str]:
+
+def is_spell_translated(spells: dict[str, SpellData]) -> bool:
     if not spells:
-        return []
-    translated_expansions = list()
-    for expansion, spell in spells.items():
-        if spell.name_ua or spell.description_ua or spell.aura_ua or spell.ref:
-            translated_expansions.append(expansion)
-    return translated_expansions
+        return False
+    return any(spell.is_translated() for spell in spells.values())
 
 
 def populate_similarities_across_expansions(spells: dict[int, dict[str, SpellData]]):
@@ -544,16 +544,6 @@ def populate_similarities_across_expansions(spells: dict[int, dict[str, SpellDat
             else:
                 aura_to_spells[aura] = {expansion: key}
 
-
-
-def __to_tsv_val(value) -> str:
-    if value:
-        value_str = str(value).replace('"', '""')
-        if value_str.startswith('+'):
-            value_str = "'" + value_str
-        return f'"{value_str}"'
-    else:
-        return ''
 
 def create_translation_sheet(spells: dict[int, dict[str, SpellData]]):
     with (open(f'translate_this.tsv', mode='w', encoding='utf-8') as f):
@@ -699,8 +689,10 @@ def populate_similarities(spells: dict[int, SpellData]):
             aura_to_spell_id[aura] = key
 
 
-def retrieve_spell_data() -> dict[int, dict[str, SpellData]]:
-    all_spells = dict()
+def retrieve_spell_data() -> tuple[dict[int, dict[str, SpellData]], dict[int, dict[str, SpellData]]]:
+    merged_spells = dict()
+    raw_spells = dict()
+
     stored_classic_spells = None
     for expansion, expansion_properties in expansion_data.items():
         wowhead_md = get_wowhead_spell_metadata(expansion)
@@ -714,6 +706,8 @@ def retrieve_spell_data() -> dict[int, dict[str, SpellData]]:
 
         store_raw_spells(expansion, wowhead_spells_raw) # Store current raw pages as 'tmp/wowhead_<expansion>_spell_cache_raw_stored'
 
+        raw_spells[expansion] = wowhead_spells_rendered.copy()
+
         if expansion == CLASSIC:
             stored_classic_spells = wowhead_spells_rendered.copy()
         if expansion == SOD:
@@ -722,9 +716,9 @@ def retrieve_spell_data() -> dict[int, dict[str, SpellData]]:
         else:
             populate_similarities(wowhead_spells_rendered)
         print(f'Merging with {expansion}')
-        all_spells = merge_expansions(all_spells, wowhead_spells_rendered)
+        merged_spells = merge_expansions(merged_spells, wowhead_spells_rendered)
 
-    return all_spells
+    return merged_spells, raw_spells
 
 
 def __spell_guide_header() -> str:
@@ -1409,7 +1403,7 @@ if __name__ == '__main__':
     download_csv_from_google_sheet()
 
     # loaded_spells = load_spells_from_db()
-    all_spells = retrieve_spell_data()
+    all_spells, raw_spells = retrieve_spell_data()
     # populate_similarities_across_expansions(all_spells)
 
     tsv_translations = read_translations_sheet()
@@ -1418,7 +1412,8 @@ if __name__ == '__main__':
     compare_refs(all_spells, tsv_translations) # Temp? method to compare generated refs and refs in sheet
     apply_translations_to_data(all_spells, tsv_translations)
 
-    save_spells_to_db(all_spells)
+    save_spells_to_db(all_spells, 'cache/spells.db')
+    save_spells_to_db(raw_spells, 'cache/raw_spells.db')
 
     compare_tsv_and_classicua(tsv_translations, classicua_translations)
     validate_translations(all_spells)
