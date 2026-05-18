@@ -30,6 +30,9 @@ def load_missing_chats_from_feedback(path) -> list[Chat]:
                 if type(chat_object) == str:
                     chat_text = chat_object
                 elif type(chat_object) == dict:
+                    if chat_object.get('lang_name', '') != '':
+                        # Means that chat text in foreign language, so there's nothing to translate
+                        continue
                     chat_text = chat_object[0]
                 else:
                     print(f"Warning! Unknown chat_object type: {type(chat_object)}")
