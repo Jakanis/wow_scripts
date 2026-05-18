@@ -1,9 +1,12 @@
-./items/
-items_xml/
-npc_htmls/
-entries/
+entries
 venv
+.venv
 *.tsv
 *.csv
 *.lua
 .idea
+*.xml
+*.html
+*.pkl
+*.db
+credentials.json
