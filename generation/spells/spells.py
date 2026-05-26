@@ -1,5 +1,6 @@
 import json
 import os
+import re
 from typing import Dict, Any
 
 import requests
@@ -149,6 +150,7 @@ class SpellData:
         self.category = category
         self.group = group
         self.rank = rank
+        self.pretranslated = False
 
     def is_translated(self) -> bool:
         if self.name_ua or self.description_ua or self.aura_ua or self.ref:
@@ -545,6 +547,115 @@ def populate_similarities_across_expansions(spells: dict[int, dict[str, SpellDat
                 aura_to_spells[aura] = {expansion: key}
 
 
+def _get_candidate_spell(candidate_id: int, spell: SpellData, lookup: dict[int, dict[str, SpellData]]) -> SpellData | None:
+    candidate_expansions = lookup.get(candidate_id)
+    if not candidate_expansions:
+        return None
+    parent_expansions = expansion_data[spell.expansion][PARENT_EXPANSIONS]
+    for exp in reversed([*parent_expansions, spell.expansion]):
+        if exp in candidate_expansions:
+            return candidate_expansions[exp]
+    return None
+
+
+def _candidate_covers_spell(spell: SpellData, candidate_id: int, lookup: dict[int, dict[str, SpellData]]) -> bool:
+    candidate = _get_candidate_spell(candidate_id, spell, lookup)
+    if not candidate:
+        return False
+    # Candidate must not have fields the spell doesn't — ref resolution copies all *_ua fields,
+    # so extra fields on the candidate would inject translations that don't belong to this spell.
+    if not spell.description and candidate.description:
+        return False
+    if not spell.aura and candidate.aura:
+        return False
+    checks = [
+        (spell.name,        spell.name_ref,        candidate.name_ref),
+        (spell.description, spell.description_ref,  candidate.description_ref),
+        (spell.aura,        spell.aura_ref,         candidate.aura_ref),
+    ]
+    for field_value, spell_ref, candidate_ref in checks:
+        if not field_value:
+            continue  # field absent on spell
+        if spell_ref == candidate_id:
+            continue  # this field IS the candidate — directly covered
+        if spell_ref != candidate_ref:
+            return False  # both must point to same ancestor
+    return True
+
+
+def _ref_signature(spell: SpellData) -> tuple | None:
+    """Returns (expansion, name_ref, desc_ref, aura_ref) or None if any present field lacks a ref."""
+    if spell.name and spell.name_ref is None:
+        return None
+    if spell.description and spell.description_ref is None:
+        return None
+    if spell.aura and spell.aura_ref is None:
+        return None
+    return (spell.expansion, spell.name_ref, spell.description_ref, spell.aura_ref)
+
+
+def pretranslate_spells(spells: dict[int, dict[str, SpellData]], all_spells: dict[int, dict[str, SpellData]] = None):
+    lookup = all_spells if all_spells is not None else spells
+    count = 0
+
+    # Pass 1: direct and transitive ref resolution via existing *_ref candidates
+    for key in sorted(spells.keys()):
+        for spell in spells[key].values():
+            if spell.is_translated():
+                continue
+            sig = _ref_signature(spell)
+            if sig is None:
+                continue
+
+            field_refs = [r for r in [
+                spell.name_ref if spell.name else None,
+                spell.description_ref if spell.description else None,
+                spell.aura_ref if spell.aura else None,
+            ] if r is not None]
+
+            if not field_refs:
+                continue
+
+            for candidate_id in sorted(set(field_refs), reverse=True):
+                if _candidate_covers_spell(spell, candidate_id, lookup):
+                    spell.ref = candidate_id
+                    spell.pretranslated = True
+                    count += 1
+                    break
+
+    # Pass 2: group by ref signature; siblings ref the first directly-translated spell in the group.
+    # Only directly-translated spells (with actual *_ua text) are valid sources — avoids ref chains.
+    signature_to_source: dict[tuple, int] = {}
+    for key in sorted(lookup.keys()):
+        for spell in lookup[key].values():
+            sig = _ref_signature(spell)
+            if sig is not None and sig not in signature_to_source:
+                is_translated = bool(spell.name_ua or spell.description_ua or spell.aura_ua)
+                signature_to_source[sig] = (key, is_translated)
+
+    for key in sorted(spells.keys()):
+        for spell in spells[key].values():
+            if spell.is_translated():
+                continue
+            sig = _ref_signature(spell)
+            if sig is None:
+                continue
+            source = signature_to_source.get(sig)
+            if source is None:
+                continue
+            source_id, source_is_translated = source
+            if source_id == key:
+                continue
+            spell.ref = source_id
+            spell.pretranslated = True
+            count += 1
+            if not source_is_translated:
+                print(f"Warning: spell#{spell.id}:{spell.expansion} pretranslated with ref to untranslated spell#{source_id}")
+
+    if count > 0:
+        print(f"Pretranslated {count} spells via ref")
+
+
 def create_translation_sheet(spells: dict[int, dict[str, SpellData]]):
     with (open(f'translate_this.tsv', mode='w', encoding='utf-8') as f):
         f.write('ID\texpansion\tName(EN)\tName(UA)\tDescription(EN)\tDescription(UA)\tAura(EN)\tAura(UA)\tref\tname_ref\tdesc_ref\taura_ref\tcategory\tgroup\tNote\tNote 2\n')
@@ -588,9 +699,14 @@ def create_translation_sheet(spells: dict[int, dict[str, SpellData]]):
                 ## For missing referenced spells
                 # force_translate = (1220635, 1220642, 1220645, 1220650, 1220651, 1220653, 1220654, 1220655, 1220656, 1220657, 1220666, 1220668, 1220700, 1220702, 1220707, 1220708, 1220711, 28800, 1220738, 1220741, 1220756, 1220770, 1222974, 1222994, 1223010, 1220980, 1219019, 1219043, 1219083, 1223262, 1223341, 1223348, 1223349, 1223350, 1223351, 1223352, 1223353, 1223354, 1223355, 1223357, 1223367, 1223368, 1223370, 1223371, 1223372, 1223373, 1223374, 1223375, 1223376, 1223379, 1223380, 1223381, 1223382, 1223383, 1223384, 1223385, 1223386, 1223387, 1223455, 1219415, 1219500, 1219501, 1219503, 1219506, 1219507, 1219510, 1219511, 1219512, 1219513, 1219515, 1219519, 1219520, 1219521, 1219522, 1219539, 1219548, 1219552, 1219553, 1219557, 1219558, 1223689, 1223795, 1219740, 1219742, 1219743, 1219745, 1219747, 1219748, 1219749, 1219751, 1219752, 1219753, 1219754, 1219755, 1219756, 1219757, 1219758, 1219760, 1219762, 1219763, 1219764, 1219766, 1219767, 1219768, 1219769, 1219770, 1219771, 1219772, 1219773, 1219774, 1219775, 1219776, 1219777, 1219778, 1219779, 1219780, 1219781, 1219782, 1219783, 1219784, 1219785, 1219786, 1219787, 1219788, 1219789, 1219790, 1219791, 1219792, 1219793, 1219794, 1219795, 1219796, 1219797, 1219798, 1219799, 1219800, 1219801, 1219802, 1219803, 1219804, 1219805, 1219806, 1219807, 1219808, 1219809, 1219810, 1219811, 1219812, 1219813, 1219815, 1219816, 1219818, 1219819, 1219820, 1219821, 1219822, 1219823, 1219824, 1219825, 1219826, 1219827, 1219828, 1219829, 1219830, 1219831, 1219832, 1219833, 1219834, 1219835, 1219836, 1219837, 1219838, 1219839, 1219840, 1219841, 1219842, 1219843, 1219844, 1219845, 1219846, 1219847, 1219848, 1219849, 1219850, 1219851, 1219852, 1219853, 1219854, 1219855, 1219856, 1219857, 1219858, 1219859, 1219860, 1219861, 1219862, 1219863, 1219864, 1219865, 1219866, 1219867, 1219868, 1219869, 1219870, 1219871, 1219872, 1219873, 1219874, 1219875, 1219876, 1219877, 1219878, 1219879, 1219880, 1219881, 1219882, 1219883, 1219884, 1219885, 1219886, 1219887, 1219888, 1219889, 1219890, 1219891, 1219892, 1219893, 1219894, 1219895, 1219896, 1219897, 1219898, 1219899, 1219900, 1219901, 1219902, 1219903, 1219904, 1219905, 1219906, 1219907, 1219908, 1219909, 1219910, 1219911, 1219912, 1219913, 1219914, 1219915, 1219916, 1219917, 1219918, 1219919, 1219920, 1219921, 1219922, 1219923, 1219924, 1219925, 1219926, 1219927, 1219928, 1219929, 1219930, 1219931, 1219932, 1219933, 1219934, 1219935, 1219936, 1219937, 1219938, 1219939, 1219940, 1219941, 1219942, 1219943, 1219944, 1219945, 1219946, 1219947, 1219948, 1219949, 1219950, 1219951, 1219952, 1219953, 1219954, 28148, 1213971, 28282, 1222393, 1222394, 1218367, 1220418, 1220514, 1220521, 1214381, 1220533, 1220536, 1220538, 1220540, 1214407, 1214409, 1220560, 1220561, 1220563, 1220564, 1220565, 1220566, 1220567, 1220568)
                 # if spell.expansion in [CLASSIC, SOD] and spell.name_ua is None and spell.description_ua is None and spell.aura_ua is None and spell.ref is None and spell.id in force_translate:
-                if not spell.is_translated():
+                if not spell.is_translated() or spell.pretranslated:
                     class_name = SpellMD._classes[getattr(spell.spell_md, 'chrclass')] if getattr(spell.spell_md, 'chrclass') in SpellMD._classes else ''
-                    note = 'ALREADY TRANSLATED' if spell.is_translated() else 'NOT TRANSLATED'
+                    if spell.pretranslated:
+                        note = 'PRETRANSLATED'
+                    elif spell.is_translated():
+                        note = 'ALREADY TRANSLATED'
+                    else:
+                        note = 'NOT TRANSLATED'
                     note_2 = ''
                     fields = [spell.id, spell.expansion, spell.name, spell.name_ua, spell.description, spell.description_ua, spell.aura, spell.aura_ua, spell.ref, spell.name_ref, spell.description_ref, spell.aura_ref, class_name, spell.group, note, note_2]
                     f.write(f'{'\t'.join(map(lambda x: __to_tsv_val(x), fields))}\n')
@@ -611,7 +727,8 @@ def merge_spell(id: int, old_spells: dict[str, SpellData], new_spell: SpellData)
         if (not old_spell.is_equal_ignoring_values_to(new_spell)
                 or old_spell.name_ref != new_spell.name_ref
                 or old_spell.description_ref != new_spell.description_ref
-                or old_spell.aura_ref != new_spell.aura_ref):
+                or old_spell.aura_ref != new_spell.aura_ref
+                or old_spell.expansion not in expansion_data[new_spell.expansion][PARENT_EXPANSIONS]):
             return {**old_spells, **{new_spell.expansion: new_spell}}
         else:
             return old_spells
@@ -1053,7 +1170,7 @@ def read_classicua_translations(spells_root_path: str, spell_data: dict[int, dic
             if spell_id in spell_data and expansion in spell_data[spell_id].keys():
                 original_name = spell_data[spell_id][expansion].name
             else:
-                print(f"Warning! Spell#{spell_id}:{expansion} doesn't exist on Wowhead!")
+                print(f"Warning! Spell#{spell_id}:{expansion} doesn't exist in DB!")
                 original_name = 'UNKNOWN'
             spell = SpellData(spell_id, expansion, original_name, category=category, name_ua=name_ua,
                               description_ua=description_ua, aura_ua=aura_ua, ref=ref)
@@ -1422,5 +1539,11 @@ if __name__ == '__main__':
 
     convert_translations_to_entries(tsv_translations)
 
+    # with open('input/missing_spells.csv') as f:
+    #     missing_ids = set(int(x) for x in re.findall(r'\d+', f.read()))
+    # for_translation = {k: v for k, v in all_spells.items() if k in missing_ids}
+
     needs_update = filter_not_updated(all_spells)
+    pretranslate_spells(needs_update, all_spells)
+
     create_translation_sheet(needs_update)
