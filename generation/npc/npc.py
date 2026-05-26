@@ -445,18 +445,18 @@ def __try_cast_str_to_int(value: str, default=None):
 def load_merged_translations() -> dict[int, dict[str, NPC_MD]]:
     import csv
     merged_translations = dict()
-    with open(f'input/translations.tsv', 'r', encoding="utf-8") as input_file:
-        reader = csv.reader(input_file, delimiter="\t", quoting=csv.QUOTE_NONE)
+    with open(f'input/translations.csv', 'r', encoding="utf-8") as input_file:
+        reader = csv.reader(input_file)
         for row in reader:
             npc_id = __try_cast_str_to_int(row[0])
             if not npc_id:
                 print(f'Skipping: {row}')
                 continue
-            name_en = row[1]
-            tag_en = row[2][1:-1] if row[2] != '' else None
-            name_ua = row[3]
-            tag_ua = row[4][1:-1] if row[4] != '' else None
-            expansion = row[8]
+            name_en = row[2]
+            tag_en = row[3][1:-1] if row[3] != '' else None
+            name_ua = row[4]
+            tag_ua = row[5][1:-1] if row[5] != '' else None
+            expansion = row[1]
             npc = NPC_MD(npc_id, name_en, name_ua=name_ua, tag=tag_en, tag_ua=tag_ua, expansion=expansion)
             if npc_id not in merged_translations:
                 merged_translations[npc_id] = {expansion: npc}
@@ -481,17 +481,18 @@ def check_feedback_npcs(all_npcs: dict[int, dict[str, NPC_MD]]) -> set[int]:
 
     missed_npcs = set()
     for feedback_id, feedback_name in feedback.items():
-        if feedback_id not in all_npcs:
-            print(f'Warning! Feedback NPC#{feedback_id} "{feedback_name}" does not exist in DB!')
-            missed_npcs.add(feedback_id)
-        else:
+        if feedback_id in all_npcs:
             translated = False
             for npc in all_npcs[feedback_id].values():
                 if npc.name_ua:
                     translated = True
             if not translated:
-                print(f'Warning! Feedback NPC#{feedback_id} "{feedback_name}" is not translated!')
+                # print(f'Warning! Feedback NPC#{feedback_id} "{feedback_name}" is not translated!')
                 missed_npcs.add(feedback_id)
+        else:
+            # print(f'Warning? Feedback NPC#{feedback_id} "{feedback_name}" does not exist in DB!')
+            # missed_npcs.add(feedback_id)
+            continue
 
     print(f'Missed IDs({len(missed_npcs)}): {sorted(missed_npcs)}')
     return missed_npcs
@@ -663,7 +664,25 @@ def store_npc_quotes():
         pickle.dump(wowhead_npcs, f)
     print('Done')
 
+
+def download_csv_from_google_sheet():
+    output_file = 'input/translations.csv'
+    sheet_id = '1xwoaO6U-jXQChHecEzzqG-leESTmRKm2WXHev4GOFho'
+    url = f'https://docs.google.com/spreadsheets/d/{sheet_id}/gviz/tq?tqx=out:csv&sheet=NPCs'
+    print('Downloading translations from Google Sheet... ', end='')
+    response = requests.get(url)
+    if response.status_code == 200:
+        with open(output_file, 'w', encoding='utf-8') as file:
+            file.write(response.text.replace('\r\n', '\n'))
+        print('Done!')
+    else:
+        print(f'Error downloading sheet: {response.status_code} - {response.text}')
+
+
+
 if __name__ == '__main__':
+    download_csv_from_google_sheet()
+
     all_npcs_md = populate_cache_db_with_npc_data()  # Generate cache/npcs.db
 
     check_existing_translations(all_npcs_md)  # Check if original data changes since previous translation and difference between ClassicUA and translation sheet

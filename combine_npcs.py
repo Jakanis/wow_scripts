@@ -119,13 +119,13 @@ def parse_pending_npcs_tsv() -> dict[NPC_TR]:
         for row in reader:
             if (row[0] == 'Id'):
                 continue
-            id = row[0] + ':' + row[8] if row[8] != '' else row[0]
-            npc = NPC_TR(id, row[1], row[2], row[3], row[4], row[5], row[6])
+            id = row[0] + ':' + row[1] if row[1] != '' else row[0]
+            npc = NPC_TR(id, row[2], row[3], row[4], row[5], row[6], row[7])
             if id in all_npcs:
                 print(f'NPC #{id} ID duplicated')
-            if row[1] in npc_names:
+            if row[2] in npc_names:
                 print(f'NPC #{id} name duplicated')
-            npc_names.add(row[1])
+            npc_names.add(row[2])
             all_npcs[id] = npc
     return all_npcs
 
