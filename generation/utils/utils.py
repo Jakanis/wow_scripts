@@ -199,7 +199,33 @@ def __ensure_path_exists(client: CrowdinClient, path: pathlib.Path, existing_dir
             print(' done')
 
 
-def update_on_crowdin(diffs: list[str], removals: list[str], additions: list[str], skip_parent_dirs = 2) -> None:
+def __update_local_crowdin_input(updated: list[str], removed: list[str], added: list[str],
+                                 input_dir: str, output_dir: str) -> None:
+    """Mirrors files already pushed to Crowdin into the local input folder, so that the
+    next generation run compares against the actual Crowdin state and shows no diffs."""
+    import shutil
+
+    for source_path in updated + added:
+        target_path = os.path.join(input_dir, os.path.relpath(source_path, output_dir))
+        print(f'Copying {source_path} to {target_path}...', end='')
+        os.makedirs(os.path.dirname(target_path), exist_ok=True)
+        shutil.copyfile(source_path, target_path)
+        print(' done')
+
+    for target_path in removed:
+        print(f'Deleting {target_path}...', end='')
+        os.remove(target_path)
+        print(' done')
+        # drop directories left empty by the removal, up to (but not including) the input root
+        dir_path = os.path.dirname(target_path)
+        while (os.path.normpath(dir_path) != os.path.normpath(input_dir)
+               and os.path.isdir(dir_path) and not os.listdir(dir_path)):
+            os.rmdir(dir_path)
+            dir_path = os.path.dirname(dir_path)
+
+
+def update_on_crowdin(diffs: list[str], removals: list[str], additions: list[str], skip_parent_dirs = 2,
+                      input_dir = 'input/source_from_crowdin', output_dir = 'output/source_for_crowdin') -> None:
     from crowdin_api.api_resources.source_files.enums import FileUpdateOption
 
     if not diffs and not removals and not additions:
@@ -214,6 +240,9 @@ def update_on_crowdin(diffs: list[str], removals: list[str], additions: list[str
     client = CrowdinClient(token=token)
     crowdin_files = __get_crowdin_files(client)
     crowdin_dirs = __get_crowdin_directories(client)
+    updated_files = list()
+    removed_files = list()
+    added_files = list()
     for diff in diffs:
         file_path = '/' + pathlib.Path(*pathlib.Path(diff).parts[skip_parent_dirs:]).as_posix()
         if file_path in crowdin_files:
@@ -223,6 +252,7 @@ def update_on_crowdin(diffs: list[str], removals: list[str], additions: list[str
                                                             storageId=storage['data']['id'],
                                                             fileId=crowdin_files[file_path],
                                                             updateOption=FileUpdateOption.KEEP_TRANSLATIONS)
+            updated_files.append(diff)
             print(' done')
         else:
             print(f'File path "{file_path}" not found')
@@ -234,8 +264,10 @@ def update_on_crowdin(diffs: list[str], removals: list[str], additions: list[str
             deleted_file = client.source_files.delete_file(projectId=CROWDIN_PROJECT_ID,
                                                            fileId=crowdin_files[file_path])
             del crowdin_files[file_path]
+            removed_files.append(removal)
             print(' done')
         else:
+            removed_files.append(removal)
             print(f'File path "{file_path}" not found')
 
     for addition in additions:
@@ -252,8 +284,10 @@ def update_on_crowdin(diffs: list[str], removals: list[str], additions: list[str
                                                          directoryId=crowdin_dirs['/' + dir_path.as_posix()],
                                                          name=pathlib.Path(addition).name)
             crowdin_files[file_path] = uploaded_file['data']['id']
+            added_files.append(addition)
             print(' done')
     __store_crowdin_files(crowdin_files)
+    __update_local_crowdin_input(updated_files, removed_files, added_files, input_dir, output_dir)
 
 # [!] Any changes made to string_hash() func must be kept in sync with Lua impl
 def string_hash(text: str) -> int:
