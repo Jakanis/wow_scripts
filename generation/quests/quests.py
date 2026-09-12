@@ -1,20 +1,20 @@
 import json
 import os
 
-import requests
 import multiprocessing
 from bs4 import BeautifulSoup
 import sqlite3
 import difflib
-from generation.utils.utils import compare_directories, write_crowdin_xml_file, update_on_crowdin
+from generation.utils.utils import compare_directories, write_crowdin_xml_file, update_on_crowdin, wowhead_get
 
-THREADS = 32
+THREADS = 2
 
 CLASSIC = 'classic'
 SOD = 'sod'
 TBC = 'tbc'
 WRATH = 'wrath'
 CATA = 'cata'
+MISTS = 'mists'
 RETAIL = 'retail'
 WOWHEAD_URL = 'wowhead_url'
 METADATA_CACHE = 'metadata_cache'
@@ -80,6 +80,19 @@ expansion_data = {
         METADATA_CACHE: 'wowhead_cata_metadata_cache',
         HTML_CACHE: 'wowhead_cata_quests_html',
         QUESTS_CACHE: 'wowhead_cata_quest_cache',
+        METADATA_FILTERS: ('', '', ''),
+        IGNORES: [
+            1, 785, 912, 999, 1005, 1006, 1099, 1174, 1272, 1500, 2000, 5383, 6843, 7522, 7561, 7797, 7906, 7961, 7962, 8226, 8259, 8289, 8296, 8478, 8489, 8618, 8896, 9065,  # Not used in all expansions
+            9511, 9880, 9881, 10375, 10376, 10377, 10378, 10379, 10383, 10386, 10387, 10558, 10559, 10560, 10561, 10638, 10716, 10779, 10844, 10999, 11027, 11196, 11334, 11345, 11551, 11976, 24508, 24509, 65221, 65222, 65223, 65224,  # Appeared in TBC, not used
+            11179, 13997, 11402, 11461, 11578, 11579, 11939, 11987, 11992, 12162, 12163, 12426, 12586, 13175, 13176, 13184, 13203, 13299, 13317, 13475, 13477, 12233, 12493, 12586, 12825, 12834, 12835, 12837, 12881, 12890, 12911, 13977, 24821, 24840, 25055, 25092, 25306, 60860, 70685, # Appeared in Wrath, not used
+            13802, 14220, 14231, 14427, 14450, 14451, 25639, 26282, 27543, 27819, 28106, 28365, 28601, 29091, 29183, 29185, 29258, 29339, 29340, 29341, 29372, 29373, 30110, 30111, 30173, 30538 # Appeared in Cata, not used
+        ]
+    },
+    MISTS: {
+        WOWHEAD_URL: 'https://www.wowhead.com/mop-classic',
+        METADATA_CACHE: 'wowhead_mists_metadata_cache',
+        HTML_CACHE: 'wowhead_mists_quests_html',
+        QUESTS_CACHE: 'wowhead_mists_quests_cache',
         METADATA_FILTERS: ('', '', ''),
         IGNORES: [
             1, 785, 912, 999, 1005, 1006, 1099, 1174, 1272, 1500, 2000, 5383, 6843, 7522, 7561, 7797, 7906, 7961, 7962, 8226, 8259, 8289, 8296, 8478, 8489, 8618, 8896, 9065,  # Not used in all expansions
@@ -408,7 +421,7 @@ def __get_wowhead_quests_search(expansion, start, end=None) -> list[QuestMD]:
         url = base_url + f"/quests?filter={metadata_filters[0]}30:30;{metadata_filters[1]}5:2;{metadata_filters[2]}{end}:{start}"
     else:
         url = base_url + f"/quests?filter={metadata_filters[0]}30;{metadata_filters[1]}2;{metadata_filters[2]}{start}"
-    r = requests.get(url)
+    r = wowhead_get(url)
     soup = BeautifulSoup(r.text, 'html.parser')
     script_tag = soup.find('script', type='text/javascript', src=None)
     if script_tag:
@@ -423,7 +436,7 @@ def __get_wowhead_quests_search(expansion, start, end=None) -> list[QuestMD]:
 
 def get_wowhead_categories(expansion) -> dict[int, dict[int, str]]:
     url = expansion_data[expansion][WOWHEAD_URL] + f"/quests?filter=30;3;1"
-    r = requests.get(url)
+    r = wowhead_get(url)
     soup = BeautifulSoup(r.text, 'html.parser')
     script_tags = soup.find_all('script', type=None, src=None)
     script_tag = next(filter(lambda script: 'Filter.init({' in script.text, script_tags))
@@ -485,11 +498,8 @@ def get_wowhead_quests_metadata(expansion) -> dict[int, QuestMD]:
 def save_page(expansion, id):
     url = expansion_data[expansion][WOWHEAD_URL] + f'/quest={id}?xml'
     html_file_path = f'cache/{expansion_data[expansion][HTML_CACHE]}/{id}.html'
-    r = requests.get(url)
+    r = wowhead_get(url)
     if not r.ok:
-        # You download over 90000 quests in one hour - you'll fail
-        # You do it async - you fail
-        # Have a tea break (or change IP, lol)
         raise Exception(f'Wowhead({expansion}) returned {r.status_code} for quest #{id}')
     if (f"Quest #{id} doesn't exist." in r.text):
         return
@@ -1572,6 +1582,7 @@ def populate_cache_db_with_quest_data() -> dict[int, dict[str, QuestEntity]]:
     wowhead_metadata_tbc = get_wowhead_quests_metadata(TBC)
     wowhead_metadata_wrath = get_wowhead_quests_metadata(WRATH)
     wowhead_metadata_cata = get_wowhead_quests_metadata(CATA)
+    wowhead_metadata_mists = get_wowhead_quests_metadata(MISTS)
     wowhead_metadata_retail = get_wowhead_quests_metadata(RETAIL)
 
     save_htmls_from_wowhead(CLASSIC, set(wowhead_metadata.keys()))
@@ -1579,6 +1590,7 @@ def populate_cache_db_with_quest_data() -> dict[int, dict[str, QuestEntity]]:
     save_htmls_from_wowhead(TBC, set(wowhead_metadata_tbc.keys()))
     save_htmls_from_wowhead(WRATH, set(wowhead_metadata_wrath.keys()))
     save_htmls_from_wowhead(CATA, set(wowhead_metadata_cata.keys()))
+    save_htmls_from_wowhead(MISTS, set(wowhead_metadata_mists.keys()))
     save_htmls_from_wowhead(RETAIL, set(wowhead_metadata_retail.keys()))
 
     wowhead_quests = parse_wowhead_pages(CLASSIC, wowhead_metadata)
@@ -1586,6 +1598,7 @@ def populate_cache_db_with_quest_data() -> dict[int, dict[str, QuestEntity]]:
     wowhead_quests_tbc = parse_wowhead_pages(TBC, wowhead_metadata_tbc)
     wowhead_quests_wrath = parse_wowhead_pages(WRATH, wowhead_metadata_wrath)
     wowhead_quests_cata = parse_wowhead_pages(CATA, wowhead_metadata_cata)
+    wowhead_quests_mists = parse_wowhead_pages(MISTS, wowhead_metadata_mists)
     wowhead_quests_retail = parse_wowhead_pages(RETAIL, wowhead_metadata_retail)
 
     fix_expansion(wowhead_quests, wowhead_quests_sod, wowhead_quests_tbc, wowhead_quests_wrath)
@@ -1602,6 +1615,9 @@ def populate_cache_db_with_quest_data() -> dict[int, dict[str, QuestEntity]]:
     classic_tbc_wrath_quests = merge_expansions(classic_and_tbc_quests, wowhead_quests_wrath)
     print('Merging with Cata')
     all_quests = merge_expansions(classic_tbc_wrath_quests, wowhead_quests_cata)
+    # classic_tbc_wrath_cata_quests = merge_expansions(classic_tbc_wrath_quests, wowhead_quests_cata)
+    # print('Merging with Mists')
+    # all_quests = merge_expansions(classic_tbc_wrath_cata_quests, wowhead_quests_mists)
     print('Merging with Retail')
     # all_quests = merge_expansions(classic_tbc_wrath_cata_quests, wowhead_quests_retail)
 
