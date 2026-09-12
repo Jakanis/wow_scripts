@@ -529,14 +529,10 @@ def get_wowhead_zones() -> dict[int, WowheadZone]:
     url = sources[WOWHEAD][URL] + '/zones'
     r = requests.get(url)
     soup = BeautifulSoup(r.text, 'html.parser')
-    script_tag = soup.find('script', type='text/javascript', src=None)
+    script_tag = soup.find('script', {'id': 'data.page.listPage.listviews'}, type='application/json', src=None)
     if script_tag:
-        script_content = script_tag.text
-        start = script_content.find('new Listview(') + 13
-        start = script_content.find('data: [', start) + 5
-        end = script_content.rfind('});')
-        json_data = script_content[start:end]
-        return {md.get('id'): WowheadZone(md.get('id'), md.get('name'), md.get('category'), md.get('expansion'), md.get('instance'), md.get('territory')) for md in json.loads(json_data)}
+        script_content = json.loads(script_tag.text)[0]["data"]
+        return {md.get('id'): WowheadZone(md.get('id'), md.get('name'), md.get('category'), md.get('expansion'), md.get('instance'), md.get('territory')) for md in script_content}
     else:
         return None
 
@@ -688,7 +684,8 @@ def generate_glossary_row(translation: Zone, zones: dict[str, Zone]) -> str:
     elif translation.parent_zone and translation.parent_zone in zones and zones[translation.parent_zone].translation:
         zone_description += f', {zones[translation.parent_zone].translation}'
     else:
-        print(f'Warning! No translation for parent zone "{translation.parent_zone}" from {zone.name}')
+        if translation.parent_zone not in ('підземелля', 'сценарій'):
+            print(f'Warning! No translation for parent zone "{translation.parent_zone}" from {zone.name}')
         zone_description += f', {translation.parent_zone}'
     if zone.category:
         if zones.get(zone.category):
