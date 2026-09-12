@@ -68,9 +68,11 @@ def load_missing_gossips() -> list[Gossip]:
                         if type(gossip_object) == str:
                             gossip_text = gossip_object
                         elif type(gossip_object) == dict:
-                            gossip_text = gossip_object[0]
+                            gossip_text = gossip_object.get(0) or gossip_object.get(1)
                         else:
                             print(f"Warning! Unknown gossip_object type: {type(gossip_object)}")
+                            continue
+                        if not gossip_text:
                             continue
                         cleaned_text = __clean_newlines(gossip_text)
                         cleaned_text = re.sub(r'[ \u00A0]+', ' ', cleaned_text)
