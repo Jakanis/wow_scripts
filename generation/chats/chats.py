@@ -19,27 +19,36 @@ class Chat:
         return hash((self.npc_name, self.text))
 
 
-def load_missing_chats_from_feedback(path) -> list[Chat]:
+def load_missing_chats_from_feedback() -> list[Chat]:
+    import os
     import pickle
     chats = list()
-    with open(path, 'rb') as f:
-        missing_chats = pickle.load(f)
-        for npc_name, npc_chats in missing_chats.items():
-            for chat_key, chat_object in npc_chats.items():
-                chat_text = None
-                if type(chat_object) == str:
-                    chat_text = chat_object
-                elif type(chat_object) == dict:
-                    if chat_object.get('lang_name', '') != '':
-                        # Means that chat text in foreign language, so there's nothing to translate
-                        continue
-                    chat_text = chat_object[0]
-                else:
-                    print(f"Warning! Unknown chat_object type: {type(chat_object)}")
-                    continue
-                chat_text = chat_text.replace(r'\r\n', '\n').replace(r'\n', '\n').strip()
-                chat = Chat(npc_name, chat_text, chat_key=chat_key)
-                chats.append(chat)
+
+    feedbacks_folder = 'input/feedbacks'
+    for feedback_file in os.listdir(feedbacks_folder):
+        feedback_file_path = os.path.join(feedbacks_folder, feedback_file)
+        if os.path.isfile(feedback_file_path) and feedback_file.endswith('.pkl'):
+            with open(feedback_file_path, 'rb') as f:
+                missing_chats = pickle.load(f)
+                for npc_name, npc_chats in missing_chats.items():
+                    for chat_key, chat_object in npc_chats.items():
+                        chat_text = None
+                        if type(chat_object) == str:
+                            chat_text = chat_object
+                        elif type(chat_object) == dict:
+                            if chat_object.get('lang_name', '') != '':
+                                # Means that chat text in foreign language, so there's nothing to translate
+                                continue
+                            chat_text = chat_object.get(0) or chat_object.get(1)
+                        else:
+                            print(f"Warning! Unknown chat_object type: {type(chat_object)}")
+                            continue
+                        if not chat_text:
+                            continue
+                        chat_text = chat_text.replace(r'\r\n', '\n').replace(r'\n', '\n').strip()
+                        chat = Chat(npc_name, chat_text, chat_key=chat_key)
+                        if not chat in chats:
+                            chats.append(chat)
 
     return chats
 
@@ -287,7 +296,7 @@ if __name__ == '__main__':
     crowdin_chats = load_from_db('crowdin_chats.db')
     pickled_chats = load_from_pickled_wowhead_npcs('input/all_npcs.pkl')
 
-    missing_chats = load_missing_chats_from_feedback('input/missing_chats.pkl')
+    missing_chats = load_missing_chats_from_feedback()
     npcs = load_npcs_from_db('input/npcs.db')
     missing_chats = populate_npcs(missing_chats, npcs)
 
