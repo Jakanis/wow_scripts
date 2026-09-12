@@ -1,10 +1,36 @@
 import os
 import pathlib
+import random
 import re
+import time
 
+import requests
 from crowdin_api import CrowdinClient
 
 CROWDIN_PROJECT_ID = 393919
+
+_WOWHEAD_HEADERS = {
+    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/148.0.0.0 Safari/537.36 Edg/148.0.0.0',
+    'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7',
+    'Accept-Language': 'uk',
+}
+
+
+def wowhead_get(url: str) -> requests.Response:
+    # return requests.get(url)
+    time.sleep(random.uniform(1.0, 5.0))
+    wait = 60
+    attempt = 0
+    while True:
+        # r = requests.get(url, headers=_WOWHEAD_HEADERS)
+        r = requests.get(url)
+        if r.ok:
+            return r
+        else:
+            attempt += 1
+            print(f'[wowhead] {r.status_code} — waiting {wait}s (attempt {attempt})...')
+            time.sleep(wait)
+            wait = int(wait * 1.5)
 
 
 class ValidationError:
