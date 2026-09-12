@@ -91,6 +91,7 @@ Warning! Redundant translation for item#23015:classic effect#0 - original requir
 Warning! Redundant translation for item#23083:classic effect#0 - original requires spell#28871 reference.
 Warning! Redundant translation for item#23712:classic effect#0 - original requires spell#30152 reference.
 Warning! Redundant translation for item#23713:classic effect#0 - original requires spell#30156 reference.
+Warning! Redundant translation for item#23735:tbc effect#0 - original requires spell#30230 reference.
 Warning! Redundant translation for item#25535:tbc effect#0 - original requires spell#32298 reference.
 Warning! Redundant translation for item#31702:tbc effect#0 - original requires spell#39010 reference.
 Warning! Redundant translation for item#33218:tbc effect#0 - original requires spell#42760 reference.
