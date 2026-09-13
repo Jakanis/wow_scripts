@@ -58,6 +58,7 @@ expansion_data = {
         METADATA_FILTERS: ('', '', ''),
         IGNORES: [
             1, 785, 912, 999, 1005, 1006, 1099, 1174, 1272, 1500, 2000, 5383, 6843, 7522, 7561, 7797, 7906, 7961, 7962, 8226, 8259, 8289, 8296, 8478, 8489, 8618, 8896, 9065,  # Not used in all expansions
+            2358,  # Horns of Nez'ra (added in Wrath)
             # 236,  # Still Wintergrasp. Doesn't exist for TBC
             9511, 9880, 9881, 10375, 10376, 10377, 10378, 10379, 10383, 10386, 10387, 10558, 10559, 10560, 10561, 10638, 10716, 10779, 10844, 10999, 11027, 11196, 11334, 11345, 11551, 11976, 24508, 24509, 65221, 65222, 65223, 65224, # Appeared in TBC, not used
             24580, 24581, 24582, 24583, # from Wrath
@@ -1402,6 +1403,7 @@ def fix_wrath_quests(wrath_quests: dict[int, dict[str, QuestEntity]]):
     wrath_quests[9136][WRATH].completion = wrath_quests[9136][WRATH].completion.replace("\n\n\n\n", "\n\n<Rayne bows.>\n\n")
     wrath_quests[9319][WRATH].progress = 'Have you found your way through the dark?'
     wrath_quests[9319][WRATH].completion = wrath_quests[9319][WRATH].completion.replace("\n\n\n\n", "\n\n<The Flamekeeper mutters an incantation in a strange, arcane tongue, then pulls out a glowing bottle.>\n\n")
+    wrath_quests[9636][WRATH].completion = wrath_quests[9636][WRATH].completion.replace("Tigule and Foror's", "Tigule's")
 
     #Fixes from Cata:
     wrath_quests[47][WRATH].description = wrath_quests[47][WRATH].description.replace('The Kobolds', 'The kobolds')
@@ -1533,6 +1535,7 @@ def fix_cata_quests(cata_quests: dict[int, dict[str, QuestEntity]]):
     cata_quests[8382][CATA].completion = cata_quests[8382][CATA].completion.replace("\n\n\n\n", "\n\n<Geologist Larksbane turns pale.>\n\n")
     cata_quests[9319][CATA].progress = 'Have you found your way through the dark?'
     cata_quests[9319][CATA].completion = cata_quests[9319][CATA].completion.replace("\n\n\n\n", "\n\n<The Flamekeeper mutters an incantation in a strange, arcane tongue, then pulls out a glowing bottle.>\n\n")
+    cata_quests[9636][CATA].completion = cata_quests[9636][CATA].completion.replace("Tigule and Foror's", "Tigule's")
 
     cata_quests[24819][CATA].completion = "May you find what you're looking for, <brother/sister>."
     cata_quests[24820][CATA].completion = "May you find what you're looking for, <brother/sister>."
@@ -1553,6 +1556,12 @@ def fix_cata_quests(cata_quests: dict[int, dict[str, QuestEntity]]):
     cata_quests[25248][CATA].completion = "May you find what you're looking for, <brother/sister>."
     cata_quests[25249][CATA].completion = "May you find what you're looking for, <brother/sister>."
 
+    cata_quests[25224][CATA].progress = cata_quests[25224][CATA].progress.replace("Crosectdamus", "<name>")
+    cata_quests[26118][CATA].completion = cata_quests[26118][CATA].completion.replace("Dark Iron <race> whose", "Dark Iron dwarf whose")
+    cata_quests[26489][CATA].completion = cata_quests[26489][CATA].completion.replace("boss-man", "boss-<man/lady>")
+    cata_quests[26965][CATA].progress = cata_quests[26965][CATA].progress.replace("Meowstermagnub", "<name>")
+    cata_quests[26989][CATA].completion = cata_quests[26989][CATA].completion.replace("Szaggynub", "<name>")
+
 
 
 
@@ -1563,6 +1572,12 @@ def fix_expansion(classic_quests: dict[int, dict[str, QuestEntity]], sod_quests:
     classic_quests[6221][CLASSIC] = sod_quests[6221][SOD]
     classic_quests[6221][CLASSIC].expansion = CLASSIC
     del sod_quests[6221]
+
+
+    classic_quests[6241] = dict()
+    classic_quests[6241][CLASSIC] = tbc_quests[6241][TBC]
+    classic_quests[6241][CLASSIC].expansion = CLASSIC
+    del tbc_quests[6241]
 
     # classic_quests[7797] = dict()
     # classic_quests[7797][CLASSIC] = sod_quests[7797][SOD]
