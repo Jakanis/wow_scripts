@@ -24,7 +24,7 @@ def wowhead_get(url: str) -> requests.Response:
     while True:
         # r = requests.get(url, headers=_WOWHEAD_HEADERS)
         r = requests.get(url)
-        if r.ok:
+        if r.ok or r.status_code == 404:
             return r
         else:
             attempt += 1
