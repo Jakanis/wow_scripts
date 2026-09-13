@@ -2,6 +2,8 @@ import os
 import pathlib
 import random
 import re
+import shutil
+import sys
 import time
 
 import requests
@@ -153,6 +155,246 @@ def write_crowdin_xml_file(path: str, content: dict[str, str]) -> None:
 
 
 
+def __getenv(name: str) -> str:
+    # Read settings where they are used, not at import time. A real environment variable still wins
+    # (PyCharm run configs, CI); otherwise it comes from the gitignored .env in the repository root - the
+    # modules run from their own subdirectory, so anchor the path to this file, not the working directory.
+    from dotenv import load_dotenv
+    load_dotenv(pathlib.Path(__file__).parents[2] / '.env')
+    return os.getenv(name)
+
+
+def __get_crowdin_client() -> CrowdinClient:
+    token = __getenv('CROWDIN_TOKEN')
+    if not token:
+        raise Exception('CROWDIN_TOKEN is not set. Put it in .env in the repository root, or set it in the environment.')
+    return CrowdinClient(token=token)
+
+
+def classicua_root() -> pathlib.Path:
+    # Optional: the ClassicUA checkout whose dev/gen_*_lua.py scripts turn Crowdin exports into addon
+    # entries. Without it the generation steps are skipped and the existing input/entries are kept.
+    root = __getenv('CLASSICUA_ROOT')
+    return pathlib.Path(root) if root else None
+
+
+def __classicua_python(root: pathlib.Path) -> str:
+    # Prefer ClassicUA's own interpreter - some of its dev scripts need luaparser, which we do not have
+    for candidate in (root / '.venv' / 'Scripts' / 'python.exe', root / '.venv' / 'bin' / 'python'):
+        if candidate.exists():
+            return str(candidate)
+    return sys.executable
+
+
+def run_classicua_generator(script: str, glossary: pathlib.Path = None) -> str:
+    # Runs one of ClassicUA's dev/gen_*_lua.py scripts in place. Its stdout carries that script's own
+    # validation report, so it is printed rather than swallowed.
+    import subprocess
+
+    root = classicua_root()
+    if not root:
+        raise Exception('CLASSICUA_ROOT is not set - add it to .env in the repository root')
+    dev_dir = root / 'dev'
+    if not (dev_dir / script).exists():
+        raise Exception(f'No {script} in {dev_dir}')
+
+    if glossary:
+        # dev/translation_from_crowdin is gitignored in ClassicUA, so dropping the glossary there is clean
+        target = dev_dir / 'translation_from_crowdin' / 'ClassicUA.tbx'
+        target.parent.mkdir(parents=True, exist_ok=True)
+        shutil.copyfile(glossary, target)
+        print(f'Copied glossary to {target}')
+
+    print(f'Running {script} in {dev_dir}')
+    result = subprocess.run([__classicua_python(root), script], cwd=dev_dir,
+                            capture_output=True, text=True, encoding='utf-8')
+    if result.stdout:
+        print(result.stdout.rstrip())
+    if result.returncode != 0:
+        raise Exception(f'{script} failed with code {result.returncode}:\n{result.stderr}')
+    return result.stdout
+
+
+def copy_classicua_entries(filename: str, expansions, target_dir: str) -> None:
+    # ClassicUA writes the generated entries into its own (git tracked) entries/<expansion>/ folder, so
+    # report what landed - a glossary that regressed shows up as a drop in the count here.
+    root = classicua_root()
+    for expansion in expansions:
+        source = root / 'entries' / expansion / filename
+        if not source.exists():
+            print(f'Warning! {source} was not generated')
+            continue
+        target = pathlib.Path(target_dir) / expansion / filename
+        target.parent.mkdir(parents=True, exist_ok=True)
+        before = __count_lua_entries(target)
+        shutil.copyfile(source, target)
+        after = __count_lua_entries(target)
+        delta = after - before
+        print(f'  {expansion:8s} {after:6d} entries' + (f'  ({delta:+d})' if delta else '') +
+              f' -> {target}')
+
+
+def __count_lua_entries(path: pathlib.Path) -> int:
+    if not path.exists():
+        return 0
+    with open(path, 'r', encoding='utf-8') as input_file:
+        return sum(1 for line in input_file if line.startswith('['))
+
+
+def __select_crowdin_glossary(client: CrowdinClient, glossary_name: str = None) -> dict:
+    # [!] Needs a token with the glossaries scope - the files-only token used for update_on_crowdin
+    # gets "Endpoint isn't allowed for token scopes" here.
+    from crowdin_api.exceptions import CrowdinException
+
+    try:
+        glossaries = [g['data'] for g in client.glossaries.list_glossaries()['data']]
+    except CrowdinException as error:
+        raise Exception(
+            f'Crowdin refused to list glossaries ({error}).\n'
+            f'Glossaries are an account-level resource, so CROWDIN_TOKEN needs the "Glossaries" scope - a '
+            f'project-files token is enough for update_on_crowdin but not for this. Either add that scope '
+            f'to the token in .env, or export the glossary from Crowdin by hand (TBX v2).') from error
+    # The account holds several glossaries, so pick the one attached to this project rather than the first
+    if glossary_name:
+        matches = [g for g in glossaries if g['name'] == glossary_name]
+    else:
+        matches = [g for g in glossaries if CROWDIN_PROJECT_ID in g.get('projectIds', [])]
+    if len(matches) != 1:
+        known = ', '.join(f'"{g["name"]}" (id={g["id"]}, projects={g.get("projectIds")})' for g in glossaries)
+        raise Exception(f'Expected exactly one Crowdin glossary for '
+                        f'{f"name {glossary_name!r}" if glossary_name else f"project {CROWDIN_PROJECT_ID}"}, '
+                        f'found {len(matches)}. Available: {known}')
+
+    return matches[0]
+
+
+def download_crowdin_glossary(path, glossary_name: str = None) -> None:
+    # TBX v2 is what ClassicUA's generator reads, and Crowdin serves it much faster than v3.
+    from crowdin_api.api_resources.glossaries.enums import GlossaryFormat
+
+    client = __get_crowdin_client()
+    glossary = __select_crowdin_glossary(client, glossary_name)
+    print(f'Exporting Crowdin glossary "{glossary["name"]}" ({glossary.get("terms")} terms)...', end='')
+    export_id = client.glossaries.export_glossary(glossary['id'], data={'format': GlossaryFormat.TBX})['data']['identifier']
+
+    for attempt in range(60):
+        status = client.glossaries.check_glossary_export_status(glossary['id'], export_id)['data']['status']
+        if status == 'finished':
+            break
+        if status in ('canceled', 'failed'):
+            raise Exception(f'Crowdin glossary export {status}')
+        time.sleep(2)
+    else:
+        raise Exception('Crowdin glossary export did not finish in time')
+
+    url = client.glossaries.download_glossary(glossary['id'], export_id)['data']['url']
+    print(' downloading...', end='')
+    response = requests.get(url)
+    if not response.ok:
+        raise Exception(f'Crowdin glossary download returned {response.status_code}')
+
+    path = pathlib.Path(path)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_bytes(response.content)
+    print(f' done, {path.stat().st_size} bytes')
+
+
+def __get_crowdin_glossary_terms(client: CrowdinClient, glossary_id: int) -> dict[str, dict]:
+    # English term text (lowercased) -> term record. The description holding the tags lives on the
+    # English side of a concept; the Ukrainian term of the same concept carries none.
+    result = dict()
+    offset, page_size = 0, 500
+    print('Getting Crowdin glossary terms...', end='')
+    while True:
+        page = client.glossaries.list_terms(glossary_id, languageId='en', offset=offset, limit=page_size)['data']
+        for term in page:
+            result[term['data']['text'].lower()] = term['data']
+        if len(page) < page_size:
+            break
+        offset += page_size
+    print(f' done, {len(result)} English terms')
+    return result
+
+
+def update_glossary_on_crowdin(new_terms: list[tuple[str, str, str]],
+                               description_updates: list[tuple[str, str]] = (),
+                               glossary_name: str = None) -> None:
+    # new_terms: (text_en, text_uk, description). description_updates: (text_en, whole new description).
+    from crowdin_api.api_resources.enums import PatchOperation
+    from crowdin_api.api_resources.glossaries.enums import TermPatchPath
+
+    if not new_terms and not description_updates:
+        print('No glossary changes.')
+        return
+
+    client = __get_crowdin_client()
+    glossary = __select_crowdin_glossary(client, glossary_name)
+    existing = __get_crowdin_glossary_terms(client, glossary['id'])
+
+    # Compare against what Crowdin has right now rather than against the downloaded copy, which may
+    # already be behind - a term added since the last download must not be added a second time.
+    to_add, to_edit, present, absent = [], [], [], []
+    for text_en, text_uk, description in new_terms:
+        if text_en.lower() in existing:
+            present.append(text_en)
+        else:
+            to_add.append((text_en, text_uk, description))
+    for text_en, description in description_updates:
+        term = existing.get(text_en.lower())
+        if not term:
+            absent.append(text_en)
+        elif (term.get('description') or '') != description:
+            to_edit.append((term, description))
+        else:
+            present.append(text_en)
+
+    print('-' * 100)
+    if to_add:
+        print(f'{len(to_add)} term(s) to add:')
+        for text_en, text_uk, description in to_add:
+            print(f'  + "{text_en}" -> "{text_uk}"')
+            print(f'      {description}')
+    if to_edit:
+        print(f'{len(to_edit)} description(s) to change:')
+        for term, description in to_edit:
+            print(f'  ~ "{term["text"]}"')
+            print(f'      - {term.get("description") or ""}')
+            print(f'      + {description}')
+    if present:
+        print(f'{len(present)} term(s) already up to date on Crowdin: {", ".join(present[:10])}'
+              + (' ...' if len(present) > 10 else ''))
+    if absent:
+        print(f'{len(absent)} term(s) meant to be edited are not in the glossary: {", ".join(absent[:10])}'
+              + (' ...' if len(absent) > 10 else ''))
+
+    if not to_add and not to_edit:
+        print('Nothing to change in the glossary.')
+        return
+
+    print(f'Going to update glossary "{glossary["name"]}" on Crowdin '
+          f'({len(to_add)} added, {len(to_edit)} changed). Type "UPDATE" to confirm: ')
+    if input() != 'UPDATE':
+        print('Ok, cancelling update')
+        return
+
+    for text_en, text_uk, description in to_add:
+        print(f'Adding "{text_en}"...', end='')
+        # The English term creates the concept, the Ukrainian one joins it
+        added = client.glossaries.add_term(glossary['id'], 'en', text_en, description=description)
+        client.glossaries.add_term(glossary['id'], 'uk', text_uk, conceptId=added['data']['conceptId'])
+        print(' done')
+
+    for term, description in to_edit:
+        print(f'Updating "{term["text"]}"...', end='')
+        client.glossaries.edit_term(glossary['id'], term['id'],
+                                    data=[{'op': PatchOperation.REPLACE,
+                                           'path': TermPatchPath.DESCRIPTION,
+                                           'value': description}])
+        print(' done')
+
+    print(f'Glossary updated: {len(to_add)} term(s) added, {len(to_edit)} description(s) changed')
+
+
 def __get_crowdin_files(client: CrowdinClient) -> dict[str, int]:
     import pickle
     crowdin_files = dict()
@@ -262,8 +504,7 @@ def update_on_crowdin(diffs: list[str], removals: list[str], additions: list[str
     if user_input != 'UPDATE':
         print('Ok, cancelling update')
         return
-    token = os.getenv('CROWDIN_TOKEN')
-    client = CrowdinClient(token=token)
+    client = __get_crowdin_client()
     crowdin_files = __get_crowdin_files(client)
     crowdin_dirs = __get_crowdin_directories(client)
     updated_files = list()
