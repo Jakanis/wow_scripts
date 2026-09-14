@@ -294,10 +294,10 @@ def verify_duplicates(chats: list[Chat]):
 
 if __name__ == '__main__':
     crowdin_chats = load_from_db('crowdin_chats.db')
-    pickled_chats = load_from_pickled_wowhead_npcs('input/all_npcs.pkl')
+    pickled_chats = load_from_pickled_wowhead_npcs('../npc/output/all_npcs.pkl')
 
     missing_chats = load_missing_chats_from_feedback()
-    npcs = load_npcs_from_db('input/npcs.db')
+    npcs = load_npcs_from_db('../npc/cache/npcs.db')
     missing_chats = populate_npcs(missing_chats, npcs)
 
     combined_chats = cleanup_chats([*crowdin_chats, *pickled_chats, *missing_chats])
