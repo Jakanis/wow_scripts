@@ -371,7 +371,7 @@ def verify_duplicates(gossips: list[Gossip]):
 if __name__ == '__main__':
     crowdin_gossips = load_from_db('crowdin_gossips.db')
     missing_gossips = load_missing_gossips()
-    npcs = load_npcs_from_db('input/npcs.db')
+    npcs = load_npcs_from_db('../npc/cache/npcs.db')
     missing_gossips = populate_npcs(missing_gossips, npcs)
 
     combined_gossips = cleanup_gossips([*crowdin_gossips, *missing_gossips])
