@@ -2,13 +2,12 @@ import json
 import os
 import re
 
-import requests
 from bs4 import BeautifulSoup
 
 from generation.utils.glossary import Glossary, GlossaryTerm, NPC_TAG, glossary_path
 from generation.utils.utils import (ValidationError, classicua_root, copy_classicua_entries,
-                                    download_crowdin_glossary, run_classicua_generator,
-                                    update_glossary_on_crowdin, wowhead_get)
+                                    download_crowdin_glossary, download_csv_from_google_sheet,
+                                    run_classicua_generator, update_glossary_on_crowdin, wowhead_get)
 
 SCRAPE_THREADS = 1
 PARSE_THREADS = os.cpu_count()
@@ -767,20 +766,6 @@ def save_npc_quotes(npc_quotes: dict[str, dict[int, NPC_Data]]):
     print(f'Stored quotes for {", ".join(npc_quotes.keys())}')
 
 
-def download_csv_from_google_sheet(sheet_name: str = 'NPCs', output_file: str = 'input/translations.csv'):
-    sheet_id = '1xwoaO6U-jXQChHecEzzqG-leESTmRKm2WXHev4GOFho'
-    url = f'https://docs.google.com/spreadsheets/d/{sheet_id}/gviz/tq?tqx=out:csv&sheet={sheet_name}'
-    print(f'Downloading "{sheet_name}" from Google Sheet... ', end='')
-    response = requests.get(url)
-    if response.status_code == 200:
-        os.makedirs(os.path.dirname(output_file), exist_ok=True)
-        with open(output_file, 'w', encoding='utf-8') as file:
-            file.write(response.text.replace('\r\n', '\n'))
-        print('Done!')
-    else:
-        print(f'Error downloading sheet: {response.status_code} - {response.text}')
-
-
 def read_pending_npcs(path: str) -> list[PendingNpc]:
     import csv
     with open(path, 'r', encoding='utf-8') as input_file:
@@ -1113,7 +1098,7 @@ def generate_entries_with_classicua(glossary: Glossary, entries_dir: str = 'inpu
 
 
 if __name__ == '__main__':
-    download_csv_from_google_sheet()
+    download_csv_from_google_sheet('NPCs')
 
     all_npcs_md, npc_quotes = retrieve_npc_data()
 

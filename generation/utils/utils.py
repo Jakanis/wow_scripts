@@ -10,6 +10,7 @@ import requests
 from crowdin_api import CrowdinClient
 
 CROWDIN_PROJECT_ID = 393919
+TRANSLATIONS_SHEET_ID = '1xwoaO6U-jXQChHecEzzqG-leESTmRKm2WXHev4GOFho'
 
 _WOWHEAD_HEADERS = {
     'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/148.0.0.0 Safari/537.36 Edg/148.0.0.0',
@@ -153,6 +154,22 @@ def write_crowdin_xml_file(path: str, content: dict[str, str]) -> None:
 #                         text_key = str(get_text_hash(string_text))
 #                     client.source_strings.string_batch_operation(projectId=CROWDIN_PROJECT_ID, data=[{'op': StringBatchOperations.REPLACE, 'value': text_key, 'path': f'/{string_id}/identifier'}, {'op': StringBatchOperations.REPLACE, 'value': text_context, 'path': f'/{string_id}/context'}])
 
+
+
+def download_csv_from_google_sheet(sheet_name: str, output_file: str = 'input/translations.csv') -> None:
+    # Every module pulls its translations from a tab of the same workbook, so the id lives here and
+    # the caller only names the tab.
+    import requests
+    url = f'https://docs.google.com/spreadsheets/d/{TRANSLATIONS_SHEET_ID}/gviz/tq?tqx=out:csv&sheet={sheet_name}'
+    print(f'Downloading "{sheet_name}" from Google Sheet... ', end='')
+    response = requests.get(url)
+    if response.status_code == 200:
+        os.makedirs(os.path.dirname(output_file), exist_ok=True)
+        with open(output_file, 'w', encoding='utf-8') as file:
+            file.write(response.text.replace('\r\n', '\n'))
+        print('Done!')
+    else:
+        print(f'Error downloading sheet: {response.status_code} - {response.text}')
 
 
 def __getenv(name: str) -> str:

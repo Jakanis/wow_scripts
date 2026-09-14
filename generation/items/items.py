@@ -4,7 +4,8 @@ import re
 
 from bs4 import BeautifulSoup, CData
 from generation.spells.spells import SpellData, load_spells_from_db, is_spell_translated
-from generation.utils.utils import compare_directories, update_on_crowdin, wowhead_get, __to_tsv_val
+from generation.utils.utils import compare_directories, download_csv_from_google_sheet, update_on_crowdin, \
+    wowhead_get, __to_tsv_val
 
 THREADS = 16
 CLASSIC = 'classic'
@@ -1475,21 +1476,6 @@ def filter_not_updated(items: dict[int, dict[str, ItemData]]) -> dict[int, dict[
     return result
 
 
-def download_csv_from_google_sheet():
-    import requests
-    output_file = 'input/translations.csv'
-    sheet_id = '1xwoaO6U-jXQChHecEzzqG-leESTmRKm2WXHev4GOFho'
-    url = f'https://docs.google.com/spreadsheets/d/{sheet_id}/gviz/tq?tqx=out:csv&sheet=Items'
-    print('Downloading translations from Google Sheet... ', end='')
-    response = requests.get(url)
-    if response.status_code == 200:
-        with open(output_file, 'w', encoding='utf-8') as file:
-            file.write(response.text.replace('\r\n', '\n'))
-        print('Done!')
-    else:
-        print(f'Error downloading sheet: {response.status_code} - {response.text}')
-
-
 def filter_out_deprecated_items(items: dict[int, dict[str, ItemData]]) -> dict[int, dict[str, ItemData]]:
     result = dict()
     for key in sorted(items.keys()):
@@ -1530,7 +1516,7 @@ def check_for_translation_redundancies(items: dict[int, dict[str, ItemData]], sp
                         print(f'Warning! Redundant translation for item#{item.id}:{item.expansion} effect#{i} - original requires spell#{orig_effect.effect_id} reference.')
 
 if __name__ == '__main__':
-    download_csv_from_google_sheet()
+    download_csv_from_google_sheet('Items')
 
     # TODO: compare item effect texts with spell texts to find mismatches
     parsed_items, readable_items = retrieve_item_data()

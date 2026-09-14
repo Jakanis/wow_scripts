@@ -6,7 +6,7 @@ from typing import Dict, Any
 
 from bs4 import BeautifulSoup, CData
 
-from generation.utils.utils import ValidationError, __to_tsv_val, wowhead_get
+from generation.utils.utils import ValidationError, download_csv_from_google_sheet, __to_tsv_val, wowhead_get
 
 # THREADS = os.cpu_count()
 SCRAPE_THREADS = 1
@@ -1483,21 +1483,6 @@ def filter_not_updated(spells: dict[int, dict[str, SpellData]]) -> dict[int, dic
     return result
 
 
-def download_csv_from_google_sheet():
-    import requests
-    output_file = 'input/translations.csv'
-    sheet_id = '1xwoaO6U-jXQChHecEzzqG-leESTmRKm2WXHev4GOFho'
-    url = f'https://docs.google.com/spreadsheets/d/{sheet_id}/gviz/tq?tqx=out:csv&sheet=Spells'
-    print('Downloading translations from Google Sheet... ', end='')
-    response = requests.get(url)
-    if response.status_code == 200:
-        with open(output_file, 'w', encoding='utf-8') as file:
-            file.write(response.text.replace('\r\n', '\n'))
-        print('Done!')
-    else:
-        print(f'Error downloading sheet: {response.status_code} - {response.text}')
-
-
 def compare_refs(spells: dict[int, dict[str, SpellData]], translations: dict[int, dict[str, SpellData]]):
     for key in sorted(spells.keys() & translations.keys()):
         for expansion in spells[key].keys() & translations[key].keys():
@@ -1535,7 +1520,7 @@ def remove_refs(remove_refs: set[tuple[int, str]]):
 
 
 if __name__ == '__main__':
-    download_csv_from_google_sheet()
+    download_csv_from_google_sheet('Spells')
 
     # loaded_spells = load_spells_from_db()
     all_spells, raw_spells = retrieve_spell_data()
