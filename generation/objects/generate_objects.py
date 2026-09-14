@@ -1,8 +1,9 @@
 import json
 import os
 
-import requests
 from bs4 import BeautifulSoup
+
+from generation.utils.utils import wowhead_get
 
 CLASSIC = 'classic'
 SOD = 'sod'
@@ -85,7 +86,7 @@ def __get_wowhead_object_search(expansion, start, end=None) -> list[ObjectMD]:
         url = base_url + f"/objects?filter={metadata_filters[0]}15:15;{metadata_filters[1]}2:5;{metadata_filters[2]}{start}:{end}"
     else:
         url = base_url + f"/objects?filter={metadata_filters[0]}15;{metadata_filters[1]}2;{metadata_filters[2]}{start}"
-    r = requests.get(url)
+    r = wowhead_get(url)
     soup = BeautifulSoup(r.text, 'html.parser')
     pre_script_div = soup.find('div', id='lv-objects')
     if not pre_script_div:

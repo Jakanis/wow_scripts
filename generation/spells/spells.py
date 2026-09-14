@@ -4,7 +4,6 @@ import re
 import time
 from typing import Dict, Any
 
-import requests
 from bs4 import BeautifulSoup, CData
 
 from generation.utils.utils import ValidationError, __to_tsv_val, wowhead_get
@@ -190,7 +189,7 @@ def __get_wowhead_spell_search(expansion, start, end=None) -> list[SpellMD]:
         url = base_url + f"/spells?filter={metadata_filters[0]}14:14;{metadata_filters[1]}2:5;{metadata_filters[2]}{start}:{end}"
     else:
         url = base_url + f"/spells?filter={metadata_filters[0]}14;{metadata_filters[1]}2;{metadata_filters[2]}{start}"
-    r = requests.get(url)
+    r = wowhead_get(url)
     soup = BeautifulSoup(r.text, 'html.parser')
     script_tag = soup.find('script', src=None, type="text/javascript")
     if not script_tag:

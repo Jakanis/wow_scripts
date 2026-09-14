@@ -2,10 +2,9 @@ import json
 import os
 import re
 
-import requests
 from bs4 import BeautifulSoup, CData
 from generation.spells.spells import SpellData, load_spells_from_db, is_spell_translated
-from generation.utils.utils import compare_directories, update_on_crowdin, __to_tsv_val
+from generation.utils.utils import compare_directories, update_on_crowdin, wowhead_get, __to_tsv_val
 
 THREADS = 16
 CLASSIC = 'classic'
@@ -204,7 +203,7 @@ def __get_wowhead_item_search(expansion, start, end=None) -> list[ItemMD]:
         url = base_url + f"/items?filter={metadata_filters[0]}151:151;{metadata_filters[1]}2:5;{metadata_filters[2]}{start}:{end}"
     else:
         url = base_url + f"/items?filter={metadata_filters[0]}151;{metadata_filters[1]}2;{metadata_filters[2]}{start}"
-    r = requests.get(url)
+    r = wowhead_get(url)
     soup = BeautifulSoup(r.text, 'html.parser')
     script_tag = soup.find('script', src=None, type="text/javascript")
     if not script_tag:
@@ -262,7 +261,7 @@ def save_xml_page(expansion, id):
     if os.path.exists(xml_file_path):
         print(f'Warning! Trying to download existing XML for #{id}')
         return
-    r = requests.get(url)
+    r = wowhead_get(url)
     if not r.ok:
         # You download over 90000 pages in one hour - you'll fail
         # You do it async - you fail
@@ -280,7 +279,7 @@ def save_html_page(expansion, id):
     if os.path.exists(html_file_path):
         print(f'Warning! Trying to download existing HTML for #{id}')
         return
-    r = requests.get(url)
+    r = wowhead_get(url)
     if not r.ok:
         # You download over 90000 pages in one hour - you'll fail
         # You do it async - you fail

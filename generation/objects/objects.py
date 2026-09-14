@@ -1,9 +1,8 @@
 import os
 
-import requests
 from bs4 import BeautifulSoup
 
-from generation.utils.utils import compare_directories, update_on_crowdin
+from generation.utils.utils import compare_directories, update_on_crowdin, wowhead_get
 
 THREADS = os.cpu_count() // 2
 CLASSIC = 'classic'
@@ -126,7 +125,7 @@ def __get_wowhead_search(expansion, start, end=None) -> list[ObjectData]:
         url = base_url + f"/objects?filter={metadata_filters[0]}15:15;{metadata_filters[1]}2:5;{metadata_filters[2]}{start}:{end}"
     else:
         url = base_url + f"/objects?filter={metadata_filters[0]}15;{metadata_filters[1]}2;{metadata_filters[2]}{start}"
-    r = requests.get(url)
+    r = wowhead_get(url)
     soup = BeautifulSoup(r.text, 'html.parser')
     script_div = soup.find('script', id='data.page.listPage.listviews').text
     if script_div:
@@ -178,7 +177,7 @@ def save_html_page(expansion, id):
     if os.path.exists(html_file_path):
         print(f'Warning! Trying to download existing HTML for #{id}')
         return
-    r = requests.get(url)
+    r = wowhead_get(url)
     if not r.ok:
         # You download over 90000 pages in one hour - you'll fail
         # You do it async - you fail

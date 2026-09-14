@@ -5,6 +5,8 @@ import multiprocessing
 
 from bs4 import BeautifulSoup
 
+from generation.utils.utils import wowhead_get
+
 
 THREADS = 16
 WOWDB = 'WOWDB'
@@ -527,7 +529,7 @@ def read_new_translations() -> dict[str, Zone]:
 def get_wowhead_zones() -> dict[int, WowheadZone]:
     import json
     url = sources[WOWHEAD][URL] + '/zones'
-    r = requests.get(url)
+    r = wowhead_get(url)
     soup = BeautifulSoup(r.text, 'html.parser')
     script_tag = soup.find('script', {'id': 'data.page.listPage.listviews'}, type='application/json', src=None)
     if script_tag:
