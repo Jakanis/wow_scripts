@@ -8,9 +8,6 @@ Saving spells to DB
 Validating...
 Validated.
 Warning! Newline count doesn't match for spell#66:wrath description
-Warning! Template failed for spell#100:mists
-Warning! Template failed for spell#100:mists
-Warning! Newline count doesn't match for spell#100:mists description
 Warning! Template failed for spell#331:cata
 Warning! Newline count doesn't match for spell#339:cata description
 Warning! Template failed for spell#498:cata
@@ -28,6 +25,7 @@ Warning! Newline count doesn't match for spell#697:mists description
 Warning! Newline count doesn't match for spell#712:cata description
 Warning! Newline count doesn't match for spell#712:mists description
 Warning! Newline count doesn't match for spell#713:cata description
+Warning! Newline count doesn't match for spell#713:mists description
 Warning! Newline count doesn't match for spell#755:mists description
 Warning! Newline count doesn't match for spell#845:wrath description
 Warning! Template failed for spell#974:sod
@@ -73,6 +71,7 @@ Warning! Template failed for spell#6262:mists
 Warning! Newline count doesn't match for spell#6353:cata description
 Warning! Template failed for spell#7384:mists
 Warning! Template failed for spell#7384:mists
+Warning! Template failed for spell#7384:mists
 Warning! Newline count doesn't match for spell#7384:mists description
 Warning! Template failed for spell#7405:wrath
 Warning! Template failed for spell#8004:cata
@@ -90,6 +89,11 @@ Warning! Template failed for spell#8647:wrath
 Warning! Newline count doesn't match for spell#8647:wrath description
 Warning! Newline count doesn't match for spell#8936:cata description
 Warning! Newline count doesn't match for spell#8936:mists description
+Warning! Template failed for spell#11129:mists
+Warning! Template failed for spell#11129:mists
+Warning! Template failed for spell#11129:mists
+Warning! Template failed for spell#11129:mists
+Warning! Newline count doesn't match for spell#11129:mists description
 Warning! Template failed for spell#12294:mists
 Warning! Template failed for spell#12294:mists
 Warning! Template failed for spell#12294:mists
@@ -99,6 +103,11 @@ Warning! Template failed for spell#12328:mists
 Warning! Template failed for spell#12328:mists
 Warning! Newline count doesn't match for spell#12328:mists description
 Warning! Newline count doesn't match for spell#12328:mists aura
+Warning! Template failed for spell#12880:mists
+Warning! Template failed for spell#12880:mists
+Warning! Template failed for spell#12880:mists
+Warning! Newline count doesn't match for spell#12880:mists description
+Warning! Newline count doesn't match for spell#12880:mists aura
 Warning! Template failed for spell#13795:cata
 Warning! Template failed for spell#15473:mists
 Warning! Template failed for spell#15473:mists
@@ -107,11 +116,18 @@ Warning! Template failed for spell#15473:mists
 Warning! Template failed for spell#15473:mists
 Warning! Newline count doesn't match for spell#15473:mists description
 Warning! Newline count doesn't match for spell#15473:mists aura
+Warning! Template failed for spell#16511:tbc
 Warning! Template failed for spell#16896:classic
 Warning! Template failed for spell#16902:classic
 Warning! Newline count doesn't match for spell#16914:wrath description
 Warning! Template failed for spell#17073:mists
 Warning! Newline count doesn't match for spell#17073:mists description
+Warning! Template failed for spell#17364:mists
+Warning! Template failed for spell#17364:mists
+Warning! Template failed for spell#17364:mists
+Warning! Template failed for spell#17364:mists
+Warning! Newline count doesn't match for spell#17364:mists description
+Warning! Newline count doesn't match for spell#17364:mists aura
 Warning! Newline count doesn't match for spell#17401:wrath description
 Warning! Template failed for spell#17877:cata
 Warning! Newline count doesn't match for spell#17962:wrath description
@@ -206,6 +222,9 @@ Warning! Template failed for spell#82944:cata
 Warning! Template failed for spell#84601:mists
 Warning! Template failed for spell#84601:mists
 Warning! Newline count doesn't match for spell#84601:mists description
+Warning! Template failed for spell#84654:mists
+Warning! Template failed for spell#84654:mists
+Warning! Newline count doesn't match for spell#84654:mists description
 Warning! Template failed for spell#85288:mists
 Warning! Template failed for spell#85288:mists
 Warning! Newline count doesn't match for spell#85288:mists description
