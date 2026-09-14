@@ -172,6 +172,50 @@ def download_csv_from_google_sheet(sheet_name: str, output_file: str = 'input/tr
         print(f'Error downloading sheet: {response.status_code} - {response.text}')
 
 
+FEEDBACK_OUTPUT_DIR = '../feedback/output'
+
+
+def feedback_path(kind: str) -> str:
+    # [!] Read feedback.py's output where it is written. Copying it into a module's own input/ makes
+    # the copy the thing that rots: before this, items was validating against a feedback list 19
+    # months older than the one feedback.py had produced, and quests against one 21 months older.
+    return f'{FEEDBACK_OUTPUT_DIR}/missing_{kind}.tsv'
+
+
+def read_feedback(kind: str) -> dict[int, str]:
+    import csv
+    entries = dict()
+    with open(feedback_path(kind), 'r', encoding='utf-8') as input_file:
+        for row in csv.reader(input_file, delimiter='	'):
+            if not row:
+                continue
+            entries[int(row[0])] = row[1] if len(row) > 1 else ''
+    return entries
+
+
+def check_feedback(kind: str, entity_name: str, entities: dict[int, dict],
+                   is_translated=None) -> tuple[set[int], set[int]]:
+    # What players reported as missing, against what we actually generated. Unknown ids are usually
+    # entries Wowhead does not list for any expansion we scrape; untranslated ones are real gaps and
+    # feed the translation sheets.
+    feedback = read_feedback(kind)
+    unknown = set()
+    untranslated = set()
+    for id in feedback:
+        if id not in entities:
+            unknown.add(id)
+        elif is_translated and not any(is_translated(entry) for entry in entities[id].values()):
+            untranslated.add(id)
+
+    print(f'[feedback] {entity_name}: {len(feedback)} reported, {len(unknown)} unknown, '
+          f'{len(untranslated)} untranslated')
+    if unknown:
+        print(f'  unknown ids     : {sorted(unknown)}')
+    if untranslated:
+        print(f'  untranslated ids: {sorted(untranslated)}')
+    return unknown, untranslated
+
+
 def __getenv(name: str) -> str:
     # Read settings where they are used, not at import time. A real environment variable still wins
     # (PyCharm run configs, CI); otherwise it comes from the gitignored .env in the repository root - the

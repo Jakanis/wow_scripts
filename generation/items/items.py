@@ -4,8 +4,8 @@ import re
 
 from bs4 import BeautifulSoup, CData
 from generation.spells.spells import SpellData, load_spells_from_db, is_spell_translated
-from generation.utils.utils import compare_directories, download_csv_from_google_sheet, update_on_crowdin, \
-    wowhead_get, __to_tsv_val
+from generation.utils.utils import (check_feedback, compare_directories, download_csv_from_google_sheet,
+                                    update_on_crowdin, wowhead_get, __to_tsv_val)
 
 THREADS = 16
 CLASSIC = 'classic'
@@ -1392,31 +1392,6 @@ def validate_spell_references(items: dict[int, dict[str, ItemData]], spells: dic
     print(f'Missing spell references ({len(used_spell_references - translated_spell_ids)}): {sorted(used_spell_references - translated_spell_ids)}')
 
 
-def check_feedback_items(all_items: dict[int, dict[str, ItemData]]):
-    import csv
-    feedback = dict()
-    with open('input/missing_items.tsv', 'r', encoding='utf-8') as input_file:
-        reader = csv.reader(input_file, delimiter="\t")
-        for row in reader:
-            feedback[int(row[0])] = row[1]
-
-    missed_items = list()
-    for feedback_id, feedback_name in feedback.items():
-        if feedback_id not in all_items:
-            print(f'Warning! Feedback Item#{feedback_id} "{feedback_name}" does not exist in DB!')
-            missed_items.append(feedback_id)
-        else:
-            translated = False
-            for item in all_items[feedback_id].values():
-                if item.name_ua:
-                    translated = True
-            if not translated:
-                print(f'Warning! Feedback Item#{feedback_id} "{feedback_name}" is not translated!')
-                missed_items.append(feedback_id)
-
-    print(f'Missed IDs: {sorted(missed_items)}')
-
-
 def __book_filename(book_id, book_title):
     valid_chars = frozenset("-.() abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789")
     return ''.join(c for c in book_title if c in valid_chars) + '_' + str(book_id)
@@ -1534,7 +1509,7 @@ if __name__ == '__main__':
 
     validate_translations(filtered_items)
 
-    check_feedback_items(filtered_items)
+    check_feedback('items', 'Item', filtered_items, lambda item: bool(item.name_ua))
 
     spells = load_spells_from_db('../spells/cache/spells.db')
 

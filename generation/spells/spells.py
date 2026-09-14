@@ -6,7 +6,8 @@ from typing import Dict, Any
 
 from bs4 import BeautifulSoup, CData
 
-from generation.utils.utils import ValidationError, download_csv_from_google_sheet, __to_tsv_val, wowhead_get
+from generation.utils.utils import (ValidationError, check_feedback, download_csv_from_google_sheet,
+                                    __to_tsv_val, wowhead_get)
 
 # THREADS = os.cpu_count()
 SCRAPE_THREADS = 1
@@ -1438,33 +1439,6 @@ def compare_tsv_and_classicua(tsv_translations, classicua_translations):
                 print(f'Warning! Aura translation differs for spell#{key}:{expansion}:\n{__diff_fields(tsv_translation.aura_ua, classicua_translation.aura_ua)}')
 
 
-def check_feedback_spells(spells: dict[int, dict[str, SpellData]]) -> list[int]:
-    import csv
-    feedback = dict()
-    with open('input/missing_spells.tsv', 'r', encoding='utf-8') as input_file:
-        reader = csv.reader(input_file, delimiter="\t")
-        for row in reader:
-            feedback[int(row[0])] = row[1]
-
-    missed_spells = set()
-    for feedback_id, feedback_name in feedback.items():
-        if feedback_id not in spells:
-            print(f'Warning! Feedback spell#{feedback_id} "{feedback_name}" does not exist in DB!')
-            missed_spells.add(feedback_id)
-        else:
-            translated = False
-            for spell in spells[feedback_id].values():
-                if spell.name_ua or spell.ref:
-                    translated = True
-            if not translated:
-                # print(f'Warning! Feedback spell#{feedback_id} "{feedback_name}" is not translated!')
-                missed_spells.add(feedback_id)
-
-    # print(f'Missed IDs from feedback({len(missed_spells)}): {sorted(missed_spells)}')
-
-    return sorted(missed_spells)
-
-
 def filter_not_updated(spells: dict[int, dict[str, SpellData]]) -> dict[int, dict[str, SpellData]]:
     result = dict()
     for key in spells.keys():
@@ -1538,7 +1512,9 @@ if __name__ == '__main__':
     compare_tsv_and_classicua(tsv_translations, classicua_translations)
     validate_translations(all_spells)
 
-    missing_spells = check_feedback_spells(all_spells)
+    unknown_spells, untranslated_spells = check_feedback('spells', 'Spell', all_spells,
+                                                        lambda spell: bool(spell.name_ua or spell.ref))
+    missing_spells = sorted(unknown_spells | untranslated_spells)
 
     convert_translations_to_entries(tsv_translations)
 

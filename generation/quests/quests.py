@@ -5,7 +5,8 @@ import multiprocessing
 from bs4 import BeautifulSoup
 import sqlite3
 import difflib
-from generation.utils.utils import compare_directories, write_crowdin_xml_file, update_on_crowdin, wowhead_get
+from generation.utils.utils import (check_feedback, compare_directories, write_crowdin_xml_file,
+                                    update_on_crowdin, wowhead_get)
 
 THREADS = 2
 
@@ -1752,23 +1753,6 @@ def generate_sources(quests):
     print(f'Generated {count} sources.')
 
 
-def check_feedback_quests(all_quests: dict[int, dict[str, QuestEntity]]):
-    import csv
-    feedback_ids = list()
-    with open('input/missing_quests.tsv', 'r', encoding='utf-8') as input_file:
-        reader = csv.reader(input_file, delimiter="\t")
-        for row in reader:
-            feedback_ids.append(int(row[0]))
-
-    missed_quests = list()
-    for feedback_id in feedback_ids:
-        if feedback_id not in all_quests:
-            print(f'Warning! Feedback quest#{feedback_id} does not exist in DB!')
-            missed_quests.append(int(feedback_id))
-
-    print(f'Missed IDs: {sorted(missed_quests)}')
-
-
 if __name__ == '__main__':
     # check_categories() # Check categories and update known_categories in utils if needed
 
@@ -1780,7 +1764,7 @@ if __name__ == '__main__':
 
     diffs, removals, additions = compare_directories('input/source_from_crowdin', 'output/source_for_crowdin')
 
-    check_feedback_quests(all_quests)
+    check_feedback('quests', 'Quest', all_quests)
 
     update_on_crowdin(diffs, removals, additions)
 

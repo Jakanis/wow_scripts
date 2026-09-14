@@ -5,7 +5,7 @@ import re
 from bs4 import BeautifulSoup
 
 from generation.utils.glossary import Glossary, GlossaryTerm, NPC_TAG, glossary_path
-from generation.utils.utils import (ValidationError, classicua_root, copy_classicua_entries,
+from generation.utils.utils import (ValidationError, check_feedback, classicua_root, copy_classicua_entries,
                                     download_crowdin_glossary, download_csv_from_google_sheet,
                                     run_classicua_generator, update_glossary_on_crowdin, wowhead_get)
 
@@ -568,33 +568,6 @@ def load_merged_translations() -> dict[int, dict[str, NPC_MD]]:
     return merged_translations
 
 
-def check_feedback_npcs(all_npcs: dict[int, dict[str, NPC_MD]]) -> set[int]:
-    import csv
-    feedback = dict()
-    with open('input/missing_npcs.tsv', 'r', encoding='utf-8') as input_file:
-        reader = csv.reader(input_file, delimiter="\t")
-        for row in reader:
-            feedback[int(row[0])] = row[1]
-
-    missed_npcs = set()
-    for feedback_id, feedback_name in feedback.items():
-        if feedback_id in all_npcs:
-            translated = False
-            for npc in all_npcs[feedback_id].values():
-                if npc.name_ua:
-                    translated = True
-            if not translated:
-                # print(f'Warning! Feedback NPC#{feedback_id} "{feedback_name}" is not translated!')
-                missed_npcs.add(feedback_id)
-        else:
-            # print(f'Warning? Feedback NPC#{feedback_id} "{feedback_name}" does not exist in DB!')
-            # missed_npcs.add(feedback_id)
-            continue
-
-    print(f'Missed IDs({len(missed_npcs)}): {sorted(missed_npcs)}')
-    return missed_npcs
-
-
 def compare_npc(tsv_npc: NPC_MD, lua_npc: NPC_MD):
     if tsv_npc.name != lua_npc.name:
         print(f'Warning! NPC#{tsv_npc.id}:{tsv_npc.expansion} name differs:\n{tsv_npc.name}<->{lua_npc.name}')
@@ -1113,7 +1086,7 @@ if __name__ == '__main__':
     check_existing_translations(all_npcs_md)  # Check if original data changes since previous translation and difference between ClassicUA and translation sheet
     # update_questie_translation(all_npcs)  # Update translations for Questie
 
-    missed_npcs = check_feedback_npcs(all_npcs_md)
+    _, missed_npcs = check_feedback('npcs', 'NPC', all_npcs_md, lambda npc: bool(npc.name_ua))
 
     # create_translation_sheet(all_npcs_md)
     create_translation_sheet(all_npcs_md, missed_npcs)

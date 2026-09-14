@@ -5,7 +5,7 @@ import multiprocessing
 
 from bs4 import BeautifulSoup
 
-from generation.utils.utils import wowhead_get
+from generation.utils.utils import feedback_path, wowhead_get
 
 
 THREADS = 16
@@ -721,7 +721,7 @@ def generate_translation_csv(merged_zones: dict[str, Zone], translated_zones: di
     import csv
 
     feedback_zone_names = set()
-    with open('input/missing_zones.tsv', 'r', encoding="utf-8") as input_file:
+    with open(feedback_path('zones'), 'r', encoding='utf-8') as input_file:
         reader = csv.reader(input_file, delimiter="\t")
         for row in reader:
             feedback_zone_names.add(row[0].strip())
