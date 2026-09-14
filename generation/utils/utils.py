@@ -163,13 +163,19 @@ def download_csv_from_google_sheet(sheet_name: str, output_file: str = 'input/tr
     url = f'https://docs.google.com/spreadsheets/d/{TRANSLATIONS_SHEET_ID}/gviz/tq?tqx=out:csv&sheet={sheet_name}'
     print(f'Downloading "{sheet_name}" from Google Sheet... ', end='')
     response = requests.get(url)
-    if response.status_code == 200:
-        os.makedirs(os.path.dirname(output_file), exist_ok=True)
-        with open(output_file, 'w', encoding='utf-8') as file:
-            file.write(response.text.replace('\r\n', '\n'))
-        print('Done!')
-    else:
-        print(f'Error downloading sheet: {response.status_code} - {response.text}')
+    if response.status_code != 200:
+        # Raise rather than report: the module would otherwise carry on against whatever copy of
+        # output_file happens to be on disk and quietly apply an old set of translations.
+        raise Exception(f'Could not download "{sheet_name}" from Google Sheet: '
+                        f'{response.status_code} - {response.text}')
+
+    # [!] A tab name that does not exist is not an error to Google - gviz answers 200 with the first
+    # sheet of the workbook instead, so a typo here reads the wrong tab rather than failing.
+    content = response.text.replace('\r\n', '\n')
+    os.makedirs(os.path.dirname(output_file), exist_ok=True)
+    with open(output_file, 'w', encoding='utf-8') as file:
+        file.write(content)
+    print('Done!')
 
 
 FEEDBACK_OUTPUT_DIR = '../feedback/output'
