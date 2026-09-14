@@ -307,6 +307,7 @@ def save_npcs_to_db(all_npcs: dict[int, dict[str, NPC_MD]]):
                         'DND' in npc.name or
                         'DNT' in npc.name or
                         'UNUSED' in npc.name or
+                        '<old>' in npc.name or
                         '<TXT>' in npc.name or
                         key in expansion_data[npc.expansion][IGNORES]):
                     continue
@@ -1093,13 +1094,14 @@ def create_missing_entries_sheet(all_npcs: dict[int, dict[str, NPC_MD]], glossar
               + (' ...' if len(missing_from_wowhead) > 10 else ''))
 
 
-def generate_entries_with_classicua(entries_dir: str = 'input/entries') -> None:
+def generate_entries_with_classicua(glossary: Glossary, entries_dir: str = 'input/entries') -> Glossary:
     # ClassicUA owns NPC entry generation - it turns the Crowdin glossary into entries/<expansion>/npc.lua
     # the same way it does for quests, chats and gossips - so run its generator instead of repeating the
-    # rules here, then take the result as our input.
+    # rules here, then take the result as our input. Returns the glossary it generated from, which is a
+    # newer one than the caller passed in.
     if not classicua_root():
         print(f'CLASSICUA_ROOT is not set, keeping the existing {entries_dir}')
-        return
+        return glossary
 
     # This runs straight after the glossary was updated on Crowdin, so the local copy is a version behind
     # by definition - regenerating from it would quietly undo the terms we just added.
@@ -1107,6 +1109,7 @@ def generate_entries_with_classicua(entries_dir: str = 'input/entries') -> None:
     run_classicua_generator('gen_npc_lua.py', glossary=glossary_path())
     print(f'Copying generated entries into {entries_dir}')
     copy_classicua_entries('npc.lua', expansion_data.keys(), entries_dir)
+    return Glossary.load()
 
 
 if __name__ == '__main__':
@@ -1132,9 +1135,13 @@ if __name__ == '__main__':
 
     # Pending NPCs -> new Crowdin glossary terms (replaces combine_npcs.py)
     download_csv_from_google_sheet('Pending NPCs', 'input/pending_npcs.csv')
-    new_terms, description_updates = process_pending_npcs(Glossary.load())
+    glossary = Glossary.load()
+    new_terms, description_updates = process_pending_npcs(glossary)
     update_glossary_on_crowdin(new_terms, description_updates)
 
     # Regenerate ClassicUA's npc.lua from the updated glossary and take it as our input
-    # generate_entries_with_classicua()
+    # glossary = generate_entries_with_classicua(glossary)
+
+    # Entries that exist in ClassicUA but were never recorded on the NPCs sheet
+    # create_missing_entries_sheet(all_npcs_md, glossary)
 
