@@ -6,8 +6,10 @@ from typing import Dict, Any
 
 from bs4 import BeautifulSoup, CData
 
-from generation.utils.utils import (ValidationError, check_feedback, download_csv_from_google_sheet,
-                                    __to_tsv_val, wowhead_get)
+from generation.utils.utils import (NOTE_ALREADY_TRANSLATED, NOTE_NOT_TRANSLATED, NOTE_PRETRANSLATED,
+                                    ValidationError, check_feedback, download_csv_from_google_sheet,
+                                    format_notes, notes_hold_back_row, parse_notes, __to_tsv_val,
+                                    wowhead_get)
 
 # THREADS = os.cpu_count()
 SCRAPE_THREADS = 1
@@ -718,12 +720,14 @@ def create_translation_sheet(spells: dict[int, dict[str, SpellData]]):
                 # if spell.expansion in [CLASSIC, SOD] and spell.name_ua is None and spell.description_ua is None and spell.aura_ua is None and spell.ref is None and spell.id in force_translate:
                 if not spell.is_translated() or spell.pretranslated:
                     class_name = SpellMD._classes[getattr(spell.spell_md, 'chrclass')] if getattr(spell.spell_md, 'chrclass') in SpellMD._classes else ''
+                    notes = []
                     if spell.pretranslated:
-                        note = 'PRETRANSLATED'
+                        notes.append(NOTE_PRETRANSLATED)
                     elif spell.is_translated():
-                        note = 'ALREADY TRANSLATED'
+                        notes.append(NOTE_ALREADY_TRANSLATED)
                     else:
-                        note = 'NOT TRANSLATED'
+                        notes.append(NOTE_NOT_TRANSLATED)
+                    note = format_notes(notes)
                     note_2 = ''
                     fields = [spell.id, spell.expansion, spell.name, spell.name_ua, spell.description, spell.description_ua, spell.aura, spell.aura_ua, spell.ref, spell.name_ref, spell.description_ref, spell.aura_ref, class_name, spell.group, note, note_2]
                     f.write(f'{'\t'.join(map(lambda x: __to_tsv_val(x), fields))}\n')
@@ -1127,8 +1131,10 @@ def read_translations_sheet() -> dict[int, dict[str, SpellData]]:
             aura_ref = __try_cast_str_to_int(row[11], None)
             category = row[12] if len(row) > 12 and row[12] != '' else None
             group = row[13] if len(row) > 13 and row[13] != '' else None
-            note = row[14] if len(row) > 14 and row[14] != '' else None
-            if note == 'NOT TRANSLATED':
+            # Both note columns
+            notes = parse_notes(row[14] if len(row) > 14 else None,
+                                row[15] if len(row) > 15 else None)
+            if notes_hold_back_row(notes):
                 continue
             all_translations[spell_id] = all_translations.get(spell_id, dict())
             if expansion in all_translations[spell_id]:

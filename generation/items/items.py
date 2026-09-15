@@ -4,8 +4,10 @@ import re
 
 from bs4 import BeautifulSoup, CData
 from generation.spells.spells import SpellData, load_spells_from_db, is_spell_translated
-from generation.utils.utils import (check_feedback, compare_directories, download_csv_from_google_sheet,
-                                    update_on_crowdin, wowhead_get, __to_tsv_val)
+from generation.utils.utils import (NOTE_NOT_TRANSLATED, NOTE_PRETRANSLATED, check_feedback,
+                                    compare_directories, download_csv_from_google_sheet, format_notes,
+                                    notes_hold_back_row, parse_notes, update_on_crowdin, wowhead_get,
+                                    __to_tsv_val)
 
 THREADS = 16
 CLASSIC = 'classic'
@@ -954,7 +956,9 @@ def read_translations_sheet() -> dict[int, dict[str, ItemData]]:
             effects = str_effects_to_effects(row[4], ignore_desc=True) if row[4] else []
             ref = None
             effects_ua = str_effects_to_effects(row[5]) if row[5] else []
-            notes = row[6].split('\n') if row[6] else []
+            notes = parse_notes(row[6] if len(row) > 6 else None)
+            if notes_hold_back_row(notes):
+                continue
             if effects_ua and effects_ua[0].effect_type == 'Ref':
                 ref = effects_ua[0].effect_id
             all_translations[item_id] = all_translations.get(item_id, dict())
@@ -1124,13 +1128,13 @@ def create_translation_sheet(filtered_items: dict[int, dict[str, ItemData]], all
             for item in sorted(filtered_items[key].values(), key=lambda x: expansion_data[x.expansion][INDEX]):
                 effects_text = '\n'.join(map(lambda x: str(x), item.effects)) if item.effects else ''
                 effects_ua_text = '\n'.join(map(lambda x: str(x), item.effects_ua)) if item.effects_ua else ''
-                if 'TRANSLATE' in effects_ua_text or not item.name_ua or (item.name_ua and ' ???' in item.name_ua):
-                    item.notes.append('NOT TRANSLATED')
-                elif item.name_ua:
-                    item.notes.append('PRETRANSLATED')
-                else:
-                    item.notes.append('UNKNOWN')
-                notes = '\n'.join(item.notes) if item.notes else ''
+                incomplete = ('TRANSLATE' in effects_ua_text or not item.name_ua
+                              or ' ???' in item.name_ua)
+                if item.name_ua or effects_ua_text:
+                    item.notes.append(NOTE_PRETRANSLATED)
+                if incomplete:
+                    item.notes.append(NOTE_NOT_TRANSLATED)
+                notes = format_notes(item.notes)
                 fields = [item.id, item.expansion, item.name, item.name_ua, effects_text, effects_ua_text, notes]
                 f.write(f'{'\t'.join(map(lambda x: __to_tsv_val(x), fields))}\n')
                 count += 1

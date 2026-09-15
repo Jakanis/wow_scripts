@@ -178,6 +178,34 @@ def download_csv_from_google_sheet(sheet_name: str, output_file: str = 'input/tr
     print('Done!')
 
 
+# A note cell holds one marker per line, so a row can say several things at once: that it was
+# pretranslated *and* that it is not finished, for instance. NOT_TRANSLATED is the only marker that
+# changes behaviour - on any line of any note cell it means the row is not ready and the readers
+# must ignore it. Everything else is there for the person reading the sheet.
+NOTE_NOT_TRANSLATED = 'NOT TRANSLATED'
+NOTE_PRETRANSLATED = 'PRETRANSLATED'
+NOTE_ALREADY_TRANSLATED = 'ALREADY TRANSLATED'
+
+
+def parse_notes(*cells: str) -> list[str]:
+    # Notes arrive as one cell per note column, each holding zero or more lines.
+    return [line.strip() for cell in cells if cell for line in cell.split('\n') if line.strip()]
+
+
+def notes_hold_back_row(notes: list[str]) -> bool:
+    return NOTE_NOT_TRANSLATED in notes
+
+
+def format_notes(notes: list[str]) -> str:
+    # Keep the order the markers were added in, but never repeat one.
+    seen, ordered = set(), []
+    for note in notes:
+        if note and note not in seen:
+            seen.add(note)
+            ordered.append(note)
+    return '\n'.join(ordered)
+
+
 FEEDBACK_OUTPUT_DIR = '../feedback/output'
 
 
