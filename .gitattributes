@@ -1,0 +1,2 @@
+# embedded newlines in messages must survive checkout
+verified_issues.tsv -text
