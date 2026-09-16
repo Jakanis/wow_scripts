@@ -675,65 +675,75 @@ def pretranslate_spells(spells: dict[int, dict[str, SpellData]], all_spells: dic
         print(f"Pretranslated {count} spells via ref")
 
 
-def create_translation_sheet(spells: dict[int, dict[str, SpellData]]):
-    with (open(f'translate_this.tsv', mode='w', encoding='utf-8') as f):
+def filter_for_translation(spells: dict[int, dict[str, SpellData]]) -> dict[int, dict[str, SpellData]]:
+    # spells still to translate, or freshly pretranslated, minus the ones the game never
+    # shows: DNT/DND/TEST placeholders and the per-expansion ignore lists
+    result = dict()
+    for key in sorted(spells.keys()):
+        for spell in sorted(spells[key].values(), key=lambda x: expansion_data[x.expansion][INDEX]):
+            if ('[DNT]' in spell.name.upper() or
+                    'DND' in spell.name or
+                    '(DND)' in spell.name.upper() or
+                    '(DNT)' in spell.name.upper() or
+                    '[DNT]' in spell.name.upper() or
+                    '(OLD)' in spell.name.upper() or
+                    '(TEST)' in spell.name.upper() or
+                    'TEST' in spell.name or
+                    '(NYI)' in spell.name.upper() or
+                    '(DNC)' in spell.name.upper() or
+                    '(PT)' in spell.name.upper() or
+                    '[PH]' in spell.name.upper() or
+                    spell.name.startswith('QA') or
+                    key in expansion_data[spell.expansion][IGNORES]):
+                continue
+            # if getattr(spell.spell_md, 'chrclass') in SpellMD._classes.keys() and spell.expansion == SOD and spell.name_ua is None and spell.description_ua is None and spell.aura_ua is None and spell.ref is None:
+
+            ## Feedback translations:
+            # feedback_ids = [468275, 1221337, 1225769, 1225771, 1225772, 1225906, 1225907, 1225960, 1225987, 1226007, 1226396, 1226800, 1226810, 1227369, 1229305, 1229308, 1229340, 1230942, 1230944, 1230980, 1231091, 1231254, 1231258, 1231267, 1231289, 1231330, 1231382, 1231402, 1231417, 1231547, 1231548, 1231550, 1231551, 1231553, 1231554, 1231578, 1231586, 1231604, 1231605, 1231612, 1231620, 1231624, 1231656, 1231681, 1231694, 1231698, 1231874, 1231904, 1232044, 1232057, 1232066, 1232103, 1232150, 1232153, 1232157, 1232158, 1232162, 1232167, 1232181, 1232312, 1232322, 1232477, 1232479, 1232896, 1232946, 1234033, 1234040, 1234085, 1234299, 1234326, 1234792, 1234805, 1235011, 1235320, 1235351, 1235681, 1237064]
+            # if spell.expansion in [CLASSIC, SOD] and (spell.description is not None or spell.aura is not None) and spell.name_ua is None and spell.description_ua is None and spell.aura_ua is None and spell.ref is None and spell.spell_md.cat in (9, 11) and spell.id in feedback_ids: # Review manually. Skip recipes (for now, me may want to translate trainer interface)
+            # if spell.expansion == CLASSIC and spell.is_translated() and spell.description_ua is None and spell.aura_ua is None and spell.ref is None and spell.spell_md.cat in (7, 5, 0, -2, -3, -4, -8, -11, -13, -25, -26) and spell.id in feedback_ids:
+            # if spell.expansion in [CLASSIC, SOD] and spell.name_ua is None and spell.description_ua is None and spell.aura_ua is None and spell.ref is None and spell.id in feedback_ids: # Massive
+
+            ## Autotranslation:
+            # if spell.expansion in [CLASSIC, SOD] and spell.name_ua is None and spell.description_ua is None and spell.aura_ua is None and spell.ref is None and (
+            #         (spell.spell_md.cat in (7,) and not spell.name.startswith('S03 -')) or
+            #         (spell.spell_md.cat in (-5, -6)) or  # mount/pet journal. nice to have. Translate only if we can display translation. wrath+
+            #         (spell.spell_md.cat in (0, -8, -26) and spell.aura is not None) or  # Enable when translating everything
+            #         (spell.spell_md.cat in (-11,) and not spell.name.startswith('Language ')) or
+            #         (spell.spell_md.cat in (-13,)) or  # Glyphs. Translate only when we can display translation. wrath+ (TODO)
+            #         (spell.spell_md.cat in (5, -2, -3, -4))):
+
+            ## For missing referenced spells
+            # force_translate = (1220635, 1220642, 1220645, 1220650, 1220651, 1220653, 1220654, 1220655, 1220656, 1220657, 1220666, 1220668, 1220700, 1220702, 1220707, 1220708, 1220711, 28800, 1220738, 1220741, 1220756, 1220770, 1222974, 1222994, 1223010, 1220980, 1219019, 1219043, 1219083, 1223262, 1223341, 1223348, 1223349, 1223350, 1223351, 1223352, 1223353, 1223354, 1223355, 1223357, 1223367, 1223368, 1223370, 1223371, 1223372, 1223373, 1223374, 1223375, 1223376, 1223379, 1223380, 1223381, 1223382, 1223383, 1223384, 1223385, 1223386, 1223387, 1223455, 1219415, 1219500, 1219501, 1219503, 1219506, 1219507, 1219510, 1219511, 1219512, 1219513, 1219515, 1219519, 1219520, 1219521, 1219522, 1219539, 1219548, 1219552, 1219553, 1219557, 1219558, 1223689, 1223795, 1219740, 1219742, 1219743, 1219745, 1219747, 1219748, 1219749, 1219751, 1219752, 1219753, 1219754, 1219755, 1219756, 1219757, 1219758, 1219760, 1219762, 1219763, 1219764, 1219766, 1219767, 1219768, 1219769, 1219770, 1219771, 1219772, 1219773, 1219774, 1219775, 1219776, 1219777, 1219778, 1219779, 1219780, 1219781, 1219782, 1219783, 1219784, 1219785, 1219786, 1219787, 1219788, 1219789, 1219790, 1219791, 1219792, 1219793, 1219794, 1219795, 1219796, 1219797, 1219798, 1219799, 1219800, 1219801, 1219802, 1219803, 1219804, 1219805, 1219806, 1219807, 1219808, 1219809, 1219810, 1219811, 1219812, 1219813, 1219815, 1219816, 1219818, 1219819, 1219820, 1219821, 1219822, 1219823, 1219824, 1219825, 1219826, 1219827, 1219828, 1219829, 1219830, 1219831, 1219832, 1219833, 1219834, 1219835, 1219836, 1219837, 1219838, 1219839, 1219840, 1219841, 1219842, 1219843, 1219844, 1219845, 1219846, 1219847, 1219848, 1219849, 1219850, 1219851, 1219852, 1219853, 1219854, 1219855, 1219856, 1219857, 1219858, 1219859, 1219860, 1219861, 1219862, 1219863, 1219864, 1219865, 1219866, 1219867, 1219868, 1219869, 1219870, 1219871, 1219872, 1219873, 1219874, 1219875, 1219876, 1219877, 1219878, 1219879, 1219880, 1219881, 1219882, 1219883, 1219884, 1219885, 1219886, 1219887, 1219888, 1219889, 1219890, 1219891, 1219892, 1219893, 1219894, 1219895, 1219896, 1219897, 1219898, 1219899, 1219900, 1219901, 1219902, 1219903, 1219904, 1219905, 1219906, 1219907, 1219908, 1219909, 1219910, 1219911, 1219912, 1219913, 1219914, 1219915, 1219916, 1219917, 1219918, 1219919, 1219920, 1219921, 1219922, 1219923, 1219924, 1219925, 1219926, 1219927, 1219928, 1219929, 1219930, 1219931, 1219932, 1219933, 1219934, 1219935, 1219936, 1219937, 1219938, 1219939, 1219940, 1219941, 1219942, 1219943, 1219944, 1219945, 1219946, 1219947, 1219948, 1219949, 1219950, 1219951, 1219952, 1219953, 1219954, 28148, 1213971, 28282, 1222393, 1222394, 1218367, 1220418, 1220514, 1220521, 1214381, 1220533, 1220536, 1220538, 1220540, 1214407, 1214409, 1220560, 1220561, 1220563, 1220564, 1220565, 1220566, 1220567, 1220568)
+            # if spell.expansion in [CLASSIC, SOD] and spell.name_ua is None and spell.description_ua is None and spell.aura_ua is None and spell.ref is None and spell.id in force_translate:
+            if not spell.is_translated() or spell.pretranslated:
+                result.setdefault(key, {})[spell.expansion] = spell
+    return result
+
+
+def create_translation_sheet(spells: dict[int, dict[str, SpellData]], path: str = 'output/translate_this.tsv'):
+    os.makedirs(os.path.dirname(path), exist_ok=True)
+    with (open(path, mode='w', encoding='utf-8') as f):
         f.write('ID\texpansion\tName(EN)\tName(UA)\tDescription(EN)\tDescription(UA)\tAura(EN)\tAura(UA)\tref\tname_ref\tdesc_ref\taura_ref\tcategory\tgroup\tNote\tNote 2\n')
         count = 0
         for key in sorted(spells.keys()):
-            # for expansion, spell in list(spells[key].items())[-1:]:
-            # for spell in sorted(set([list(spells[key].values())[0], list(spells[key].values())[-1]]), key=lambda x: expansion_data[x.expansion][INDEX]):
             for spell in sorted(spells[key].values(), key=lambda x: expansion_data[x.expansion][INDEX]):
-                if ('[DNT]' in spell.name.upper() or
-                        'DND' in spell.name or
-                        '(DND)' in spell.name.upper() or
-                        '(DNT)' in spell.name.upper() or
-                        '[DNT]' in spell.name.upper() or
-                        '(OLD)' in spell.name.upper() or
-                        '(TEST)' in spell.name.upper() or
-                        'TEST' in spell.name or
-                        '(NYI)' in spell.name.upper() or
-                        '(DNC)' in spell.name.upper() or
-                        '(PT)' in spell.name.upper() or
-                        '[PH]' in spell.name.upper() or
-                        spell.name.startswith('QA') or
-                        key in expansion_data[spell.expansion][IGNORES]):
-                    continue
-                # if getattr(spell.spell_md, 'chrclass') in SpellMD._classes.keys() and spell.expansion == SOD and spell.name_ua is None and spell.description_ua is None and spell.aura_ua is None and spell.ref is None:
-
-                ## Feedback translations:
-                # feedback_ids = [468275, 1221337, 1225769, 1225771, 1225772, 1225906, 1225907, 1225960, 1225987, 1226007, 1226396, 1226800, 1226810, 1227369, 1229305, 1229308, 1229340, 1230942, 1230944, 1230980, 1231091, 1231254, 1231258, 1231267, 1231289, 1231330, 1231382, 1231402, 1231417, 1231547, 1231548, 1231550, 1231551, 1231553, 1231554, 1231578, 1231586, 1231604, 1231605, 1231612, 1231620, 1231624, 1231656, 1231681, 1231694, 1231698, 1231874, 1231904, 1232044, 1232057, 1232066, 1232103, 1232150, 1232153, 1232157, 1232158, 1232162, 1232167, 1232181, 1232312, 1232322, 1232477, 1232479, 1232896, 1232946, 1234033, 1234040, 1234085, 1234299, 1234326, 1234792, 1234805, 1235011, 1235320, 1235351, 1235681, 1237064]
-                # if spell.expansion in [CLASSIC, SOD] and (spell.description is not None or spell.aura is not None) and spell.name_ua is None and spell.description_ua is None and spell.aura_ua is None and spell.ref is None and spell.spell_md.cat in (9, 11) and spell.id in feedback_ids: # Review manually. Skip recipes (for now, me may want to translate trainer interface)
-                # if spell.expansion == CLASSIC and spell.is_translated() and spell.description_ua is None and spell.aura_ua is None and spell.ref is None and spell.spell_md.cat in (7, 5, 0, -2, -3, -4, -8, -11, -13, -25, -26) and spell.id in feedback_ids:
-                # if spell.expansion in [CLASSIC, SOD] and spell.name_ua is None and spell.description_ua is None and spell.aura_ua is None and spell.ref is None and spell.id in feedback_ids: # Massive
-
-                ## Autotranslation:
-                # if spell.expansion in [CLASSIC, SOD] and spell.name_ua is None and spell.description_ua is None and spell.aura_ua is None and spell.ref is None and (
-                #         (spell.spell_md.cat in (7,) and not spell.name.startswith('S03 -')) or
-                #         (spell.spell_md.cat in (-5, -6)) or  # mount/pet journal. nice to have. Translate only if we can display translation. wrath+
-                #         (spell.spell_md.cat in (0, -8, -26) and spell.aura is not None) or  # Enable when translating everything
-                #         (spell.spell_md.cat in (-11,) and not spell.name.startswith('Language ')) or
-                #         (spell.spell_md.cat in (-13,)) or  # Glyphs. Translate only when we can display translation. wrath+ (TODO)
-                #         (spell.spell_md.cat in (5, -2, -3, -4))):
-
-                ## For missing referenced spells
-                # force_translate = (1220635, 1220642, 1220645, 1220650, 1220651, 1220653, 1220654, 1220655, 1220656, 1220657, 1220666, 1220668, 1220700, 1220702, 1220707, 1220708, 1220711, 28800, 1220738, 1220741, 1220756, 1220770, 1222974, 1222994, 1223010, 1220980, 1219019, 1219043, 1219083, 1223262, 1223341, 1223348, 1223349, 1223350, 1223351, 1223352, 1223353, 1223354, 1223355, 1223357, 1223367, 1223368, 1223370, 1223371, 1223372, 1223373, 1223374, 1223375, 1223376, 1223379, 1223380, 1223381, 1223382, 1223383, 1223384, 1223385, 1223386, 1223387, 1223455, 1219415, 1219500, 1219501, 1219503, 1219506, 1219507, 1219510, 1219511, 1219512, 1219513, 1219515, 1219519, 1219520, 1219521, 1219522, 1219539, 1219548, 1219552, 1219553, 1219557, 1219558, 1223689, 1223795, 1219740, 1219742, 1219743, 1219745, 1219747, 1219748, 1219749, 1219751, 1219752, 1219753, 1219754, 1219755, 1219756, 1219757, 1219758, 1219760, 1219762, 1219763, 1219764, 1219766, 1219767, 1219768, 1219769, 1219770, 1219771, 1219772, 1219773, 1219774, 1219775, 1219776, 1219777, 1219778, 1219779, 1219780, 1219781, 1219782, 1219783, 1219784, 1219785, 1219786, 1219787, 1219788, 1219789, 1219790, 1219791, 1219792, 1219793, 1219794, 1219795, 1219796, 1219797, 1219798, 1219799, 1219800, 1219801, 1219802, 1219803, 1219804, 1219805, 1219806, 1219807, 1219808, 1219809, 1219810, 1219811, 1219812, 1219813, 1219815, 1219816, 1219818, 1219819, 1219820, 1219821, 1219822, 1219823, 1219824, 1219825, 1219826, 1219827, 1219828, 1219829, 1219830, 1219831, 1219832, 1219833, 1219834, 1219835, 1219836, 1219837, 1219838, 1219839, 1219840, 1219841, 1219842, 1219843, 1219844, 1219845, 1219846, 1219847, 1219848, 1219849, 1219850, 1219851, 1219852, 1219853, 1219854, 1219855, 1219856, 1219857, 1219858, 1219859, 1219860, 1219861, 1219862, 1219863, 1219864, 1219865, 1219866, 1219867, 1219868, 1219869, 1219870, 1219871, 1219872, 1219873, 1219874, 1219875, 1219876, 1219877, 1219878, 1219879, 1219880, 1219881, 1219882, 1219883, 1219884, 1219885, 1219886, 1219887, 1219888, 1219889, 1219890, 1219891, 1219892, 1219893, 1219894, 1219895, 1219896, 1219897, 1219898, 1219899, 1219900, 1219901, 1219902, 1219903, 1219904, 1219905, 1219906, 1219907, 1219908, 1219909, 1219910, 1219911, 1219912, 1219913, 1219914, 1219915, 1219916, 1219917, 1219918, 1219919, 1219920, 1219921, 1219922, 1219923, 1219924, 1219925, 1219926, 1219927, 1219928, 1219929, 1219930, 1219931, 1219932, 1219933, 1219934, 1219935, 1219936, 1219937, 1219938, 1219939, 1219940, 1219941, 1219942, 1219943, 1219944, 1219945, 1219946, 1219947, 1219948, 1219949, 1219950, 1219951, 1219952, 1219953, 1219954, 28148, 1213971, 28282, 1222393, 1222394, 1218367, 1220418, 1220514, 1220521, 1214381, 1220533, 1220536, 1220538, 1220540, 1214407, 1214409, 1220560, 1220561, 1220563, 1220564, 1220565, 1220566, 1220567, 1220568)
-                # if spell.expansion in [CLASSIC, SOD] and spell.name_ua is None and spell.description_ua is None and spell.aura_ua is None and spell.ref is None and spell.id in force_translate:
-                if not spell.is_translated() or spell.pretranslated:
-                    class_name = SpellMD._classes[getattr(spell.spell_md, 'chrclass')] if getattr(spell.spell_md, 'chrclass') in SpellMD._classes else ''
-                    notes = []
-                    if spell.pretranslated:
-                        notes.append(NOTE_PRETRANSLATED)
-                    elif spell.is_translated():
-                        notes.append(NOTE_ALREADY_TRANSLATED)
-                    else:
-                        notes.append(NOTE_NOT_TRANSLATED)
-                    note = format_notes(notes)
-                    note_2 = ''
-                    fields = [spell.id, spell.expansion, spell.name, spell.name_ua, spell.description, spell.description_ua, spell.aura, spell.aura_ua, spell.ref, spell.name_ref, spell.description_ref, spell.aura_ref, class_name, spell.group, note, note_2]
-                    f.write(f'{'\t'.join(map(lambda x: __to_tsv_val(x), fields))}\n')
-                    count += 1
+                class_name = SpellMD._classes[getattr(spell.spell_md, 'chrclass')] if getattr(spell.spell_md, 'chrclass') in SpellMD._classes else ''
+                notes = []
+                if spell.pretranslated:
+                    notes.append(NOTE_PRETRANSLATED)
+                elif spell.is_translated():
+                    notes.append(NOTE_ALREADY_TRANSLATED)
+                else:
+                    notes.append(NOTE_NOT_TRANSLATED)
+                note = format_notes(notes)
+                note_2 = ''
+                fields = [spell.id, spell.expansion, spell.name, spell.name_ua, spell.description, spell.description_ua, spell.aura, spell.aura_ua, spell.ref, spell.name_ref, spell.description_ref, spell.aura_ref, class_name, spell.group, note, note_2]
+                f.write(f'{'\t'.join(map(lambda x: __to_tsv_val(x), fields))}\n')
+                count += 1
         if count > 0:
-            print(f"Added {count} spells for translation")
+            print(f"Added {count} spells for translation to {path}")
+
 
 def merge_spell(id: int, old_spells: dict[str, SpellData], new_spell: SpellData) -> dict[str, SpellData]:
     import re
@@ -1539,4 +1549,4 @@ if __name__ == '__main__':
     for key in pretranslated_ids:
         for_sheet[key] = all_spells[key]
 
-    create_translation_sheet(for_sheet)
+    create_translation_sheet(filter_for_translation(for_sheet))
