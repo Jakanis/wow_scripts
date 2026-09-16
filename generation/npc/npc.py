@@ -580,8 +580,8 @@ def compare_npc(tsv_npc: NPC_MD, lua_npc: NPC_MD):
 
 
 
-def check_existing_translations(all_npcs: dict[int, dict[str, NPC_MD]]):
-    merged_translations = load_merged_translations()
+def check_existing_translations(all_npcs: dict[int, dict[str, NPC_MD]],
+                                merged_translations: dict[int, dict[str, NPC_MD]]):
     for key in merged_translations.keys() - all_npcs.keys():
         print(f'NPC#{key} does not exist in ClassicUA')
 
@@ -1009,12 +1009,10 @@ def __term_traits(term: GlossaryTerm) -> tuple[str, str]:
     return race, sex
 
 
-def filter_missing_entries(entries_dir: str = 'input/entries') -> dict[str, dict[int, NPC_Short]]:
+def filter_missing_entries(translations: dict[str, dict[int, NPC_Short]],
+                           sheet: dict[int, dict[str, NPC_MD]]) -> dict[str, dict[int, NPC_Short]]:
     # entries ClassicUA generates that the NPCs sheet never recorded; pass any other
     # selection to create_missing_entries_sheet to work through a batch by hand
-    translations = read_classicua_translations(entries_dir)
-    sheet = load_merged_translations()
-
     missing = dict()
     for expansion in expansion_data:
         for npc_id in sorted(translations.get(expansion, {})):
@@ -1086,6 +1084,7 @@ def generate_entries_with_classicua(glossary: Glossary, entries_dir: str = 'inpu
 
 if __name__ == '__main__':
     download_csv_from_google_sheet('NPCs')
+    sheet_translations = load_merged_translations()
 
     all_npcs_md, npc_quotes = retrieve_npc_data()
 
@@ -1097,7 +1096,7 @@ if __name__ == '__main__':
     save_npcs_to_db(all_npcs_md)  # Generate cache/npcs.db
     save_npc_quotes(npc_quotes)  # Generate output/all_npcs.pkl
 
-    check_existing_translations(all_npcs_md)  # Check if original data changes since previous translation and difference between ClassicUA and translation sheet
+    check_existing_translations(all_npcs_md, sheet_translations)  # Check if original data changes since previous translation and difference between ClassicUA and translation sheet
     # update_questie_translation(all_npcs)  # Update translations for Questie
 
     _, missed_npcs = check_feedback('npcs', 'NPC', all_npcs_md, lambda npc: bool(npc.name_ua))
@@ -1115,6 +1114,6 @@ if __name__ == '__main__':
     # glossary = generate_entries_with_classicua(glossary)
 
     # Entries that exist in ClassicUA but were never recorded on the NPCs sheet
-    # missing_entries = filter_missing_entries()
+    # missing_entries = filter_missing_entries(classicua_translations, sheet_translations)
     # create_missing_entries_sheet(missing_entries, all_npcs_md, glossary)
 
