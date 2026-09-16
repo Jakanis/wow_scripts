@@ -1,0 +1,214 @@
+severity	rule	entity	id	expansion	field	message	note
+warning	newline-count	spell	66	wrath	description_ua	blank line count differs from the English	verified before the migration, 2026-09-17
+warning	newline-count	spell	339	cata	description_ua	blank line count differs from the English	verified before the migration, 2026-09-17
+warning	newline-count	spell	688	cata	description_ua	blank line count differs from the English	verified before the migration, 2026-09-17
+warning	newline-count	spell	688	mists	description_ua	blank line count differs from the English	verified before the migration, 2026-09-17
+warning	newline-count	spell	689	cata	description_ua	blank line count differs from the English	verified before the migration, 2026-09-17
+warning	newline-count	spell	689	mists	description_ua	blank line count differs from the English	verified before the migration, 2026-09-17
+warning	newline-count	spell	691	cata	description_ua	blank line count differs from the English	verified before the migration, 2026-09-17
+warning	newline-count	spell	691	mists	description_ua	blank line count differs from the English	verified before the migration, 2026-09-17
+warning	newline-count	spell	697	cata	description_ua	blank line count differs from the English	verified before the migration, 2026-09-17
+warning	newline-count	spell	697	mists	description_ua	blank line count differs from the English	verified before the migration, 2026-09-17
+warning	newline-count	spell	712	cata	description_ua	blank line count differs from the English	verified before the migration, 2026-09-17
+warning	newline-count	spell	712	mists	description_ua	blank line count differs from the English	verified before the migration, 2026-09-17
+warning	newline-count	spell	713	cata	description_ua	blank line count differs from the English	verified before the migration, 2026-09-17
+warning	newline-count	spell	713	mists	description_ua	blank line count differs from the English	verified before the migration, 2026-09-17
+warning	newline-count	spell	755	mists	description_ua	blank line count differs from the English	verified before the migration, 2026-09-17
+warning	newline-count	spell	845	wrath	description_ua	blank line count differs from the English	verified before the migration, 2026-09-17
+warning	newline-count	spell	1079	cata	description_ua	blank line count differs from the English	verified before the migration, 2026-09-17
+warning	newline-count	spell	1079	mists	description_ua	blank line count differs from the English	verified before the migration, 2026-09-17
+warning	newline-count	spell	1490	mists	description_ua	blank line count differs from the English	verified before the migration, 2026-09-17
+warning	newline-count	spell	1715	wrath	description_ua	blank line count differs from the English	verified before the migration, 2026-09-17
+warning	newline-count	spell	2457	mists	description_ua	blank line count differs from the English	verified before the migration, 2026-09-17
+warning	newline-count	spell	2645	wrath	aura_ua	blank line count differs from the English	verified before the migration, 2026-09-17
+warning	newline-count	spell	2645	wrath	description_ua	blank line count differs from the English	verified before the migration, 2026-09-17
+warning	newline-count	spell	3408	mists	description_ua	blank line count differs from the English	verified before the migration, 2026-09-17
+warning	newline-count	spell	5176	cata	description_ua	blank line count differs from the English	verified before the migration, 2026-09-17
+warning	newline-count	spell	5487	mists	aura_ua	blank line count differs from the English	verified before the migration, 2026-09-17
+warning	newline-count	spell	5487	mists	description_ua	blank line count differs from the English	verified before the migration, 2026-09-17
+warning	newline-count	spell	5676	cata	description_ua	blank line count differs from the English	verified before the migration, 2026-09-17
+warning	newline-count	spell	5697	mists	description_ua	blank line count differs from the English	verified before the migration, 2026-09-17
+warning	newline-count	spell	5697	wrath	description_ua	blank line count differs from the English	verified before the migration, 2026-09-17
+warning	newline-count	spell	5761	mists	description_ua	blank line count differs from the English	verified before the migration, 2026-09-17
+warning	newline-count	spell	5782	mists	description_ua	blank line count differs from the English	verified before the migration, 2026-09-17
+warning	newline-count	spell	6262	cata	description_ua	blank line count differs from the English	verified before the migration, 2026-09-17
+warning	newline-count	spell	6353	cata	description_ua	blank line count differs from the English	verified before the migration, 2026-09-17
+warning	newline-count	spell	7384	mists	description_ua	blank line count differs from the English	verified before the migration, 2026-09-17
+warning	newline-count	spell	8017	cata	description_ua	blank line count differs from the English	verified before the migration, 2026-09-17
+warning	newline-count	spell	8024	cata	description_ua	blank line count differs from the English	verified before the migration, 2026-09-17
+warning	newline-count	spell	8024	mists	description_ua	blank line count differs from the English	verified before the migration, 2026-09-17
+warning	newline-count	spell	8024	wrath	description_ua	blank line count differs from the English	verified before the migration, 2026-09-17
+warning	newline-count	spell	8033	cata	description_ua	blank line count differs from the English	verified before the migration, 2026-09-17
+warning	newline-count	spell	8232	cata	description_ua	blank line count differs from the English	verified before the migration, 2026-09-17
+warning	newline-count	spell	8647	wrath	description_ua	blank line count differs from the English	verified before the migration, 2026-09-17
+warning	newline-count	spell	8936	cata	description_ua	blank line count differs from the English	verified before the migration, 2026-09-17
+warning	newline-count	spell	8936	mists	description_ua	blank line count differs from the English	verified before the migration, 2026-09-17
+warning	newline-count	spell	11129	mists	description_ua	blank line count differs from the English	verified before the migration, 2026-09-17
+warning	newline-count	spell	12294	mists	aura_ua	blank line count differs from the English	verified before the migration, 2026-09-17
+warning	newline-count	spell	12328	mists	aura_ua	blank line count differs from the English	verified before the migration, 2026-09-17
+warning	newline-count	spell	12328	mists	description_ua	blank line count differs from the English	verified before the migration, 2026-09-17
+warning	newline-count	spell	12880	mists	aura_ua	blank line count differs from the English	verified before the migration, 2026-09-17
+warning	newline-count	spell	12880	mists	description_ua	blank line count differs from the English	verified before the migration, 2026-09-17
+warning	newline-count	spell	15473	mists	aura_ua	blank line count differs from the English	verified before the migration, 2026-09-17
+warning	newline-count	spell	15473	mists	description_ua	blank line count differs from the English	verified before the migration, 2026-09-17
+warning	newline-count	spell	16914	wrath	description_ua	blank line count differs from the English	verified before the migration, 2026-09-17
+warning	newline-count	spell	17073	mists	description_ua	blank line count differs from the English	verified before the migration, 2026-09-17
+warning	newline-count	spell	17364	mists	aura_ua	blank line count differs from the English	verified before the migration, 2026-09-17
+warning	newline-count	spell	17364	mists	description_ua	blank line count differs from the English	verified before the migration, 2026-09-17
+warning	newline-count	spell	17401	wrath	description_ua	blank line count differs from the English	verified before the migration, 2026-09-17
+warning	newline-count	spell	17962	mists	description_ua	blank line count differs from the English	verified before the migration, 2026-09-17
+warning	newline-count	spell	17962	wrath	description_ua	blank line count differs from the English	verified before the migration, 2026-09-17
+warning	newline-count	spell	18223	mists	description_ua	blank line count differs from the English	verified before the migration, 2026-09-17
+warning	newline-count	spell	18499	mists	aura_ua	blank line count differs from the English	verified before the migration, 2026-09-17
+warning	newline-count	spell	18499	mists	description_ua	blank line count differs from the English	verified before the migration, 2026-09-17
+warning	newline-count	spell	20484	wrath	description_ua	blank line count differs from the English	verified before the migration, 2026-09-17
+warning	newline-count	spell	20925	classic	description_ua	blank line count differs from the English	verified before the migration, 2026-09-17
+warning	newline-count	spell	20925	mists	description_ua	blank line count differs from the English	verified before the migration, 2026-09-17
+warning	newline-count	spell	23588	mists	description_ua	blank line count differs from the English	verified before the migration, 2026-09-17
+warning	newline-count	spell	23922	classic	description_ua	blank line count differs from the English	verified before the migration, 2026-09-17
+warning	newline-count	spell	27243	cata	description_ua	blank line count differs from the English	verified before the migration, 2026-09-17
+warning	newline-count	spell	27243	mists	description_ua	blank line count differs from the English	verified before the migration, 2026-09-17
+warning	newline-count	spell	27580	mists	aura_ua	blank line count differs from the English	verified before the migration, 2026-09-17
+warning	newline-count	spell	27580	mists	description_ua	blank line count differs from the English	verified before the migration, 2026-09-17
+warning	newline-count	spell	30146	cata	description_ua	blank line count differs from the English	verified before the migration, 2026-09-17
+warning	newline-count	spell	31821	mists	aura_ua	blank line count differs from the English	verified before the migration, 2026-09-17
+warning	newline-count	spell	31821	mists	description_ua	blank line count differs from the English	verified before the migration, 2026-09-17
+warning	newline-count	spell	33763	cata	description_ua	blank line count differs from the English	verified before the migration, 2026-09-17
+warning	newline-count	spell	33763	mists	description_ua	blank line count differs from the English	verified before the migration, 2026-09-17
+warning	newline-count	spell	34861	wrath	description_ua	blank line count differs from the English	verified before the migration, 2026-09-17
+warning	newline-count	spell	47541	wrath	description_ua	blank line count differs from the English	verified before the migration, 2026-09-17
+warning	newline-count	spell	48020	cata	description_ua	blank line count differs from the English	verified before the migration, 2026-09-17
+warning	newline-count	spell	48020	mists	description_ua	blank line count differs from the English	verified before the migration, 2026-09-17
+warning	newline-count	spell	48438	cata	description_ua	blank line count differs from the English	verified before the migration, 2026-09-17
+warning	newline-count	spell	48438	mists	description_ua	blank line count differs from the English	verified before the migration, 2026-09-17
+warning	newline-count	spell	48792	wrath	description_ua	blank line count differs from the English	verified before the migration, 2026-09-17
+warning	newline-count	spell	51730	cata	description_ua	blank line count differs from the English	verified before the migration, 2026-09-17
+warning	newline-count	spell	51755	mists	aura_ua	blank line count differs from the English	verified before the migration, 2026-09-17
+warning	newline-count	spell	52610	mists	aura_ua	blank line count differs from the English	verified before the migration, 2026-09-17
+warning	newline-count	spell	52610	mists	description_ua	blank line count differs from the English	verified before the migration, 2026-09-17
+warning	newline-count	spell	55050	wrath	description_ua	blank line count differs from the English	verified before the migration, 2026-09-17
+warning	newline-count	spell	59879	wrath	description_ua	blank line count differs from the English	verified before the migration, 2026-09-17
+warning	newline-count	spell	59921	wrath	description_ua	blank line count differs from the English	verified before the migration, 2026-09-17
+warning	newline-count	spell	64843	mists	aura_ua	blank line count differs from the English	verified before the migration, 2026-09-17
+warning	newline-count	spell	64843	mists	description_ua	blank line count differs from the English	verified before the migration, 2026-09-17
+warning	newline-count	spell	74434	mists	description_ua	blank line count differs from the English	verified before the migration, 2026-09-17
+warning	newline-count	spell	76669	mists	description_ua	blank line count differs from the English	verified before the migration, 2026-09-17
+warning	newline-count	spell	79147	mists	description_ua	blank line count differs from the English	verified before the migration, 2026-09-17
+warning	newline-count	spell	84601	mists	description_ua	blank line count differs from the English	verified before the migration, 2026-09-17
+warning	newline-count	spell	84654	mists	description_ua	blank line count differs from the English	verified before the migration, 2026-09-17
+warning	newline-count	spell	85288	mists	description_ua	blank line count differs from the English	verified before the migration, 2026-09-17
+warning	newline-count	spell	85384	mists	description_ua	blank line count differs from the English	verified before the migration, 2026-09-17
+warning	newline-count	spell	86121	mists	description_ua	blank line count differs from the English	verified before the migration, 2026-09-17
+warning	newline-count	spell	89420	cata	description_ua	blank line count differs from the English	verified before the migration, 2026-09-17
+warning	newline-count	spell	94358	cata	description_ua	blank line count differs from the English	verified before the migration, 2026-09-17
+warning	newline-count	spell	96103	mists	description_ua	blank line count differs from the English	verified before the migration, 2026-09-17
+warning	newline-count	spell	349981	classic	aura_ua	blank line count differs from the English	verified before the migration, 2026-09-17
+warning	newline-count	spell	349981	tbc	aura_ua	blank line count differs from the English	verified before the migration, 2026-09-17
+warning	numbers-mismatch	spell	51123	wrath	description_ua	numbers differ from the English	verified before the migration, 2026-09-17
+warning	numbers-mismatch	spell	51127	wrath	description_ua	numbers differ from the English	verified before the migration, 2026-09-17
+warning	numbers-mismatch	spell	54811	wrath	description_ua	numbers differ from the English	verified before the migration, 2026-09-17
+warning	numbers-mismatch	spell	348704	cata	aura_ua	numbers differ from the English	verified before the migration, 2026-09-17
+warning	numbers-mismatch	spell	1213754	sod	description_ua	numbers differ from the English	verified before the migration, 2026-09-17
+warning	numbers-mismatch	spell	1219783	sod	description_ua	numbers differ from the English	verified before the migration, 2026-09-17
+warning	numbers-mismatch	spell	1231612	sod	aura_ua	numbers differ from the English	verified before the migration, 2026-09-17
+warning	numbers-mismatch	spell	1231612	sod	description_ua	numbers differ from the English	verified before the migration, 2026-09-17
+warning	original-differs	spell	1231417	sod	description	- [The blade does not respond to your presence.][Striking a higher level enemy applies a stack of Coup, increasing their damage taken from your next Execute by 10% per stack, stacking up to 20 times. At 20 stacks, Execute may be cast regardless of the target's health.][Striking a higher level enemy applies a stack of Coup, increasing their damage taken from your next Envenom by 5% per stack, stacking up to 20 times.][Striking a higher level enemy applies a stack of Coup, increasing their damage taken from your next Kill Shot by 5% per stack, stacking up to 20 times.]\n+ The blade does not respond to your presence.	verified before the migration, 2026-09-17
+warning	original-differs	spell	1235320	sod	description	- [Chance on hit to cause your next 4 instances of Nature damage to be increased by 20%. Lasts 12 sec.][Chance on hit to cause your next 2 instances of Raptor Strike damage to be increased by 20%. Lasts 12 sec.][Chance on hit to cause your next 2 instances of Cleave damage to be increased by 20%. Lasts 12 sec.][Chance on hit to cause your next 2 instances of Holy damage to be increased by 20%. Lasts 12 sec.][The Crimson Cleaver does not respond to your presence, maybe another class could benefit from this?]\n+ The Crimson Cleaver does not respond to your presence, maybe another class could benefit from this?	verified before the migration, 2026-09-17
+warning	template-failed	spell	331	cata	description_ua	the template does not match the English text	verified before the migration, 2026-09-17
+warning	template-failed	spell	498	cata	aura_ua	the template does not match the English text	verified before the migration, 2026-09-17
+warning	template-failed	spell	498	cata	description_ua	the template does not match the English text	verified before the migration, 2026-09-17
+warning	template-failed	spell	596	cata	description_ua	the template does not match the English text	verified before the migration, 2026-09-17
+warning	template-failed	spell	635	cata	description_ua	the template does not match the English text	verified before the migration, 2026-09-17
+warning	template-failed	spell	974	sod	description_ua	the template does not match the English text	verified before the migration, 2026-09-17
+warning	template-failed	spell	1064	cata	description_ua	the template does not match the English text	verified before the migration, 2026-09-17
+warning	template-failed	spell	1122	cata	description_ua	the template does not match the English text	verified before the migration, 2026-09-17
+warning	template-failed	spell	1329	classic	description_ua	the template does not match the English text	verified before the migration, 2026-09-17
+warning	template-failed	spell	1454	mists	description_ua	the template does not match the English text	verified before the migration, 2026-09-17
+warning	template-failed	spell	1535	cata	description_ua	the template does not match the English text	verified before the migration, 2026-09-17
+warning	template-failed	spell	1753	wrath	description_ua	the template does not match the English text	verified before the migration, 2026-09-17
+warning	template-failed	spell	2050	cata	description_ua	the template does not match the English text	verified before the migration, 2026-09-17
+warning	template-failed	spell	2060	cata	description_ua	the template does not match the English text	verified before the migration, 2026-09-17
+warning	template-failed	spell	2061	cata	description_ua	the template does not match the English text	verified before the migration, 2026-09-17
+warning	template-failed	spell	2823	wrath	description_ua	the template does not match the English text	verified before the migration, 2026-09-17
+warning	template-failed	spell	5185	cata	description_ua	the template does not match the English text	verified before the migration, 2026-09-17
+warning	template-failed	spell	5394	mists	description_ua	the template does not match the English text	verified before the migration, 2026-09-17
+warning	template-failed	spell	5487	mists	aura_ua	the template does not match the English text	verified before the migration, 2026-09-17
+warning	template-failed	spell	5487	mists	description_ua	the template does not match the English text	verified before the migration, 2026-09-17
+warning	template-failed	spell	5730	wrath	description_ua	the template does not match the English text	verified before the migration, 2026-09-17
+warning	template-failed	spell	5784	wrath	aura_ua	the template does not match the English text	verified before the migration, 2026-09-17
+warning	template-failed	spell	6201	mists	description_ua	the template does not match the English text	verified before the migration, 2026-09-17
+warning	template-failed	spell	6262	mists	description_ua	the template does not match the English text	verified before the migration, 2026-09-17
+warning	template-failed	spell	7384	mists	description_ua	the template does not match the English text	verified before the migration, 2026-09-17
+warning	template-failed	spell	7405	wrath	description_ua	the template does not match the English text	verified before the migration, 2026-09-17
+warning	template-failed	spell	8004	cata	description_ua	the template does not match the English text	verified before the migration, 2026-09-17
+warning	template-failed	spell	8647	wrath	description_ua	the template does not match the English text	verified before the migration, 2026-09-17
+warning	template-failed	spell	11129	mists	description_ua	the template does not match the English text	verified before the migration, 2026-09-17
+warning	template-failed	spell	12294	mists	aura_ua	the template does not match the English text	verified before the migration, 2026-09-17
+warning	template-failed	spell	12294	mists	description_ua	the template does not match the English text	verified before the migration, 2026-09-17
+warning	template-failed	spell	12328	mists	description_ua	the template does not match the English text	verified before the migration, 2026-09-17
+warning	template-failed	spell	12880	mists	aura_ua	the template does not match the English text	verified before the migration, 2026-09-17
+warning	template-failed	spell	12880	mists	description_ua	the template does not match the English text	verified before the migration, 2026-09-17
+warning	template-failed	spell	13795	cata	description_ua	the template does not match the English text	verified before the migration, 2026-09-17
+warning	template-failed	spell	15473	mists	aura_ua	the template does not match the English text	verified before the migration, 2026-09-17
+warning	template-failed	spell	15473	mists	description_ua	the template does not match the English text	verified before the migration, 2026-09-17
+warning	template-failed	spell	16511	tbc	description_ua	the template does not match the English text	verified before the migration, 2026-09-17
+warning	template-failed	spell	16896	classic	description_ua	the template does not match the English text	verified before the migration, 2026-09-17
+warning	template-failed	spell	16902	classic	description_ua	the template does not match the English text	verified before the migration, 2026-09-17
+warning	template-failed	spell	17073	mists	description_ua	the template does not match the English text	verified before the migration, 2026-09-17
+warning	template-failed	spell	17364	mists	aura_ua	the template does not match the English text	verified before the migration, 2026-09-17
+warning	template-failed	spell	17364	mists	description_ua	the template does not match the English text	verified before the migration, 2026-09-17
+warning	template-failed	spell	17877	cata	description_ua	the template does not match the English text	verified before the migration, 2026-09-17
+warning	template-failed	spell	17962	mists	description_ua	the template does not match the English text	verified before the migration, 2026-09-17
+warning	template-failed	spell	18499	mists	description_ua	the template does not match the English text	verified before the migration, 2026-09-17
+warning	template-failed	spell	18562	cata	description_ua	the template does not match the English text	verified before the migration, 2026-09-17
+warning	template-failed	spell	19750	cata	description_ua	the template does not match the English text	verified before the migration, 2026-09-17
+warning	template-failed	spell	20138	cata	description_ua	the template does not match the English text	verified before the migration, 2026-09-17
+warning	template-failed	spell	20925	mists	description_ua	the template does not match the English text	verified before the migration, 2026-09-17
+warning	template-failed	spell	21084	wrath	aura_ua	the template does not match the English text	verified before the migration, 2026-09-17
+warning	template-failed	spell	22570	mists	description_ua	the template does not match the English text	verified before the migration, 2026-09-17
+warning	template-failed	spell	23588	mists	description_ua	the template does not match the English text	verified before the migration, 2026-09-17
+warning	template-failed	spell	27042	classic	description_ua	the template does not match the English text	verified before the migration, 2026-09-17
+warning	template-failed	spell	27208	classic	description_ua	the template does not match the English text	verified before the migration, 2026-09-17
+warning	template-failed	spell	27580	mists	aura_ua	the template does not match the English text	verified before the migration, 2026-09-17
+warning	template-failed	spell	27580	mists	description_ua	the template does not match the English text	verified before the migration, 2026-09-17
+warning	template-failed	spell	31821	mists	aura_ua	the template does not match the English text	verified before the migration, 2026-09-17
+warning	template-failed	spell	31821	mists	description_ua	the template does not match the English text	verified before the migration, 2026-09-17
+warning	template-failed	spell	32385	wrath	description_ua	the template does not match the English text	verified before the migration, 2026-09-17
+warning	template-failed	spell	34861	wrath	description_ua	the template does not match the English text	verified before the migration, 2026-09-17
+warning	template-failed	spell	35395	cata	description_ua	the template does not match the English text	verified before the migration, 2026-09-17
+warning	template-failed	spell	35395	mists	description_ua	the template does not match the English text	verified before the migration, 2026-09-17
+warning	template-failed	spell	40120	cata	aura_ua	the template does not match the English text	verified before the migration, 2026-09-17
+warning	template-failed	spell	40120	mists	aura_ua	the template does not match the English text	verified before the migration, 2026-09-17
+warning	template-failed	spell	45234	cata	description_ua	the template does not match the English text	verified before the migration, 2026-09-17
+warning	template-failed	spell	48792	wrath	description_ua	the template does not match the English text	verified before the migration, 2026-09-17
+warning	template-failed	spell	52610	mists	aura_ua	the template does not match the English text	verified before the migration, 2026-09-17
+warning	template-failed	spell	52610	mists	description_ua	the template does not match the English text	verified before the migration, 2026-09-17
+warning	template-failed	spell	55233	cata	description_ua	the template does not match the English text	verified before the migration, 2026-09-17
+warning	template-failed	spell	64843	mists	aura_ua	the template does not match the English text	verified before the migration, 2026-09-17
+warning	template-failed	spell	64843	mists	description_ua	the template does not match the English text	verified before the migration, 2026-09-17
+warning	template-failed	spell	73651	mists	description_ua	the template does not match the English text	verified before the migration, 2026-09-17
+warning	template-failed	spell	76669	mists	description_ua	the template does not match the English text	verified before the migration, 2026-09-17
+warning	template-failed	spell	79147	mists	description_ua	the template does not match the English text	verified before the migration, 2026-09-17
+warning	template-failed	spell	82944	cata	description_ua	the template does not match the English text	verified before the migration, 2026-09-17
+warning	template-failed	spell	84601	mists	description_ua	the template does not match the English text	verified before the migration, 2026-09-17
+warning	template-failed	spell	84654	mists	description_ua	the template does not match the English text	verified before the migration, 2026-09-17
+warning	template-failed	spell	85288	mists	description_ua	the template does not match the English text	verified before the migration, 2026-09-17
+warning	template-failed	spell	85384	mists	description_ua	the template does not match the English text	verified before the migration, 2026-09-17
+warning	template-failed	spell	96103	mists	description_ua	the template does not match the English text	verified before the migration, 2026-09-17
+warning	template-failed	spell	400614	sod	description_ua	the template does not match the English text	verified before the migration, 2026-09-17
+warning	template-failed	spell	440672	sod	description_ua	the template does not match the English text	verified before the migration, 2026-09-17
+warning	template-failed	spell	444165	sod	description_ua	the template does not match the English text	verified before the migration, 2026-09-17
+warning	template-failed	spell	467823	sod	description_ua	the template does not match the English text	verified before the migration, 2026-09-17
+warning	template-failed	spell	467863	sod	description_ua	the template does not match the English text	verified before the migration, 2026-09-17
+warning	template-failed	spell	467917	sod	description_ua	the template does not match the English text	verified before the migration, 2026-09-17
+warning	template-failed	spell	467988	sod	description_ua	the template does not match the English text	verified before the migration, 2026-09-17
+warning	template-failed	spell	468028	sod	description_ua	the template does not match the English text	verified before the migration, 2026-09-17
+warning	template-failed	spell	468061	sod	description_ua	the template does not match the English text	verified before the migration, 2026-09-17
+warning	template-failed	spell	468235	sod	description_ua	the template does not match the English text	verified before the migration, 2026-09-17
+warning	template-failed	spell	1219747	sod	description_ua	the template does not match the English text	verified before the migration, 2026-09-17
+warning	template-failed	spell	1219788	sod	description_ua	the template does not match the English text	verified before the migration, 2026-09-17
+warning	template-failed	spell	1219790	sod	description_ua	the template does not match the English text	verified before the migration, 2026-09-17
+warning	template-failed	spell	1219798	sod	description_ua	the template does not match the English text	verified before the migration, 2026-09-17
+warning	template-failed	spell	1219800	sod	description_ua	the template does not match the English text	verified before the migration, 2026-09-17
+warning	template-failed	spell	1219913	sod	description_ua	the template does not match the English text	verified before the migration, 2026-09-17
+warning	template-failed	spell	1219914	sod	description_ua	the template does not match the English text	verified before the migration, 2026-09-17

@@ -1,13 +1,15 @@
 import json
 import os
 import re
+import sys
 import time
 from typing import Dict, Any
 
 from bs4 import BeautifulSoup, CData
 
+from generation.utils.issues import WARNING, Issue, IssueLog
 from generation.utils.utils import (NOTE_ALREADY_TRANSLATED, NOTE_NOT_TRANSLATED, NOTE_PRETRANSLATED,
-                                    ValidationError, check_feedback, download_csv_from_google_sheet,
+                                    check_feedback, download_csv_from_google_sheet,
                                     format_notes, notes_hold_back_row, parse_notes, __to_tsv_val,
                                     wowhead_get)
 
@@ -514,7 +516,7 @@ def is_spell_translated(spells: dict[str, SpellData]) -> bool:
     return any(spell.is_translated() for spell in spells.values())
 
 
-def populate_similarities_across_expansions(spells: dict[int, dict[str, SpellData]]):
+def populate_similarities_across_expansions(log: IssueLog, spells: dict[int, dict[str, SpellData]]):
     import re
     name_to_spells: dict[str, dict[str, int]] = dict()
     description_to_spells: dict[str, dict[str, int]] = dict()
@@ -533,10 +535,12 @@ def populate_similarities_across_expansions(spells: dict[int, dict[str, SpellDat
                     spell.name_ref = name_to_spells[name][common_parent]
                 elif len(common_parent_expansions) == 0:
                     if name_to_spells[name].keys() != {'sod'}:
-                        print(f"Warning. Suspicious name parent situation for {key}:{expansion}.")
+                        log.note('parent-suspicious', 'spell', 'more than one parent carries this field',
+                                 id=key, expansion=expansion, field='name')
                     name_to_spells[name][expansion] = key
                 else:
-                    print(f"Warning! Strange name parent situation for {key}:{expansion}!")
+                    log.warning('parent-strange', 'spell', 'no parent carries this field',
+                                id=key, expansion=expansion, field='name')
             else:
                 name_to_spells[name] = {expansion: key}
 
@@ -547,10 +551,12 @@ def populate_similarities_across_expansions(spells: dict[int, dict[str, SpellDat
                     spell.description_ref = description_to_spells[description][common_parent]
                 elif len(common_parent_expansions) == 0:
                     if description_to_spells[description].keys() != {'sod'}:
-                        print(f"Warning. Suspicious description parent situation for {key}:{expansion}.")
+                        log.note('parent-suspicious', 'spell', 'more than one parent carries this field',
+                                 id=key, expansion=expansion, field='description')
                     description_to_spells[description][expansion] = key
                 else:
-                    print(f"Warning! Strange description parent situation for {key}:{expansion}!")
+                    log.warning('parent-strange', 'spell', 'no parent carries this field',
+                                id=key, expansion=expansion, field='description')
             else:
                 description_to_spells[description] = {expansion: key}
 
@@ -561,10 +567,12 @@ def populate_similarities_across_expansions(spells: dict[int, dict[str, SpellDat
                     spell.aura_ref = aura_to_spells[aura][common_parent]
                 elif len(common_parent_expansions) == 0:
                     if aura_to_spells[aura].keys() != {'sod'}:
-                        print(f"Warning. Suspicious aura parent situation for {key}:{expansion}.")
+                        log.note('parent-suspicious', 'spell', 'more than one parent carries this field',
+                                 id=key, expansion=expansion, field='aura')
                     aura_to_spells[aura][expansion] = key
                 else:
-                    print(f"Warning! Strange aura parent situation for {key}:{expansion}!")
+                    log.warning('parent-strange', 'spell', 'no parent carries this field',
+                                id=key, expansion=expansion, field='aura')
             else:
                 aura_to_spells[aura] = {expansion: key}
 
@@ -1118,7 +1126,7 @@ def __try_cast_str_to_int(value: str, default=None):
         return default
 
 
-def read_translations_sheet() -> dict[int, dict[str, SpellData]]:
+def read_translations_sheet(log: IssueLog) -> dict[int, dict[str, SpellData]]:
     import csv
     all_translations: dict[int, dict[str, SpellData]] = dict()
     with open('input/translations.csv', 'r', encoding="utf-8") as input_file:
@@ -1148,7 +1156,8 @@ def read_translations_sheet() -> dict[int, dict[str, SpellData]]:
                 continue
             all_translations[spell_id] = all_translations.get(spell_id, dict())
             if expansion in all_translations[spell_id]:
-                print(f'Warning! Duplicate for {spell_id}:{expansion}')
+                log.warning('duplicate-row', 'spell', 'the sheet has more than one row for this spell',
+                            id=spell_id, expansion=expansion)
             all_translations[spell_id][expansion] = SpellData(spell_id, expansion, name=name_en,
                                                               description=description_en, aura=aura_en, name_ua=name_ua,
                                                               description_ua=description_ua, aura_ua=aura_ua, ref=ref,
@@ -1157,7 +1166,7 @@ def read_translations_sheet() -> dict[int, dict[str, SpellData]]:
 
     return all_translations
 
-def read_classicua_translations(spells_root_path: str, spell_data: dict[int, dict[str, SpellData]]):
+def read_classicua_translations(log: IssueLog, spells_root_path: str, spell_data: dict[int, dict[str, SpellData]]):
     from slpp import slpp as lua
     file_contents = list()
     for foldername, subfolders, filenames in os.walk(spells_root_path):
@@ -1182,7 +1191,8 @@ def read_classicua_translations(spells_root_path: str, spell_data: dict[int, dic
         for spell_id, decoded_spell in decoded_spells.items():
             ref = None
             if spell_id in all_spells and expansion in all_spells[spell_id]:
-                print(f'Warning! Duplicate for spell#{spell_id}:{expansion}')
+                log.warning('duplicate-entry', 'spell', 'the addon entries hold this spell twice',
+                            id=spell_id, expansion=expansion)
             if type(decoded_spell) == dict:
                 name_ua = decoded_spell.get(0)
                 description_ua = decoded_spell.get(1)
@@ -1205,7 +1215,8 @@ def read_classicua_translations(spells_root_path: str, spell_data: dict[int, dic
             if spell_id in spell_data and expansion in spell_data[spell_id].keys():
                 original_name = spell_data[spell_id][expansion].name
             else:
-                print(f"Warning! Spell#{spell_id}:{expansion} doesn't exist in DB!")
+                log.warning('missing-in-data', 'spell', 'in the addon entries but not in the scraped data',
+                            id=spell_id, expansion=expansion)
                 original_name = 'UNKNOWN'
             spell = SpellData(spell_id, expansion, original_name, category=category, name_ua=name_ua,
                               description_ua=description_ua, aura_ua=aura_ua, ref=ref)
@@ -1221,17 +1232,21 @@ def __diff_fields(field1, field2):
     diff = differ.compare(lines1, lines2)
     return '\n'.join(diff)
 
-def apply_translations_to_data(spell_data: dict[int, dict[str, SpellData]], translations: dict[int, dict[str, SpellData]]):
+def apply_translations_to_data(spell_data: dict[int, dict[str, SpellData]], translations: dict[int, dict[str, SpellData]], log: IssueLog):
     for key in sorted(spell_data.keys() & translations.keys()):
         for expansion in spell_data[key].keys() & translations[key].keys():
             orig_spell = spell_data[key][expansion]
             translation = translations[key][expansion]
             if orig_spell.name != translation.name:
-                print(f'Warning! Original name for spell#{key}:{expansion} differs:\n{__diff_fields(translation.name, orig_spell.name)}')
+                log.warning('original-differs', 'spell', __diff_fields(translation.name, orig_spell.name),
+                            id=key, expansion=expansion, field='name')
             if orig_spell.description and orig_spell.description != translation.description:
-                print(f'Warning! Original description for spell#{key}:{expansion} differs:\n{__diff_fields(translation.description, orig_spell.description)}')
+                log.warning('original-differs', 'spell',
+                            __diff_fields(translation.description, orig_spell.description),
+                            id=key, expansion=expansion, field='description')
             if orig_spell.aura and orig_spell.aura != translation.aura:
-                print(f'Warning! Original aura for spell#{key}:{expansion} differs:\n{__diff_fields(translation.aura, orig_spell.aura)}')
+                log.warning('original-differs', 'spell', __diff_fields(translation.aura, orig_spell.aura),
+                            id=key, expansion=expansion, field='aura')
             orig_spell.name_ua = translation.name_ua
             orig_spell.description_ua = translation.description_ua
             orig_spell.aura_ua = translation.aura_ua
@@ -1242,7 +1257,7 @@ def apply_translations_to_data(spell_data: dict[int, dict[str, SpellData]], tran
             translation.spell_md = orig_spell.spell_md
 
 
-def __validate_template(spell: SpellData, fields: tuple[str, str]) -> list[ValidationError]:
+def __validate_template(spell: SpellData, fields: tuple[str, str]) -> list[Issue]:
     import re
     errors = list()
     value = getattr(spell, fields[0])
@@ -1254,24 +1269,22 @@ def __validate_template(spell: SpellData, fields: tuple[str, str]) -> list[Valid
     template_start = translation.find('#')
     if template_start == -1:
         if len(re.findall(r'{\d+}', translation)) != 0:
-            print(f"Warning!! Template not described for spell#{spell.id}:{spell.expansion}")
-            errors.append(ValidationError(spell.id, spell.expansion, 'spell', 'Warning', fields[1], f"Warning!! Template not described for spell#{spell.id}:{spell.expansion}"))
+            errors.append(Issue(WARNING, 'template-not-described', 'spell', str(spell.id), spell.expansion, fields[1], "placeholders in the translation with no template after '#'"))
         return errors
     translation_templates = re.findall(r'{\d+}', translation[:template_start])
     orig_templates = re.findall(r'{\d+}', translation[template_start + 1:])
     if set(translation_templates) != set(orig_templates):
-        print(f"Warning! Templates numbers doesn't match for spell#{spell.id}:{spell.expansion}")
-        errors.append(ValidationError(spell.id, spell.expansion, 'spell', 'Warning', fields[1],f"Warning! Templates numbers doesn't match for spell#{spell.id}:{spell.expansion}"))
+        errors.append(Issue(WARNING, 'template-numbers-mismatch', 'spell', str(spell.id), spell.expansion, fields[1], "placeholder numbers differ between the translation and its template"))
     templates = translation[template_start + 1:].split('#')
     for template in templates:
         template = template.replace('.', '\\.').replace('(', r'\(').replace(')', r'\)').replace('+', r'\+')
         pattern = re.sub(r'{\d+}', r'(\\d+|\\d+\.\\d+|\.\\d+|\[.+?\]|\(.+?\))', template).replace('\\\\', '\\')
         matches = re.findall(pattern, value)
         if len(matches) != 1:
-            errors.append(ValidationError(spell.id, spell.expansion, 'spell', 'Warning', fields[1], f'Warning! Template failed for spell#{spell.id}:{spell.expansion}'))
+            errors.append(Issue(WARNING, 'template-failed', 'spell', str(spell.id), spell.expansion, fields[1], "the template does not match the English text"))
     return errors
 
-def __validate_templates(spell: SpellData) -> list[ValidationError]:
+def __validate_templates(spell: SpellData) -> list[Issue]:
     errors = list()
     if spell.name_ua:
         errors.extend(__validate_template(spell, ('name', 'name_ua')))
@@ -1282,39 +1295,39 @@ def __validate_templates(spell: SpellData) -> list[ValidationError]:
     return errors
 
 
-def __validate_newlines(spell: SpellData) -> list[ValidationError]:
+def __validate_newlines(spell: SpellData) -> list[Issue]:
     import re
     errors = list()
     if spell.description_ua and not spell.description_ua.startswith('ref='):
         if not f'spell#' in spell.description_ua:
             if re.findall("\n\n", spell.description) != re.findall("\n\n", spell.description_ua):
-                errors.append(ValidationError(spell.id, spell.expansion, 'spell', 'Warning', 'description_ua', f"Warning! Newline count doesn't match for spell#{spell.id}:{spell.expansion} description"))
+                errors.append(Issue(WARNING, 'newline-count', 'spell', str(spell.id), spell.expansion, 'description_ua', "blank line count differs from the English"))
     if spell.aura_ua and spell.aura:
         if re.findall("\n\n", spell.aura_ua) != re.findall("\n\n", spell.aura):
-            errors.append(ValidationError(spell.id, spell.expansion, 'spell', 'Warning', 'aura_ua', f"Warning! Newline count doesn't match for spell#{spell.id}:{spell.expansion} aura"))
+            errors.append(Issue(WARNING, 'newline-count', 'spell', str(spell.id), spell.expansion, 'aura_ua', "blank line count differs from the English"))
     return errors
 
-def __validate_translation_completion(spell: SpellData) -> list[ValidationError]:
+def __validate_translation_completion(spell: SpellData) -> list[Issue]:
     errors = list()
     if spell.name and not spell.name_ua:
-        errors.append(ValidationError(spell.id, spell.expansion, 'spell', 'Warning', 'name_ua', f"Warning!! There's no translation for spell#{spell.id}:{spell.expansion} name"))
+        errors.append(Issue(WARNING, 'translation-missing', 'spell', str(spell.id), spell.expansion, 'name_ua', "no translation"))
     if spell.description and not spell.description_ua:
-        errors.append(ValidationError(spell.id, spell.expansion, 'spell', 'Warning', 'description_ua', f"Warning!! There's no translation for spell#{spell.id}:{spell.expansion} description"))
+        errors.append(Issue(WARNING, 'translation-missing', 'spell', str(spell.id), spell.expansion, 'description_ua', "no translation"))
     if spell.aura and not spell.aura_ua:
-        errors.append(ValidationError(spell.id, spell.expansion, 'spell', 'Warning', 'aura_ua', f"Warning!! There's no translation for spell#{spell.id}:{spell.expansion} aura"))
+        errors.append(Issue(WARNING, 'translation-missing', 'spell', str(spell.id), spell.expansion, 'aura_ua', "no translation"))
     return errors
 
 
-def __validate_numbers(spell: SpellData, fields: tuple[str, str]) -> list[ValidationError]:
+def __validate_numbers(spell: SpellData, fields: tuple[str, str]) -> list[Issue]:
     import re
     errors = list()
     value = getattr(spell, fields[0])
     translation = getattr(spell, fields[1])
     if set(re.findall(r'\d+', value)) != set(re.findall(r'\d+', translation)):
-        errors.append(ValidationError(spell.id, spell.expansion, 'spell', 'Warning', fields[1], f"Warning!! Numbers don't match for spell#{spell.id}:{spell.expansion}"))
+        errors.append(Issue(WARNING, 'numbers-mismatch', 'spell', str(spell.id), spell.expansion, fields[1], "numbers differ from the English"))
     return errors
 
-def __validate_spell_numbers(spell: SpellData) -> list[ValidationError]:
+def __validate_spell_numbers(spell: SpellData) -> list[Issue]:
     errors = list()
     if spell.description and spell.description_ua and not spell.description_ua.startswith('ref=') and not '#' in spell.description_ua:
         errors.extend(__validate_numbers(spell, ('description', 'description_ua')))
@@ -1323,7 +1336,7 @@ def __validate_spell_numbers(spell: SpellData) -> list[ValidationError]:
     return errors
 
 
-def __resolve_spell_references(spell: SpellData, spells: dict[int, dict[str, SpellData]]) -> tuple[SpellData | None, list[ValidationError]]:
+def __resolve_spell_references(spell: SpellData, spells: dict[int, dict[str, SpellData]]) -> tuple[SpellData | None, list[Issue]]:
     import copy
     errors = []
     spell_copy = copy.deepcopy(spell)
@@ -1338,8 +1351,8 @@ def __resolve_spell_references(spell: SpellData, spells: dict[int, dict[str, Spe
             if reffed_spell.ref != reffed_spell.id:
                 break
     if not reffed_spell:
-        print(f'Warning!! Non-existent ref#{spell_copy.ref} for spell#{spell_copy.id}')
-        errors.append(ValidationError(spell_copy.id, spell_copy.expansion, 'spell', 'Warning', 'ref', f'Warning!! Non-existent ref#{spell_copy.ref} for spell#{spell_copy.id}'))
+        errors.append(Issue(WARNING, 'ref-missing', 'spell', str(spell_copy.id), spell_copy.expansion,
+                            'ref', f'references spell#{spell_copy.ref}, which does not exist'))
         return None, errors
 
     if reffed_spell.ref:
@@ -1364,14 +1377,13 @@ def __resolve_spell_references(spell: SpellData, spells: dict[int, dict[str, Spe
     return spell_copy, errors
 
 
-def __validate_references(spells: dict[int, dict[str, SpellData]], spell: SpellData, depth=0) -> list[ValidationError]:
+def __validate_references(spells: dict[int, dict[str, SpellData]], spell: SpellData, depth=0) -> list[Issue]:
     errors = list()
 
     if spell.ref == spell.id:
         return errors
     if depth > 2:
-        print(f'Warning!! Too deep reference chain at spell#{spell.id}:{spell.expansion}')
-        errors.append(ValidationError(spell.id, spell.expansion, 'spell', 'Warning', 'ref', f'Warning!! Too deep reference chain at spell#{spell.id}:{spell.expansion}'))
+        errors.append(Issue(WARNING, 'ref-chain-too-deep', 'spell', str(spell.id), spell.expansion, 'ref', "reference chain is too deep"))
         return errors
 
     if spell.ref:
@@ -1382,8 +1394,7 @@ def __validate_references(spells: dict[int, dict[str, SpellData]], spell: SpellD
                 reffed_spell = spells[spell.ref][expansion]
                 break
         if not reffed_spell:
-            print(f'Warning!! Non-existent ref#{spell.ref} for spell#{spell.id}')
-            errors.append(ValidationError(spell.id, spell.expansion, 'spell', 'Warning', 'ref',f'Warning!! Non-existent ref#{spell.ref} for spell#{spell.id}'))
+            errors.append(Issue(WARNING, 'ref-missing', 'spell', str(spell.id), spell.expansion, 'ref', f'references spell#{spell.ref}, which does not exist'))
             return errors
 
         resolved_spell, res_errors = __resolve_spell_references(spell, spells)
@@ -1391,17 +1402,17 @@ def __validate_references(spells: dict[int, dict[str, SpellData]], spell: SpellD
 
         # __validate_translation_completion(spell) # reuse with different error message?
         if spell.name and not resolved_spell.name_ua:
-            errors.append(ValidationError(spell.id, spell.expansion, 'spell', 'Warning', 'name_ua',f"Warning!! There's no translation for resolved spell#{spell.id}:{spell.expansion} name"))
+            errors.append(Issue(WARNING, 'resolved-translation-missing', 'spell', str(spell.id), spell.expansion, 'name_ua', "the resolved spell has no translation for this field"))
         if spell.description and not resolved_spell.description_ua:
-            errors.append(ValidationError(spell.id, spell.expansion, 'spell', 'Warning', 'description_ua',f"Warning!! There's no translation for resolved spell#{spell.id}:{spell.expansion} description"))
+            errors.append(Issue(WARNING, 'resolved-translation-missing', 'spell', str(spell.id), spell.expansion, 'description_ua', "the resolved spell has no translation for this field"))
         if spell.aura and not resolved_spell.aura_ua:
-            errors.append(ValidationError(spell.id, spell.expansion, 'spell', 'Warning', 'aura_ua',f"Warning!! There's no translation for resolved spell#{spell.id}:{spell.expansion} aura"))
+            errors.append(Issue(WARNING, 'resolved-translation-missing', 'spell', str(spell.id), spell.expansion, 'aura_ua', "the resolved spell has no translation for this field"))
 
         if not spell.description and resolved_spell.description_ua:
-            errors.append(ValidationError(spell.id, spell.expansion, 'spell', 'Warning', 'description_ua',f"Warning!! Redundant translation for resolved spell#{spell.id}:{spell.expansion} description"))
+            errors.append(Issue(WARNING, 'resolved-translation-redundant', 'spell', str(spell.id), spell.expansion, 'description_ua', "the resolved spell already covers this field"))
 
         if not spell.aura and resolved_spell.aura_ua:
-            errors.append(ValidationError(spell.id, spell.expansion, 'spell', 'Warning', 'aura_ua',f"Warning!! Redundant translation for resolved spell#{spell.id}:{spell.expansion} aura"))
+            errors.append(Issue(WARNING, 'resolved-translation-redundant', 'spell', str(spell.id), spell.expansion, 'aura_ua', "the resolved spell already covers this field"))
 
         # __validate_templates(resolved_spell) # there were 30 verified warnings, but it'd be better to use some different error messages
         # __validate_spell_numbers(resolved_spell) # there were 1 verified warning, but it'd be also better to use some different error messages
@@ -1411,7 +1422,7 @@ def __validate_references(spells: dict[int, dict[str, SpellData]], spell: SpellD
     return errors
 
 
-def validate_translations(spells: dict[int, dict[str, SpellData]]) -> list[ValidationError]:
+def validate_translations(spells: dict[int, dict[str, SpellData]]) -> list[Issue]:
     print("Validating...")
     validation_errors = list()
     for key in sorted(spells.keys()):
@@ -1423,36 +1434,40 @@ def validate_translations(spells: dict[int, dict[str, SpellData]]) -> list[Valid
             validation_errors.extend(__validate_spell_numbers(spell))
             validation_errors.extend(__validate_references(spells, spell))
 
-    # NOTE: Some validations are still printed into console. As I am lazy guy, I didn't wanted to test these.
-    # Print statements are removed for verified errors, so if something new appears - it will be additionally printed.
     print("Validated.")
-    for validation_error in validation_errors:
-        print(validation_error.error_message)
     return validation_errors
     # check if spell was updated in next expansion but has no translation
 
 
-def compare_tsv_and_classicua(tsv_translations, classicua_translations):
+def compare_tsv_and_classicua(tsv_translations, classicua_translations, log: IssueLog):
     for key in sorted(tsv_translations.keys() - classicua_translations.keys()):
-        print(f"Warning! Spell#{key} doesn't exist in ClassicUA")
+        log.warning('missing-in-classicua', 'spell', 'on the sheet but not in the addon entries', id=key)
     for key in sorted(classicua_translations.keys() - tsv_translations.keys()):
-        print(f"Warning! Spell#{key} doesn't exist in TSV")
+        log.warning('missing-on-sheet', 'spell', 'in the addon entries but not on the sheet', id=key)
     for key in sorted(tsv_translations.keys() & classicua_translations.keys()):
         for expansion in tsv_translations[key].keys() - classicua_translations[key].keys():
             spell = tsv_translations[key][expansion]
             if (not spell.id == spell.ref): # Intentional skipping by setting ref to id
-                print(f"Warning! Spell#{key}:{expansion} doesn't exist in ClassicUA")
+                log.warning('missing-in-classicua', 'spell', 'on the sheet but not in the addon entries',
+                            id=key, expansion=expansion)
         for expansion in classicua_translations[key].keys() - tsv_translations[key].keys():
-            print(f"Warning! Spell#{key}:{expansion} doesn't exist in data")
+            log.warning('missing-in-data', 'spell', 'in the addon entries but not in the scraped data',
+                        id=key, expansion=expansion)
         for expansion in tsv_translations[key].keys() & classicua_translations[key].keys():
             tsv_translation = tsv_translations[key][expansion]
             classicua_translation = classicua_translations[key][expansion]
             if tsv_translation.name_ua != classicua_translation.name_ua:
-                print(f'Warning! Name translation differs for spell#{key}:{expansion}:\n{__diff_fields(tsv_translation.name_ua, classicua_translation.name_ua)}')
+                log.warning('translation-differs', 'spell',
+                            __diff_fields(tsv_translation.name_ua, classicua_translation.name_ua),
+                            id=key, expansion=expansion, field='name')
             if tsv_translation.description_ua != classicua_translation.description_ua:
-                print(f'Warning! Description translation differs for spell#{key}:{expansion}:\n{__diff_fields(tsv_translation.description_ua, classicua_translation.description_ua)}')
+                log.warning('translation-differs', 'spell',
+                            __diff_fields(tsv_translation.description_ua, classicua_translation.description_ua),
+                            id=key, expansion=expansion, field='description')
             if tsv_translation.aura_ua != classicua_translation.aura_ua:
-                print(f'Warning! Aura translation differs for spell#{key}:{expansion}:\n{__diff_fields(tsv_translation.aura_ua, classicua_translation.aura_ua)}')
+                log.warning('translation-differs', 'spell',
+                            __diff_fields(tsv_translation.aura_ua, classicua_translation.aura_ua),
+                            id=key, expansion=expansion, field='aura')
 
 
 def filter_not_updated(spells: dict[int, dict[str, SpellData]]) -> dict[int, dict[str, SpellData]]:
@@ -1473,7 +1488,7 @@ def filter_not_updated(spells: dict[int, dict[str, SpellData]]) -> dict[int, dic
     return result
 
 
-def compare_refs(spells: dict[int, dict[str, SpellData]], translations: dict[int, dict[str, SpellData]]):
+def compare_refs(spells: dict[int, dict[str, SpellData]], translations: dict[int, dict[str, SpellData]], log: IssueLog):
     for key in sorted(spells.keys() & translations.keys()):
         for expansion in spells[key].keys() & translations[key].keys():
             spell = spells[key][expansion]
@@ -1481,9 +1496,10 @@ def compare_refs(spells: dict[int, dict[str, SpellData]], translations: dict[int
             if ((translation.name_ref and spell.name_ref != translation.name_ref)
                     or (translation.description_ref and spell.description_ref != translation.description_ref)
                     or (translation.aura_ref and spell.aura_ref != translation.aura_ref)):
-                print(f'Warning! Refs differ for spell#{key}:{expansion}:\n'
-                      f'Generated: {spell.name_ref}\t{spell.description_ref}\t{spell.aura_ref}\n'
-                      f'Translated: {translation.name_ref}\t{translation.description_ref}\t{translation.aura_ref}')
+                log.warning('refs-differ', 'spell',
+                            f'generated {spell.name_ref}/{spell.description_ref}/{spell.aura_ref}, '
+                            f'sheet {translation.name_ref}/{translation.description_ref}/{translation.aura_ref}',
+                            id=key, expansion=expansion, field='ref')
 
 
 def remove_refs(remove_refs: set[tuple[int, str]]):
@@ -1510,23 +1526,24 @@ def remove_refs(remove_refs: set[tuple[int, str]]):
 
 
 if __name__ == '__main__':
+    log = IssueLog('spells')
     download_csv_from_google_sheet('Spells')
 
     # loaded_spells = load_spells_from_db()
     all_spells, raw_spells = retrieve_spell_data()
-    # populate_similarities_across_expansions(all_spells)
+    # populate_similarities_across_expansions(log, all_spells)
 
-    tsv_translations = read_translations_sheet()
-    classicua_translations = read_classicua_translations(r'input\entries', all_spells)
+    tsv_translations = read_translations_sheet(log)
+    classicua_translations = read_classicua_translations(log, r'input\entries', all_spells)
 
-    compare_refs(all_spells, tsv_translations) # Temp? method to compare generated refs and refs in sheet
-    apply_translations_to_data(all_spells, tsv_translations)
+    compare_refs(all_spells, tsv_translations, log) # Temp? method to compare generated refs and refs in sheet
+    apply_translations_to_data(all_spells, tsv_translations, log)
 
     save_spells_to_db(all_spells, 'cache/spells.db')
     save_spells_to_db(raw_spells, 'cache/raw_spells.db')
 
-    compare_tsv_and_classicua(tsv_translations, classicua_translations)
-    validate_translations(all_spells)
+    compare_tsv_and_classicua(tsv_translations, classicua_translations, log)
+    log.issues.extend(validate_translations(all_spells))
 
     unknown_spells, untranslated_spells = check_feedback('spells', 'Spell', all_spells,
                                                         lambda spell: bool(spell.name_ua or spell.ref))
@@ -1550,3 +1567,5 @@ if __name__ == '__main__':
         for_sheet[key] = all_spells[key]
 
     create_translation_sheet(filter_for_translation(for_sheet))
+
+    sys.exit(log.finish())

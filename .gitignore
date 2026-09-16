@@ -11,3 +11,6 @@ venv
 *.db
 credentials.json
 .env
+
+# accepted issues are a tracked record, unlike the generated worklists
+!**/verified_issues.tsv
