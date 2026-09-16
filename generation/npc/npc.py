@@ -571,7 +571,9 @@ def load_merged_translations() -> dict[int, dict[str, NPC_MD]]:
 def compare_npc(tsv_npc: NPC_MD, lua_npc: NPC_MD):
     if tsv_npc.name != lua_npc.name:
         print(f'Warning! NPC#{tsv_npc.id}:{tsv_npc.expansion} name differs:\n{tsv_npc.name}<->{lua_npc.name}')
-    if tsv_npc.tag != lua_npc.tag:
+    # the sheet keeps descriptions in angle brackets and the sources do not always,
+    # so compare them stripped or every tagged NPC reports as changed
+    if __bracketed(tsv_npc.tag) != __bracketed(lua_npc.tag):
         print(f'Warning! NPC#{tsv_npc.id}:{tsv_npc.expansion} tag differs:\n{tsv_npc.tag}<->{lua_npc.tag}')
     if tsv_npc.name_ua != lua_npc.name_ua:
         print(f'Warning! NPC#{tsv_npc.id}:{tsv_npc.expansion} translation differs:\n{tsv_npc.name_ua}<->{lua_npc.name_ua}')
