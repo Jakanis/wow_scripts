@@ -1009,20 +1009,37 @@ def __term_traits(term: GlossaryTerm) -> tuple[str, str]:
     return race, sex
 
 
-def create_missing_entries_sheet(all_npcs: dict[int, dict[str, NPC_MD]], glossary: Glossary,
-                                 entries_dir: str = 'input/entries', path: str = 'output/missing_entries.tsv'):
-    import csv
+def filter_missing_entries(entries_dir: str = 'input/entries') -> dict[str, dict[int, NPC_Short]]:
+    # entries ClassicUA generates that the NPCs sheet never recorded; pass any other
+    # selection to create_missing_entries_sheet to work through a batch by hand
     translations = read_classicua_translations(entries_dir)
     sheet = load_merged_translations()
+
+    missing = dict()
+    for expansion in expansion_data:
+        for npc_id in sorted(translations.get(expansion, {})):
+            if expansion in sheet.get(npc_id, {}):
+                continue
+            missing.setdefault(expansion, {})[npc_id] = translations[expansion][npc_id]
+
+    in_sheet = sum(len(expansions) for expansions in sheet.values())
+    generated = sum(len(entries) for entries in translations.values())
+    found = sum(len(entries) for entries in missing.values())
+    print(f'NPCs sheet has {in_sheet} row(s), ClassicUA generates {generated} entry(ies), '
+          f'{found} of them are missing from the sheet')
+    return missing
+
+
+def create_missing_entries_sheet(missing: dict[str, dict[int, NPC_Short]],
+                                 all_npcs: dict[int, dict[str, NPC_MD]], glossary: Glossary,
+                                 path: str = 'output/missing_entries.tsv'):
+    import csv
     terms_by_id = __glossary_terms_by_npc_id(glossary)
 
     rows = []
     missing_from_wowhead = []
     for expansion in expansion_data:
-        for npc_id in sorted(translations.get(expansion, {})):
-            if expansion in sheet.get(npc_id, {}):
-                continue
-            entry = translations[expansion][npc_id]
+        for npc_id, entry in sorted(missing.get(expansion, {}).items()):
             # npcs.db collapses an NPC into the expansion it first appeared in, so fall back to any of them
             wowhead_npcs = all_npcs.get(npc_id) or {}
             wowhead = wowhead_npcs.get(expansion) or next(iter(wowhead_npcs.values()), None)
@@ -1044,14 +1061,9 @@ def create_missing_entries_sheet(all_npcs: dict[int, dict[str, NPC_MD]], glossar
                          'Description (UA)', 'раса', 'стать', 'Note'])
         writer.writerows(rows)
 
-    in_sheet = sum(len(expansions) for expansions in sheet.values())
-    generated = sum(len(entries) for entries in translations.values())
-    print(f'NPCs sheet has {in_sheet} row(s), ClassicUA generates {generated} entry(ies)')
     print(f'Wrote {len(rows)} missing entry(ies) to {path}')
     if missing_from_wowhead:
-        print(f'Warning! {len(missing_from_wowhead)} of them are not in npcs.db, so they have no English '
-              f'original: {", ".join(missing_from_wowhead[:10])}'
-              + (' ...' if len(missing_from_wowhead) > 10 else ''))
+        print(f'Warning! {len(missing_from_wowhead)} of them are not in npcs.db, so they have no English original: {", ".join(missing_from_wowhead)}')
 
 
 def generate_entries_with_classicua(glossary: Glossary, entries_dir: str = 'input/entries') -> Glossary:
@@ -1103,5 +1115,6 @@ if __name__ == '__main__':
     # glossary = generate_entries_with_classicua(glossary)
 
     # Entries that exist in ClassicUA but were never recorded on the NPCs sheet
-    # create_missing_entries_sheet(all_npcs_md, glossary)
+    # missing_entries = filter_missing_entries()
+    # create_missing_entries_sheet(missing_entries, all_npcs_md, glossary)
 
