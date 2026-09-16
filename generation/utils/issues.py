@@ -38,6 +38,11 @@ class IssueLog:
 
     The whole record is the identity, message included, so any change in what a
     check says is a reason to look at it again.
+
+    A generator module keeps one at module level and calls it from anywhere in
+    the file, rather than passing it down:
+
+        log = IssueLog('spells')
     """
 
     def __init__(self, module: str, verified_path: str = 'verified_issues.tsv'):
@@ -58,6 +63,10 @@ class IssueLog:
 
     def note(self, rule, entity, message, **kw):
         self.add(NOTE, rule, entity, message, **kw)
+
+    def clear(self) -> None:
+        self.issues.clear()
+        self.failed = False
 
     def fail(self, reason: str) -> None:
         # the run itself could not finish: a download that did not complete, a

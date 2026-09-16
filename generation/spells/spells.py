@@ -14,6 +14,8 @@ from generation.utils.utils import (NOTE_ALREADY_TRANSLATED, NOTE_NOT_TRANSLATED
                                     wowhead_get)
 
 # THREADS = os.cpu_count()
+log = IssueLog('spells')
+
 SCRAPE_THREADS = 1
 PARSE_THREADS = os.cpu_count()
 CLASSIC = 'classic'
@@ -516,7 +518,7 @@ def is_spell_translated(spells: dict[str, SpellData]) -> bool:
     return any(spell.is_translated() for spell in spells.values())
 
 
-def populate_similarities_across_expansions(log: IssueLog, spells: dict[int, dict[str, SpellData]]):
+def populate_similarities_across_expansions(spells: dict[int, dict[str, SpellData]]):
     import re
     name_to_spells: dict[str, dict[str, int]] = dict()
     description_to_spells: dict[str, dict[str, int]] = dict()
@@ -1126,7 +1128,7 @@ def __try_cast_str_to_int(value: str, default=None):
         return default
 
 
-def read_translations_sheet(log: IssueLog) -> dict[int, dict[str, SpellData]]:
+def read_translations_sheet() -> dict[int, dict[str, SpellData]]:
     import csv
     all_translations: dict[int, dict[str, SpellData]] = dict()
     with open('input/translations.csv', 'r', encoding="utf-8") as input_file:
@@ -1166,7 +1168,7 @@ def read_translations_sheet(log: IssueLog) -> dict[int, dict[str, SpellData]]:
 
     return all_translations
 
-def read_classicua_translations(log: IssueLog, spells_root_path: str, spell_data: dict[int, dict[str, SpellData]]):
+def read_classicua_translations(spells_root_path: str, spell_data: dict[int, dict[str, SpellData]]):
     from slpp import slpp as lua
     file_contents = list()
     for foldername, subfolders, filenames in os.walk(spells_root_path):
@@ -1232,7 +1234,7 @@ def __diff_fields(field1, field2):
     diff = differ.compare(lines1, lines2)
     return '\n'.join(diff)
 
-def apply_translations_to_data(spell_data: dict[int, dict[str, SpellData]], translations: dict[int, dict[str, SpellData]], log: IssueLog):
+def apply_translations_to_data(spell_data: dict[int, dict[str, SpellData]], translations: dict[int, dict[str, SpellData]]):
     for key in sorted(spell_data.keys() & translations.keys()):
         for expansion in spell_data[key].keys() & translations[key].keys():
             orig_spell = spell_data[key][expansion]
@@ -1435,11 +1437,12 @@ def validate_translations(spells: dict[int, dict[str, SpellData]]) -> list[Issue
             validation_errors.extend(__validate_references(spells, spell))
 
     print("Validated.")
+    log.issues.extend(validation_errors)
     return validation_errors
     # check if spell was updated in next expansion but has no translation
 
 
-def compare_tsv_and_classicua(tsv_translations, classicua_translations, log: IssueLog):
+def compare_tsv_and_classicua(tsv_translations, classicua_translations):
     for key in sorted(tsv_translations.keys() - classicua_translations.keys()):
         log.warning('missing-in-classicua', 'spell', 'on the sheet but not in the addon entries', id=key)
     for key in sorted(classicua_translations.keys() - tsv_translations.keys()):
@@ -1488,7 +1491,7 @@ def filter_not_updated(spells: dict[int, dict[str, SpellData]]) -> dict[int, dic
     return result
 
 
-def compare_refs(spells: dict[int, dict[str, SpellData]], translations: dict[int, dict[str, SpellData]], log: IssueLog):
+def compare_refs(spells: dict[int, dict[str, SpellData]], translations: dict[int, dict[str, SpellData]]):
     for key in sorted(spells.keys() & translations.keys()):
         for expansion in spells[key].keys() & translations[key].keys():
             spell = spells[key][expansion]
@@ -1526,24 +1529,23 @@ def remove_refs(remove_refs: set[tuple[int, str]]):
 
 
 if __name__ == '__main__':
-    log = IssueLog('spells')
     download_csv_from_google_sheet('Spells')
 
     # loaded_spells = load_spells_from_db()
     all_spells, raw_spells = retrieve_spell_data()
-    # populate_similarities_across_expansions(log, all_spells)
+    # populate_similarities_across_expansions(all_spells)
 
-    tsv_translations = read_translations_sheet(log)
-    classicua_translations = read_classicua_translations(log, r'input\entries', all_spells)
+    tsv_translations = read_translations_sheet()
+    classicua_translations = read_classicua_translations(r'input\entries', all_spells)
 
-    compare_refs(all_spells, tsv_translations, log) # Temp? method to compare generated refs and refs in sheet
-    apply_translations_to_data(all_spells, tsv_translations, log)
+    compare_refs(all_spells, tsv_translations) # Temp? method to compare generated refs and refs in sheet
+    apply_translations_to_data(all_spells, tsv_translations)
 
     save_spells_to_db(all_spells, 'cache/spells.db')
     save_spells_to_db(raw_spells, 'cache/raw_spells.db')
 
-    compare_tsv_and_classicua(tsv_translations, classicua_translations, log)
-    log.issues.extend(validate_translations(all_spells))
+    compare_tsv_and_classicua(tsv_translations, classicua_translations)
+    validate_translations(all_spells)
 
     unknown_spells, untranslated_spells = check_feedback('spells', 'Spell', all_spells,
                                                         lambda spell: bool(spell.name_ua or spell.ref))
