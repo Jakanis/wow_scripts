@@ -700,7 +700,9 @@ def get_text_code(text) -> (str, str):
     # "Number of Necropolises remaining: {1}"
     text = re.sub(r'\{\d+\}', '<number>', text)
 
-    words = re.findall(r"""([\w<][\w\-'/]*[\w>])""", text)  # matches words with at least 2 word-characters and allows punctuation characters inside (boss-lady, ma'am, etc)
+    # A template keeps its slash (<his/her>); an ordinary word does not, because
+    # utils.lua splits on it in game and would otherwise compute a different code.
+    words = re.findall(r"""(<[\w\-'/]+>|\w[\w\-']*\w)""", text)  # words of at least 2 word-characters, punctuation allowed inside (boss-lady, ma'am)
     result = list()
     for word in words:
         if len(word) > 0:
