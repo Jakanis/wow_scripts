@@ -1065,7 +1065,7 @@ effect_pretranslation_map = {
     r"Improves spell haste rating by (\d+).": "Збільшує показник швидкості заклять на \\1.",
     r"Restores (\d+) mana per (\d+) sec.": "Відновлює \\1 мани кожні \\2 с",
 
-    r"Matches a Red or Yellow Socket.": "Відновлює \\1 мани кожні \\2 с",
+    r"Matches a Red or Yellow Socket.": "Підходить для червоного та жовтого гнізда.",
 
 
 }
