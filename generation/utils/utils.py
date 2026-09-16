@@ -726,10 +726,12 @@ def get_text_code(text) -> (str, str):
                 cleaned_word = word.replace('<', '').replace('>', '') # Removing characters that aren't captured in game
                 result.append(cleaned_word[0])
                 result.append(cleaned_word[-1])
-        if len(result) >= MAX_CODE_LENGTH:
+        if len(''.join(result)) >= MAX_CODE_LENGTH:
             break
 
-    return ''.join(result), None
+    # Cut to characters, not to elements: a template contributes two of them
+    # ("..", ".-"), and utils.lua never matches a candidate longer than this.
+    return ''.join(result)[:MAX_CODE_LENGTH], None
 
 
 def are_texts_equal_ignoring_values(text1: str, text2: str) -> bool:
