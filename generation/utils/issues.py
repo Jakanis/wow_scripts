@@ -83,8 +83,7 @@ class IssueLog:
         with open(self.verified_path, encoding='utf-8', newline='') as f:
             for row in csv.DictReader(f, delimiter='\t'):
                 issue = Issue(row['severity'], row['rule'], row['entity'], row['id'],
-                              row['expansion'], row['field'],
-                              (row['message'] or '').replace('\\n', '\n'))
+                              row['expansion'], row['field'], row['message'] or '')
                 out[issue] = row.get('note') or ''
             return out
 
@@ -99,8 +98,7 @@ class IssueLog:
             writer.writerow(_COLUMNS)
             for issue, note in rows:
                 writer.writerow([issue.severity, issue.rule, issue.entity, issue.id,
-                                 issue.expansion, issue.field,
-                                 issue.message.replace('\n', '\\n'), note])
+                                 issue.expansion, issue.field, issue.message, note])
 
     def accept_new(self, note: str = '') -> int:
         verified = self.load_verified()
@@ -147,6 +145,18 @@ class IssueLog:
     def _indent(text: str, pad: str) -> str:
         return text.replace('\n', '\n' + pad)
 
+    @classmethod
+    def _block(cls, head: str, text: str, pad: str) -> str:
+        # a multiline message starts on its own line, so all of its lines share an indent
+        if '\n' in text:
+            return head + '\n' + pad + cls._indent(text, pad)
+        return f'{head} {text}'
+
+    @classmethod
+    def _render(cls, issue: Issue, pad: str) -> str:
+        return cls._block(f'{pad}[{issue.severity}] {issue.rule} {issue.where()}:',
+                          issue.message, pad + '  ')
+
     def report(self) -> None:
         new, known, gone = self.compare()
         changed, new, gone = self._pair_changed(new, gone)
@@ -159,17 +169,17 @@ class IssueLog:
         if new:
             print('\nNEW')
             for issue in sorted(new, key=lambda i: (_SEVERITY_ORDER.get(i.severity, 9), i.rule)):
-                print('  ' + self._indent(str(issue), '    '))
+                print(self._render(issue, '  '))
         if changed:
             print('\nCHANGED (accepted earlier, the message is different now)')
             for before, after in changed:
                 print(f'  {after.where()}  {after.rule}')
-                print('    was: ' + self._indent(before.message, '         '))
-                print('    now: ' + self._indent(after.message, '         '))
+                for label, text in (('was', before.message), ('now', after.message)):
+                    print(self._block(f'    {label}:', text, '      '))
         if gone:
             print(f'\nNO LONGER OCCURS (drop from {self.verified_path})')
             for issue in gone:
-                print('  ' + self._indent(str(issue), '    '))
+                print(self._render(issue, '  '))
 
     def write(self, path: str = 'output/issues.tsv') -> None:
         new, known, gone = self.compare()
@@ -183,8 +193,7 @@ class IssueLog:
             writer.writerow(('state',) + _COLUMNS[:-1])
             for issue, bucket in state.items():
                 writer.writerow([bucket, issue.severity, issue.rule, issue.entity, issue.id,
-                                 issue.expansion, issue.field,
-                                 issue.message.replace('\n', '\\n')])
+                                 issue.expansion, issue.field, issue.message])
 
     def exit_code(self, strict: bool = False) -> int:
         if self.failed:
