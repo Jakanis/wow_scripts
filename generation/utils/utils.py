@@ -696,6 +696,10 @@ def get_text_code(text) -> (str, str):
     for p in known_gossip_dynamic_seq_with_multiple_words_for_get_text_code:
         text = text.replace(p[0], p[1])
 
+    # "{1}" marks a spot where the original text has a dynamic number, e.g.
+    # "Number of Necropolises remaining: {1}"
+    text = re.sub(r'\{\d+\}', '<number>', text)
+
     words = re.findall(r"""([\w<][\w\-'/]*[\w>])""", text)  # matches words with at least 2 word-characters and allows punctuation characters inside (boss-lady, ma'am, etc)
     result = list()
     for word in words:
@@ -706,7 +710,7 @@ def get_text_code(text) -> (str, str):
                 template_type = word[1:-1]
                 if template_type in ('class', 'race'):
                     result.append('..')
-                elif template_type in ('name', 'target'):
+                elif template_type in ('name', 'target', 'number'):
                     result.append('.-')
                 elif '/' in template_type:
                     male_word, female_word = template_type.split('/')
