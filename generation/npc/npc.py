@@ -605,23 +605,39 @@ def build_name_pretranslation_map(npcs: dict[int, dict[str, NPC_MD]]) -> dict[st
     return name_translations
 
 
-def create_translation_sheet(npcs: dict[int, dict[str, NPC_MD]], missed_npcs: set[int] = None):
-    name_pretranslation_map = build_name_pretranslation_map(npcs)
-    with (open(f'translate_this.tsv', mode='w', encoding='utf-8') as f):
+def filter_untranslated(npcs: dict[int, dict[str, NPC_MD]], missed_npcs: set[int],
+                        name_pretranslation_map: dict[str, str],
+                        expansions=(CLASSIC, SOD, TBC)) -> dict[int, dict[str, NPC_MD]]:
+    # untranslated NPCs worth putting in front of a translator: ones a player can meet,
+    # ones reported through feedback, and ones whose name is already translated elsewhere
+    result = dict()
+    for key in sorted(npcs.keys()):
+        for expansion, npc in npcs[key].items():
+            if npc.name_ua is not None or npc.expansion not in expansions:
+                continue
+            if (npc.react != [None, None] or npc.location != []
+                    or key in missed_npcs or npc.name in name_pretranslation_map):
+                result.setdefault(key, {})[expansion] = npc
+    return result
+
+
+def create_translation_sheet(npcs: dict[int, dict[str, NPC_MD]],
+                             name_pretranslation_map: dict[str, str] = None,
+                             path: str = 'output/translate_this.tsv'):
+    name_pretranslation_map = name_pretranslation_map or {}
+    os.makedirs(os.path.dirname(path), exist_ok=True)
+    with (open(path, mode='w', encoding='utf-8') as f):
         f.write('ID\tName(EN)\tDescription(EN)\tName(UA)\tDescription(UA)\tраса\tстать\tNote\texpansion\n')
         count = 0
         for key in sorted(npcs.keys()):
             for expansion, npc in npcs[key].items():
-                if (npc.name_ua is None and (npc.react != [None, None] or npc.location != [] or key in missed_npcs or npc.name in name_pretranslation_map.keys()) and npc.expansion in [CLASSIC, SOD, TBC]):
-                    npc_name_ua = npc.name_ua if npc.name_ua else ''
-                    if npc_name_ua == '' and npc.name in name_pretranslation_map.keys():
-                        npc_name_ua = name_pretranslation_map[npc.name] + ' ???'
-                # if npc.name_ua is None and npc.expansion in [CLASSIC, SOD]:
-                # if npc.expansion in [CLASSIC, SOD] and npc.id in [14465, 14466, 229001, 232335, 202387, 202390, 222231, 202392, 202391, 14751, 222240, 205733, 230695, 7863, 8376, 212157, 11200, 213450, 229452, 222293, 7383, 232921, 2671, 2673, 2674, 228596, 11637, 7543, 7545, 223739]:
-                    f.write(f'{npc.id}\t"{npc.name}"\t"{f"<{npc.tag}>" if npc.tag else ""}"\t{npc_name_ua}\t\t\t\t\t{npc.expansion}\n')
-                    count += 1
+                npc_name_ua = npc.name_ua or ''
+                if npc_name_ua == '' and npc.name in name_pretranslation_map:
+                    npc_name_ua = name_pretranslation_map[npc.name] + ' ???'
+                f.write(f'{npc.id}\t"{npc.name}"\t"{f"<{npc.tag}>" if npc.tag else ""}"\t{npc_name_ua}\t\t\t\t\t{npc.expansion}\n')
+                count += 1
         if count > 0:
-            print(f"Added {count} NPCs for translation")
+            print(f"Added {count} NPCs for translation to {path}")
 
 
 def save_page(expansion, id):
@@ -1101,8 +1117,9 @@ if __name__ == '__main__':
 
     _, missed_npcs = check_feedback('npcs', 'NPC', all_npcs_md, lambda npc: bool(npc.name_ua))
 
-    # create_translation_sheet(all_npcs_md)
-    create_translation_sheet(all_npcs_md, missed_npcs)
+    name_pretranslation_map = build_name_pretranslation_map(all_npcs_md)
+    to_translate = filter_untranslated(all_npcs_md, missed_npcs, name_pretranslation_map)
+    create_translation_sheet(to_translate, name_pretranslation_map)
 
     # Pending NPCs -> new Crowdin glossary terms (replaces combine_npcs.py)
     download_csv_from_google_sheet('Pending NPCs', 'input/pending_npcs.csv')
