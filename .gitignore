@@ -10,3 +10,4 @@ venv
 *.pkl
 *.db
 credentials.json
+.env
