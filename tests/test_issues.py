@@ -2,9 +2,9 @@ import os
 import sys
 import tempfile
 
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..'))
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from generation.utils.issues import ERROR, WARNING, IssueLog
+from generation.utils.issues import IssueLog
 
 
 def make_log():
