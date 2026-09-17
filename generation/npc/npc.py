@@ -1,13 +1,18 @@
 import json
 import os
 import re
+import sys
 
 from bs4 import BeautifulSoup
 
+from generation.utils.issues import IssueLog
+from generation.utils.text_checks import report_mixed_script
 from generation.utils.glossary import Glossary, GlossaryTerm, NPC_TAG, glossary_path
 from generation.utils.utils import (ValidationError, check_feedback, classicua_root, copy_classicua_entries,
                                     download_crowdin_glossary, download_csv_from_google_sheet,
                                     run_classicua_generator, update_glossary_on_crowdin, wowhead_get)
+
+log = IssueLog('npc')
 
 SCRAPE_THREADS = 1
 PARSE_THREADS = os.cpu_count()
@@ -234,7 +239,8 @@ def get_wowhead_npc_metadata(expansion) -> dict[int, dict[str, NPC_MD]]:
         if force_id not in wowhead_metadata:
             wowhead_metadata[force_id] = NPC_MD(force_id, FORCE_LOAD_NAME, expansion=expansion)
         else:
-            print(f"Warning! NPC #{force_id}:{expansion} forced to load, but already exists in Wowhead metadata")
+            log.warning('force-load-redundant', 'npc', 'forced to load, but the Wowhead search already lists it',
+                        id=force_id, expansion=expansion)
 
     wowhead_npcs = dict()
     for key, value in wowhead_metadata.items():
@@ -444,13 +450,13 @@ def apply_page_data_to_metadata(expansion, metadata: dict[int, dict[str, NPC_MD]
             npc_md.tag = page_npc.tag
             continue
         if npc_md.name != page_npc.name:
-            print(f'Warning! NPC#{id}:{expansion} name differs between search and page: '
-                  f'"{npc_md.name}" <> "{page_npc.name}"')
+            log.warning('search-page-differs', 'npc', f'search "{npc_md.name}" <> page "{page_npc.name}"',
+                        id=id, expansion=expansion, field='name')
         if npc_md.tag != page_npc.tag:
-            print(f'Warning! NPC#{id}:{expansion} tag differs between search and page: '
-                  f'"{npc_md.tag}" <> "{page_npc.tag}"')
-    if unavailable:
-        print(f'Warning! Wowhead({expansion}) has no page for force-loaded NPCs: {sorted(unavailable)}')
+            log.warning('search-page-differs', 'npc', f'search "{npc_md.tag}" <> page "{page_npc.tag}"',
+                        id=id, expansion=expansion, field='tag')
+    for id in sorted(unavailable):
+        log.warning('no-page', 'npc', 'force-loaded, but Wowhead has no page for it', id=id, expansion=expansion)
 
 
 def retrieve_forced_npc_pages(expansion, force_ids: list[int]) -> dict[int, NPC_Data]:
@@ -560,37 +566,48 @@ def load_merged_translations() -> dict[int, dict[str, NPC_MD]]:
             else:
                 if expansion in merged_translations[npc_id]:
                     existing_npc = merged_translations[npc_id][expansion]
-                    if existing_npc != npc:
-                        print(f'Warning! NPC#{npc_id}:{expansion} duplicated and differs')
-                    if existing_npc == npc:
-                        print(f'Warning! NPC#{npc_id}:{expansion} duplicated')
+                    log.warning('duplicate-row', 'npc',
+                                'the sheet has more than one row for this NPC'
+                                + (', and they differ' if existing_npc != npc else ''),
+                                id=npc_id, expansion=expansion)
                 merged_translations[npc_id][expansion] = npc
     return merged_translations
 
 
 def compare_npc(tsv_npc: NPC_MD, lua_npc: NPC_MD):
     if tsv_npc.name != lua_npc.name:
-        print(f'Warning! NPC#{tsv_npc.id}:{tsv_npc.expansion} name differs:\n{tsv_npc.name}<->{lua_npc.name}')
+        log.warning('original-differs', 'npc', f'sheet "{tsv_npc.name}" <> data "{lua_npc.name}"',
+                    id=tsv_npc.id, expansion=tsv_npc.expansion, field='name')
     # the sheet keeps descriptions in angle brackets and the sources do not always,
     # so compare them stripped or every tagged NPC reports as changed
     if __bracketed(tsv_npc.tag) != __bracketed(lua_npc.tag):
-        print(f'Warning! NPC#{tsv_npc.id}:{tsv_npc.expansion} tag differs:\n{tsv_npc.tag}<->{lua_npc.tag}')
+        log.warning('original-differs', 'npc', f'sheet "{tsv_npc.tag}" <> data "{lua_npc.tag}"',
+                    id=tsv_npc.id, expansion=tsv_npc.expansion, field='tag')
     if tsv_npc.name_ua != lua_npc.name_ua:
-        print(f'Warning! NPC#{tsv_npc.id}:{tsv_npc.expansion} translation differs:\n{tsv_npc.name_ua}<->{lua_npc.name_ua}')
+        log.warning('translation-differs', 'npc', f'sheet "{tsv_npc.name_ua}" <> addon "{lua_npc.name_ua}"',
+                    id=tsv_npc.id, expansion=tsv_npc.expansion, field='name_ua')
 
 
 
 def check_existing_translations(all_npcs: dict[int, dict[str, NPC_MD]],
                                 merged_translations: dict[int, dict[str, NPC_MD]]):
     for key in merged_translations.keys() - all_npcs.keys():
-        print(f'NPC#{key} does not exist in ClassicUA')
+        log.warning('missing-in-data', 'npc', 'on the sheet but not in the scraped data', id=key)
 
     for key in merged_translations.keys() & all_npcs.keys():
         for expansion in merged_translations[key].keys() - all_npcs[key].keys():
-            print(f'NPC#{key}:{expansion} does not exist in ClassicUA')
+            log.warning('missing-in-data', 'npc', 'on the sheet but not in the scraped data',
+                        id=key, expansion=expansion)
 
         for expansion in merged_translations[key].keys() & all_npcs[key].keys():
             compare_npc(merged_translations[key][expansion], all_npcs[key][expansion])
+
+
+def validate_script(translations: dict[int, dict[str, NPC_MD]]):
+    for key in sorted(translations.keys()):
+        for expansion, npc in translations[key].items():
+            report_mixed_script(log, 'npc', npc.name_ua, id=key, expansion=expansion, field='name_ua')
+            report_mixed_script(log, 'npc', npc.tag_ua, id=key, expansion=expansion, field='tag_ua')
 
 
 def build_name_pretranslation_map(npcs: dict[int, dict[str, NPC_MD]]) -> dict[str, str]:
@@ -599,7 +616,9 @@ def build_name_pretranslation_map(npcs: dict[int, dict[str, NPC_MD]]) -> dict[st
         for expansion, npc in sorted(npcs[key].items()):
             if npc.name_ua:
                 if npc.name in name_translations and name_translations[npc.name] != npc.name_ua:
-                    print(f'Warning! Name translation for {npc.name} differs: {name_translations[npc.name]} <> {npc.name_ua}')
+                    log.warning('name-translated-two-ways', 'npc',
+                                f'"{npc.name}" is "{name_translations[npc.name]}" elsewhere and "{npc.name_ua}" here',
+                                id=npc.id, expansion=expansion, field='name_ua')
                 else:
                     name_translations[npc.name] = npc.name_ua
     return name_translations
@@ -947,6 +966,9 @@ def __validate_repeated_tags(groups: dict[str, list[PendingNpc]], glossary: Glos
 
 
 def __report_pending_issues(issues: list[ValidationError]):
+    for issue in issues:
+        log.add(issue.severity.lower(), f'pending-{issue.field}', 'npc', issue.error_message,
+                id=issue.id, expansion=issue.expansion, field=issue.field)
     for severity in ('Error', 'Warning'):
         of_severity = [i for i in issues if i.severity == severity]
         if not of_severity:
@@ -1076,8 +1098,9 @@ def create_missing_entries_sheet(missing: dict[str, dict[int, NPC_Short]],
         writer.writerows(rows)
 
     print(f'Wrote {len(rows)} missing entry(ies) to {path}')
-    if missing_from_wowhead:
-        print(f'Warning! {len(missing_from_wowhead)} of them are not in npcs.db, so they have no English original: {", ".join(missing_from_wowhead)}')
+    for missing_id in missing_from_wowhead:
+        log.warning('missing-in-data', 'npc', 'in the addon entries but not in npcs.db, so there is no English original',
+                    id=missing_id)
 
 
 def generate_entries_with_classicua(glossary: Glossary, entries_dir: str = 'input/entries') -> Glossary:
@@ -1112,6 +1135,7 @@ if __name__ == '__main__':
     save_npcs_to_db(all_npcs_md)  # Generate cache/npcs.db
     save_npc_quotes(npc_quotes)  # Generate output/all_npcs.pkl
 
+    validate_script(sheet_translations)
     check_existing_translations(all_npcs_md, sheet_translations)  # Check if original data changes since previous translation and difference between ClassicUA and translation sheet
     # update_questie_translation(all_npcs)  # Update translations for Questie
 
@@ -1134,3 +1158,5 @@ if __name__ == '__main__':
     # missing_entries = filter_missing_entries(classicua_translations, sheet_translations)
     # create_missing_entries_sheet(missing_entries, all_npcs_md, glossary)
 
+
+    sys.exit(log.finish())
