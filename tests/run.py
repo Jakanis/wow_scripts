@@ -12,6 +12,8 @@ sys.path.insert(0, str(ROOT))
 def load(path: pathlib.Path):
     spec = importlib.util.spec_from_file_location(f'selftest_{path.stem}', path)
     module = importlib.util.module_from_spec(spec)
+    # registered before exec: @dataclass resolves its module through sys.modules
+    sys.modules[spec.name] = module
     spec.loader.exec_module(module)
     return module
 
