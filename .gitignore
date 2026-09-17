@@ -4,6 +4,7 @@ venv
 *.tsv
 *.csv
 *.lua
+!verification/lua_harness.lua
 .idea
 *.xml
 *.html
@@ -17,3 +18,4 @@ credentials.json
 
 # snapshots are a local backup, not repository content
 crowdin/snapshots/
+__pycache__/

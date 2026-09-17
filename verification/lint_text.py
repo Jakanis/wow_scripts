@@ -11,7 +11,7 @@ generation step. A rule belongs in the generator that owns the text whenever
 one exists; this covers what no generator reaches yet.
 
 Usage:
-    python lint/lint_text.py [entries-dir] [--expansion classic] [--format tsv|text]
+    python verification/lint_text.py [entries-dir] [--expansion classic] [--format tsv|text]
 
 With no path it uses CLASSICUA_ROOT/entries from the .env in the repository
 root, then input/entries.

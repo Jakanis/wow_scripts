@@ -16,10 +16,10 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT))
 
-# loaded by path: the linter is a standalone script under lint/, not
+# loaded by path: the linter is a standalone script under verification/, not
 # something the package layout exposes as a module
 _spec = importlib.util.spec_from_file_location(
-    "lint_text_under_test", ROOT / "lint" / "lint_text.py")
+    "lint_text_under_test", ROOT / "verification" / "lint_text.py")
 L = importlib.util.module_from_spec(_spec)
 # registered before exec: @dataclass resolves its own module through sys.modules
 sys.modules[_spec.name] = L
