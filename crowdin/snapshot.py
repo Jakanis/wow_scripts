@@ -124,7 +124,7 @@ def download_translations(client: CrowdinClient, root: pathlib.Path) -> tuple[in
 
     print(f'Building {LANGUAGE} translations (build {build["id"]})...', end='', flush=True)
     status = build
-    for _ in range(300):
+    for _ in range(600):
         if status['status'] in ('finished', 'failed', 'canceled'):
             break
         time.sleep(2)
