@@ -7,7 +7,8 @@ from typing import Dict, Any
 
 from bs4 import BeautifulSoup, CData
 
-from generation.utils.issues import WARNING, Issue, IssueLog
+from generation.utils.issues import ERROR, WARNING, Issue, IssueLog
+from generation.utils.text_checks import mixed_script_words
 from generation.utils.utils import (NOTE_ALREADY_TRANSLATED, NOTE_NOT_TRANSLATED, NOTE_PRETRANSLATED,
                                     check_feedback, download_csv_from_google_sheet,
                                     format_notes, notes_hold_back_row, parse_notes, __to_tsv_val,
@@ -1297,6 +1298,18 @@ def __validate_templates(spell: SpellData) -> list[Issue]:
     return errors
 
 
+def __validate_script(spell: SpellData) -> list[Issue]:
+    errors = list()
+    for field in ('name_ua', 'description_ua', 'aura_ua'):
+        value = getattr(spell, field)
+        if not value or value.startswith('ref='):
+            continue
+        for word in mixed_script_words(value):
+            errors.append(Issue(ERROR, 'mixed-script', 'spell', str(spell.id), spell.expansion, field,
+                                f"{word!r} mixes Cyrillic and Latin letters"))
+    return errors
+
+
 def __validate_newlines(spell: SpellData) -> list[Issue]:
     import re
     errors = list()
@@ -1431,6 +1444,7 @@ def validate_translations(spells: dict[int, dict[str, SpellData]]) -> list[Issue
         for spell in spells[key].values():
             validation_errors.extend(__validate_templates(spell))
             validation_errors.extend(__validate_newlines(spell))
+            validation_errors.extend(__validate_script(spell))
             if (spell.name_ua or spell.description_ua or spell.aura_ua) and not spell.ref:
                 validation_errors.extend(__validate_translation_completion(spell))
             validation_errors.extend(__validate_spell_numbers(spell))

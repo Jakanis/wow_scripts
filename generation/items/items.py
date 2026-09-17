@@ -1,13 +1,18 @@
 import json
 import os
 import re
+import sys
 
 from bs4 import BeautifulSoup, CData
 from generation.spells.spells import SpellData, load_spells_from_db, is_spell_translated
+from generation.utils.issues import IssueLog
+from generation.utils.text_checks import report_mixed_script
 from generation.utils.utils import (NOTE_NOT_TRANSLATED, NOTE_PRETRANSLATED, check_feedback,
                                     compare_directories, download_csv_from_google_sheet, format_notes,
                                     notes_hold_back_row, parse_notes, update_on_crowdin, wowhead_get,
                                     __to_tsv_val)
+
+log = IssueLog('items')
 
 THREADS = 16
 CLASSIC = 'classic'
@@ -1336,6 +1341,14 @@ def __validate_template(orig_effect: ItemEffect, ua_effect: ItemEffect):
     pass
 
 
+def __validate_script(item: ItemData):
+    report_mixed_script(log, 'item', item.name_ua, id=item.id,
+                        expansion=item.expansion, field='name_ua')
+    for i, effect in enumerate(item.effects_ua or []):
+        report_mixed_script(log, 'item', effect.effect_text, id=item.id,
+                            expansion=item.expansion, field=f'effect[{i}]')
+
+
 def __validate_item(item: ItemData):
     import re
     from functools import cmp_to_key
@@ -1370,6 +1383,7 @@ def validate_translations(items: dict[int, dict[str, ItemData]]):
     for key in sorted(items.keys()):
         for item in items[key].values():
             __validate_item(item)
+            __validate_script(item)
     # check templates
     ## warning - No templates for raw values
     # check references
@@ -1528,3 +1542,5 @@ if __name__ == '__main__':
     generate_book_sources(readable_items)
     diffs, removals, additions = compare_directories('input/source_from_crowdin', 'output/source_for_crowdin')
     update_on_crowdin(diffs, removals, additions)
+
+    sys.exit(log.finish())
