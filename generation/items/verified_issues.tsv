@@ -16,8 +16,6 @@ warning	effect-type-differs	item	216770	sod	effect#0	Flavor in the original, Use
 warning	effect-type-differs	item	216771	sod	effect#0	Flavor in the original, Use in the translation	carried over from the ignore list in __validate_item
 warning	effect-type-differs	item	221978	sod	effect#0	Flavor in the original, Use in the translation	carried over from the ignore list in __validate_item
 warning	effect-type-differs	item	223163	sod	effect#0	Flavor in the original, Use in the translation	carried over from the ignore list in __validate_item
-warning	numbers-mismatch	item	10725	classic	effect#0	the numbers differ from the English text	carried over from the ignore list in __validate_item
-warning	numbers-mismatch	item	19883	classic	effect#0	the numbers differ from the English text	carried over from the ignore list in __validate_item
 warning	numbers-mismatch	item	203784	sod	effect#0	the numbers differ from the English text	carried over from the ignore list in __validate_item
 warning	numbers-mismatch	item	203785	sod	effect#0	the numbers differ from the English text	carried over from the ignore list in __validate_item
 warning	numbers-mismatch	item	203786	sod	effect#0	the numbers differ from the English text	carried over from the ignore list in __validate_item
@@ -143,3 +141,101 @@ warning	redundant-translation	item	25535	tbc	effect#0	the original requires a sp
 warning	redundant-translation	item	31702	tbc	effect#0	the original requires a spell#39010 reference	carried over from verified_warnings.txt
 warning	redundant-translation	item	33218	tbc	effect#0	the original requires a spell#42760 reference	carried over from verified_warnings.txt
 warning	redundant-translation	item	180089	classic	effect#0	the original requires a spell#330659 reference	carried over from verified_warnings.txt
+warning	numbers-mismatch	item	20540	classic	effect#0	the numbers differ from the English text	Skipped '1' in translation. Valid.
+warning	numbers-mismatch	item	20542	classic	effect#0	the numbers differ from the English text	Skipped '1' in translation. Valid.
+warning	numbers-mismatch	item	20543	classic	effect#0	the numbers differ from the English text	Skipped '1' in translation. Valid.
+warning	numbers-mismatch	item	20544	classic	effect#0	the numbers differ from the English text	Skipped '1' in translation. Valid.
+warning	effect-type-differs	item	3393	mists	effect#0	Flavor in the original, Use in the translation	No longer exists in mists, needs regeneration
+warning	numbers-mismatch	item	18168	classic	effect#0	the numbers differ from the English text	Somehow original text contains cooldown data. Skip.
+warning	numbers-mismatch	item	28032	cata	effect#1	the numbers differ from the English text	Joke with numbers in translation
+warning	numbers-mismatch	item	28032	mists	effect#0	the numbers differ from the English text	Joke with numbers in translation
+warning	numbers-mismatch	item	28032	tbc	effect#2	the numbers differ from the English text	Joke with numbers in translation
+warning	numbers-mismatch	item	31809	tbc	effect#0	the numbers differ from the English text
+warning	effects-count	item	122284	classic		2 effect(s) in the original, 1 in the translation	WoW Token.
+warning	numbers-mismatch	item	191280	classic	effect#0	the numbers differ from the English text	New SoM item. Potentially valid, needs reckeck
+warning	effect-type-differs	item	226394	sod	effect#0	Flavor in the original, Use in the translation	Broken SoD item effect
+warning	effect-type-differs	item	226395	sod	effect#0	Flavor in the original, Use in the translation	Broken SoD item effect
+warning	effect-type-differs	item	226396	sod	effect#0	Flavor in the original, Use in the translation	Broken SoD item effect
+warning	effect-type-differs	item	226397	sod	effect#0	Flavor in the original, Use in the translation	Broken SoD item effect
+warning	effect-type-differs	item	226398	sod	effect#0	Flavor in the original, Use in the translation	Broken SoD item effect
+warning	effect-type-differs	item	226399	sod	effect#0	Flavor in the original, Use in the translation	Broken SoD item effect
+warning	effect-type-differs	item	226400	sod	effect#0	Flavor in the original, Use in the translation	Broken SoD item effect
+warning	effect-type-differs	item	226401	sod	effect#0	Flavor in the original, Use in the translation	Broken SoD item effect
+warning	effect-type-differs	item	226402	sod	effect#0	Flavor in the original, Use in the translation	Broken SoD item effect
+warning	effect-type-differs	item	226403	sod	effect#0	Flavor in the original, Use in the translation	Broken SoD item effect
+warning	effect-type-differs	item	228222	sod	effect#0	Flavor in the original, Use in the translation	Broken SoD item effect
+warning	effect-type-differs	item	228238	sod	effect#0	Flavor in the original, Use in the translation	Broken SoD item effect
+warning	numbers-mismatch	item	230794	sod	effect#1	the numbers differ from the English text	Cooldown in effect
+warning	numbers-mismatch	item	231755	sod	effect#1	the numbers differ from the English text	Valid
+warning	template-failed	item	232392	sod	effect#0	the template does not match the English text	Broken Wowhead effect text
+warning	numbers-mismatch	item	232557	sod	effect#1	the numbers differ from the English text	Cooldown in effect
+warning	template-failed	item	233226	sod	effect#0	the template does not match the English text	Cooldown in effect
+warning	numbers-mismatch	item	233987	sod	effect#0	the numbers differ from the English text	Valid
+warning	numbers-mismatch	item	233988	sod	effect#1	the numbers differ from the English text	Cooldown in effect
+warning	numbers-mismatch	item	234264	sod	effect#0	the numbers differ from the English text	Valid
+warning	effect-type-differs	item	235526	sod	effect#0	Flavor in the original, Use in the translation	Broken SoD item effect
+warning	effect-type-differs	item	235528	sod	effect#0	Flavor in the original, Use in the translation	Broken SoD item effect
+warning	effect-type-differs	item	235530	sod	effect#0	Flavor in the original, Use in the translation	Broken SoD item effect
+warning	effect-type-differs	item	236872	sod	effect#0	Flavor in the original, Use in the translation	Broken SoD item effect
+warning	effect-type-differs	item	238298	sod	effect#0	Flavor in the original, Use in the translation	Broken SoD item effect
+warning	effect-type-differs	item	238299	sod	effect#0	Flavor in the original, Use in the translation	Broken SoD item effect
+warning	effect-type-differs	item	238300	sod	effect#0	Flavor in the original, Use in the translation	Broken SoD item effect
+warning	effect-type-differs	item	238301	sod	effect#0	Flavor in the original, Use in the translation	Broken SoD item effect
+warning	effect-type-differs	item	238302	sod	effect#0	Flavor in the original, Use in the translation	Broken SoD item effect
+warning	effect-type-differs	item	238303	sod	effect#0	Flavor in the original, Use in the translation	Broken SoD item effect
+warning	effect-type-differs	item	238304	sod	effect#0	Flavor in the original, Use in the translation	Broken SoD item effect
+warning	effect-type-differs	item	238305	sod	effect#0	Flavor in the original, Use in the translation	Broken SoD item effect
+warning	effect-type-differs	item	238306	sod	effect#0	Flavor in the original, Use in the translation	Broken SoD item effect
+warning	effect-type-differs	item	238307	sod	effect#0	Flavor in the original, Use in the translation	Broken SoD item effect
+warning	effect-type-differs	item	238308	sod	effect#0	Flavor in the original, Use in the translation	Broken SoD item effect
+warning	effect-type-differs	item	238309	sod	effect#0	Flavor in the original, Use in the translation	Broken SoD item effect
+warning	effect-type-differs	item	238310	sod	effect#0	Flavor in the original, Use in the translation	Broken SoD item effect
+warning	effect-type-differs	item	238311	sod	effect#0	Flavor in the original, Use in the translation	Broken SoD item effect
+warning	effect-type-differs	item	238312	sod	effect#0	Flavor in the original, Use in the translation	Broken SoD item effect
+warning	effect-type-differs	item	238313	sod	effect#0	Flavor in the original, Use in the translation	Broken SoD item effect
+warning	effect-type-differs	item	238314	sod	effect#0	Flavor in the original, Use in the translation	Broken SoD item effect
+warning	effect-type-differs	item	238315	sod	effect#0	Flavor in the original, Use in the translation	Broken SoD item effect
+warning	effect-type-differs	item	238316	sod	effect#0	Flavor in the original, Use in the translation	Broken SoD item effect
+warning	effect-type-differs	item	238317	sod	effect#0	Flavor in the original, Use in the translation	Broken SoD item effect
+warning	effect-type-differs	item	238318	sod	effect#0	Flavor in the original, Use in the translation	Broken SoD item effect
+warning	effect-type-differs	item	238319	sod	effect#0	Flavor in the original, Use in the translation	Broken SoD item effect
+warning	effect-type-differs	item	238320	sod	effect#0	Flavor in the original, Use in the translation	Broken SoD item effect
+warning	effect-type-differs	item	238321	sod	effect#0	Flavor in the original, Use in the translation	Broken SoD item effect
+warning	effect-type-differs	item	238322	sod	effect#0	Flavor in the original, Use in the translation	Broken SoD item effect
+warning	effect-type-differs	item	238323	sod	effect#0	Flavor in the original, Use in the translation	Broken SoD item effect
+warning	effect-type-differs	item	238324	sod	effect#0	Flavor in the original, Use in the translation	Broken SoD item effect
+warning	effect-type-differs	item	238325	sod	effect#0	Flavor in the original, Use in the translation	Broken SoD item effect
+warning	effect-type-differs	item	238326	sod	effect#0	Flavor in the original, Use in the translation	Broken SoD item effect
+warning	effect-type-differs	item	238327	sod	effect#0	Flavor in the original, Use in the translation	Broken SoD item effect
+warning	effect-type-differs	item	238328	sod	effect#0	Flavor in the original, Use in the translation	Broken SoD item effect
+warning	effect-type-differs	item	238329	sod	effect#0	Flavor in the original, Use in the translation	Broken SoD item effect
+warning	effect-type-differs	item	238645	sod	effect#0	Flavor in the original, Use in the translation	Broken SoD item effect
+warning	effect-type-differs	item	238646	sod	effect#0	Flavor in the original, Use in the translation	Broken SoD item effect
+warning	effect-type-differs	item	238647	sod	effect#0	Flavor in the original, Use in the translation	Broken SoD item effect
+warning	effect-type-differs	item	238649	sod	effect#0	Flavor in the original, Use in the translation	Broken SoD item effect
+warning	effect-type-differs	item	238650	sod	effect#0	Flavor in the original, Use in the translation	Broken SoD item effect
+warning	effect-type-differs	item	238782	sod	effect#0	Flavor in the original, Use in the translation	Broken SoD item effect
+warning	effect-type-differs	item	238783	sod	effect#0	Flavor in the original, Use in the translation	Broken SoD item effect
+warning	effect-type-differs	item	238784	sod	effect#0	Flavor in the original, Use in the translation	Broken SoD item effect
+warning	effect-type-differs	item	238785	sod	effect#0	Flavor in the original, Use in the translation	Broken SoD item effect
+warning	effect-type-differs	item	238789	sod	effect#0	Flavor in the original, Use in the translation	Broken SoD item effect
+warning	effect-type-differs	item	238927	sod	effect#0	Flavor in the original, Use in the translation	Broken SoD item effect
+warning	effect-type-differs	item	238928	sod	effect#0	Flavor in the original, Use in the translation	Broken SoD item effect
+warning	effect-type-differs	item	239149	sod	effect#0	Flavor in the original, Use in the translation	Broken SoD item effect
+warning	effect-type-differs	item	239150	sod	effect#0	Flavor in the original, Use in the translation	Broken SoD item effect
+warning	effect-type-differs	item	239222	sod	effect#0	Flavor in the original, Use in the translation	Broken SoD item effect
+warning	effect-type-differs	item	239694	sod	effect#0	Flavor in the original, Use in the translation	Broken SoD item effect
+warning	effect-type-differs	item	241191	sod	effect#0	Flavor in the original, Use in the translation	Broken SoD item effect
+warning	effect-type-differs	item	241195	sod	effect#0	Flavor in the original, Use in the translation	Broken SoD item effect
+warning	effect-type-differs	item	241201	sod	effect#0	Flavor in the original, Use in the translation	Broken SoD item effect
+warning	effect-type-differs	item	241651	sod	effect#0	Flavor in the original, Use in the translation	Broken SoD item effect
+warning	numbers-mismatch	item	242269	sod	effect#0	the numbers differ from the English text	Valid
+warning	numbers-mismatch	item	242270	sod	effect#0	the numbers differ from the English text	Valid
+warning	numbers-mismatch	item	242271	sod	effect#0	the numbers differ from the English text	Valid
+warning	effect-type-differs	item	242361	sod	effect#0	Flavor in the original, Use in the translation	Broken SoD item effect
+warning	numbers-mismatch	item	242362	sod	effect#0	the numbers differ from the English text	Valid
+warning	name-translated-two-ways	item	24278	tbc	name_ua	"""Flare Gun"" is ""сигнальний пістолет"" elsewhere and ""сигнальна ракета"" here"	Potentially needs fix
+warning	name-translated-two-ways	item	217014	sod	name_ua	"""Supply Bag"" is ""сумка для припасів"" elsewhere and ""мішок з припасами"" here"	Potentially needs fix
+warning	name-translated-two-ways	item	219147	sod	name_ua	"""Rune of Grace"" is ""руна благодаті"" elsewhere and ""руна милості"" here"	Potentially needs fix
+warning	name-translated-two-ways	item	237263	sod	name_ua	"""Supply Bag"" is ""сумка для припасів ???"" elsewhere and ""мішок з припасами"" here"	Potentially needs fix
+warning	name-translated-two-ways	item	237284	sod	name_ua	"""Supply Bag"" is ""сумка для припасів ??? ???"" elsewhere and ""мішок з припасами"" here"	Potentially needs fix
