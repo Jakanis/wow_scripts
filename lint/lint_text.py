@@ -11,7 +11,7 @@ generation step. A rule belongs in the generator that owns the text whenever
 one exists; this covers what no generator reaches yet.
 
 Usage:
-    python lint_text.py [entries-dir] [--expansion classic] [--format tsv|text]
+    python lint/lint_text.py [entries-dir] [--expansion classic] [--format tsv|text]
 
 With no path it uses CLASSICUA_ROOT/entries from the .env in the repository
 root, then input/entries.
@@ -35,7 +35,7 @@ from dataclasses import dataclass
 from pathlib import Path
 
 # run from anywhere, not only with the repository root on PYTHONPATH
-sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from generation.utils.text_checks import mixed_script_words  # noqa: E402
 from generation.utils.utils import classicua_root  # noqa: E402
