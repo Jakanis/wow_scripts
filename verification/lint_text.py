@@ -20,8 +20,12 @@ Every entries file is compiled with luac first; if any of them does not parse
 the run stops there, because no content rule means anything on a file the game
 cannot load.
 
-Exit code is 2 if an entries file does not compile, 1 if any error-severity
-finding is present, 0 otherwise.
+Findings go to the shared issue log, so a run reports what is new, what is
+already accepted in verified_issues.tsv and what no longer occurs. --accept
+writes the new ones into that file.
+
+Exit code is 2 if an entries file does not compile, 1 on a new error-severity
+finding, 0 otherwise.
 """
 
 from __future__ import annotations
@@ -37,8 +41,12 @@ from pathlib import Path
 # run from anywhere, not only with the repository root on PYTHONPATH
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
+from generation.utils import issues  # noqa: E402
 from generation.utils.text_checks import mixed_script_words  # noqa: E402
 from generation.utils.utils import classicua_root  # noqa: E402
+
+log = issues.IssueLog('lint', str(Path(__file__).with_name('verified_issues.tsv')))
+OUTPUT = Path(__file__).with_name('output') / 'issues.tsv'
 
 # --------------------------------------------------------------------------
 # The runtime grammar (scripts/entries.lua)
@@ -123,7 +131,7 @@ for _name in CHAT_CODE_NAMES:
 # Findings
 # --------------------------------------------------------------------------
 
-ERROR, WARN, INFO = "error", "warning", "info"
+ERROR, WARN, INFO = issues.ERROR, issues.WARNING, issues.NOTE
 
 
 @dataclass
@@ -136,6 +144,17 @@ class Finding:
     message: str
     excerpt: str
     suggestion: str = ""
+    # the stable half of a finding, which is what the issue log compares. The
+    # file, line and excerpt move whenever entries are regenerated, so they
+    # stay here for reading and never reach an Issue.
+    entity: str = ""
+    unit_id: str = ""
+    expansion: str = ""
+    field: str = ""
+
+    def to_issue(self) -> issues.Issue:
+        return issues.Issue(self.severity, self.rule, self.entity or "entries",
+                            str(self.unit_id), self.expansion, self.field, self.message)
 
     def as_row(self) -> str:
         def clean(t: str) -> str:
@@ -497,8 +516,14 @@ def check_npc_names(root: Path) -> list[Finding]:
             out.append(Finding(
                 ERROR, "npc-name-percent", rel, line, f"{label} {key}",
                 "a '%' in an NPC name is an escape to gsub, so the chat "
-                "substitution would corrupt or fail on it", name))
+                "substitution would corrupt or fail on it", name,
+                entity=path.stem, unit_id=key, expansion=folder_of(path, root)))
     return out
+
+
+def folder_of(path: Path, root: Path) -> str:
+    # the expansion folder, or nothing for the files that sit at the top
+    return path.parent.name if path.parent != root else ""
 
 
 def check_lua_syntax(root: Path, luac: str) -> list[Finding]:
@@ -574,10 +599,14 @@ def check_duplicate_keys(root: Path) -> list[Finding]:
                 out.append(Finding(
                     WARN if same else ERROR, "duplicate-key", rel, no,
                     f"{owner} {key}".strip(),
-                    f"already at line {seen[key][0]}, lua keeps the last value, so the "
-                    + ("earlier copy is redundant" if same
-                       else "earlier value is lost"),
-                    value_at(here)))
+                    # no line number: it moves on every regeneration, and the
+                    # message is half of an issue's identity
+                    "the key is already used in this block, lua keeps the last "
+                    "value, so the " + ("earlier copy is redundant" if same
+                                        else "earlier value is lost"),
+                    value_at(here),
+                    entity=path.stem, unit_id=key,
+                    expansion=folder_of(path, root), field=owner))
             else:
                 seen[key] = here
             if opens:
@@ -761,10 +790,19 @@ def lint_file(path: Path, root: Path, english: "EnglishSource | None" = None) ->
         if en is None and english is not None and unit is not None:
             en = english.lookup(kind, expansion, unit[0], unit[1])
         owner = unit[1] if unit and unit[0] == "owner" else ""
+        # chat and gossip key by hash, quest and book by entry id and field.
+        # Either way the pair survives a regeneration. The owner rides along
+        # only for chat: extract() tracks a quoted key, which is the NPC name
+        # there but a stale "!code" entry under gossip's numeric owners.
+        if unit and unit[0] == "owner":
+            unit_id, field = key, (owner if kind == "chat" else "")
+        else:
+            unit_id, field = unit[0], unit[1]
         for item in lint_string(text, en, kind, owner):
             severity, rule, message = item[0], item[1], item[2]
             suggestion = item[3] if len(item) > 3 else ""
-            out.append(Finding(severity, rule, rel, line, key, message, text, suggestion))
+            out.append(Finding(severity, rule, rel, line, key, message, text, suggestion,
+                               entity=kind, unit_id=unit_id, expansion=expansion, field=field))
     return out
 
 
@@ -784,7 +822,7 @@ def main() -> int:
     ap.add_argument("--expansion", action="append",
                     help="limit to these expansion folders (repeatable)")
     ap.add_argument("--rule", action="append", help="limit to these rules (repeatable)")
-    ap.add_argument("--severity", default="info", choices=[ERROR, WARN, INFO])
+    ap.add_argument("--severity", default=INFO, choices=[ERROR, WARN, INFO])
     ap.add_argument("--format", default="text", choices=["text", "tsv"])
     ap.add_argument("--db", type=Path,
                     help="classicua.db, supplies the English quest text "
@@ -793,6 +831,8 @@ def main() -> int:
                     help="Crowdin English export root, supplies English book pages "
                          "(default: <entries>/../dev/translation_from_crowdin/en)")
     ap.add_argument("--luac", help="luac used for the syntax check (default: from PATH)")
+    ap.add_argument("--accept", nargs="?", const="", metavar="NOTE",
+                    help="write the new issues into verified_issues.tsv, with an optional note")
     args = ap.parse_args()
 
     root = (args.entries or default_entries()).resolve()
@@ -807,11 +847,12 @@ def main() -> int:
     else:
         syntax_note = f"lua syntax: {len(list(root.rglob('*.lua')))} files compile"
         broken = check_lua_syntax(root, luac)
-        for f in broken:
-            print(f"{f.file}:{f.line} [{f.rule}] {f.message}", file=sys.stderr)
         if broken:
-            print(f"{len(broken)} file(s) do not compile, stopping", file=sys.stderr)
-            return 2
+            # a file the game cannot load makes every content rule meaningless,
+            # so this is a failed run rather than a finding to triage
+            for f in broken:
+                log.fail(f"{f.file}:{f.line} does not compile: {f.message}")
+            return log.finish(write_to=str(OUTPUT))
 
     files = sorted(p for p in root.rglob("*.lua")
                    if kind_for(p) != "other"
@@ -828,18 +869,25 @@ def main() -> int:
     findings.extend(check_duplicate_keys(root))
 
     order = {ERROR: 0, WARN: 1, INFO: 2}
-    cut = order[args.severity]
-    findings = [f for f in findings if order[f.severity] <= cut
-                and (not args.rule or f.rule in args.rule)]
     findings.sort(key=lambda f: (order[f.severity], f.rule, f.file, f.line))
+
+    # the log always sees every finding: --severity and --rule narrow what is
+    # printed below, never what is compared, or a filtered run would report the
+    # rest as gone
+    for f in findings:
+        log.issues.append(f.to_issue())
+
+    cut = order[args.severity]
+    shown = [f for f in findings if order[f.severity] <= cut
+             and (not args.rule or f.rule in args.rule)]
 
     if args.format == "tsv":
         print("severity\trule\tfile\tline\tkey\tmessage\texcerpt")
-        for f in findings:
+        for f in shown:
             print(f.as_row())
     else:
         counts: dict[tuple[str, str], int] = {}
-        for f in findings:
+        for f in shown:
             counts[(f.severity, f.rule)] = counts.get((f.severity, f.rule), 0) + 1
         print(f"scanned {len(files)} files under {root}")
         print(syntax_note)
@@ -850,18 +898,19 @@ def main() -> int:
         for (severity, rule), n in sorted(counts.items(), key=lambda kv: (order[kv[0][0]], -kv[1])):
             print(f"  {severity:<8} {rule:<28} {n:>6}")
         print()
-        for f in findings:
+        for f in shown:
             if f.severity == ERROR:
                 print(f"{f.file}:{f.line} [{f.rule}] {f.key}: {f.message}")
                 print(f"    {f.excerpt[:200]!r}")
                 if f.suggestion:
                     print(f"    suggested fix: {f.suggestion!r}")
 
-    n_err = sum(1 for f in findings if f.severity == ERROR)
-    # keep the summary out of the TSV so the file stays machine-readable
-    print(f"{len(findings)} findings, {n_err} errors",
-          file=sys.stderr if args.format == "tsv" else sys.stdout)
-    return 1 if n_err else 0
+    if args.accept is not None:
+        accepted = log.accept_new(args.accept)
+        print(f"accepted {accepted} new issue(s) into {log.verified_path}")
+        return 0
+
+    return log.finish(write_to=str(OUTPUT))
 
 
 if __name__ == "__main__":
