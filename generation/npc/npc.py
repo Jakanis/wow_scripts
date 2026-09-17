@@ -33,6 +33,30 @@ FORCE_DOWNLOAD = 'force_download'
 RETRIEVE_QUOTES = 'retrieve_quotes'
 FORCE_LOAD_NAME = 'FORCE LOAD'  # placeholder until the real name is read off the NPC page
 
+# Wowhead's NPC search leaves the totem creature type out entirely, in every expansion, although
+# each of them has a page. Probed 2026-09-18: all 91 exist from classic through mists.
+UNLISTED_TOTEMS = [
+    2523, 2630, 3527, 3573, 3579, 3902, 3903, 3904, 3906, 3907, 3908, 3909,
+    3911, 3912, 3913, 3968, 5873, 5874, 5879, 5913, 5919, 5920, 5921, 5922,
+    5923, 5924, 5925, 5926, 5927, 5929, 5950, 6012, 6016, 6017, 6066, 6110,
+    6111, 6112, 7366, 7367, 7368, 7398, 7399, 7400, 7402, 7403, 7412, 7413,
+    7414, 7415, 7416, 7423, 7424, 7425, 7464, 7465, 7466, 7467, 7468, 7469,
+    7483, 7484, 7486, 7487, 7844, 7845, 8510, 9637, 9687, 9688, 9689, 10183,
+    10217, 10467, 10557, 11100, 11101, 12141, 13916, 14662, 14663, 14664, 14666, 14667,
+    15112, 15304, 15363, 15463, 15464, 15803, 16385,
+]
+# Spell ranks went away in cata, and these totems were renamed zzOLD... there and in mists.
+RETIRED_TOTEM_RANKS = [
+    3902, 3903, 3904, 3906, 3907, 3908, 3909, 3911, 3912, 3913, 5879, 5919,
+    5920, 5921, 5922, 6012, 6110, 6111, 7366, 7367, 7368, 7398, 7399, 7400,
+    7402, 7403, 7412, 7413, 7414, 7415, 7416, 7423, 7424, 7425, 7464, 7465,
+    7466, 7468, 7469, 7483, 7484, 7486, 7487, 7844, 7845, 9687, 9688, 9689,
+    10557, 11100, 11101, 15463, 15464,
+]
+CURRENT_TOTEMS = [id for id in UNLISTED_TOTEMS if id not in RETIRED_TOTEM_RANKS]
+# 3580 is Invisibility Totem in classic and Crafticus Rabbitus from tbc on, where only the tbc search lists it
+CRAFTICUS = 3580
+
 expansion_data = {
     CLASSIC: {
         WOWHEAD_URL: 'https://www.wowhead.com/classic',
@@ -41,7 +65,7 @@ expansion_data = {
         NPC_CACHE: 'wowhead_classic_npc_cache',
         METADATA_FILTERS: ('13:', '5:', '11500:'),
         IGNORES: [],
-        FORCE_DOWNLOAD: [],
+        FORCE_DOWNLOAD: UNLISTED_TOTEMS + [CRAFTICUS],
         RETRIEVE_QUOTES: True
     },
     SOD: {
@@ -61,7 +85,7 @@ expansion_data = {
         NPC_CACHE: 'wowhead_tbc_npc_cache',
         METADATA_FILTERS: ('', '', ''),
         IGNORES: [],
-        FORCE_DOWNLOAD: [],
+        FORCE_DOWNLOAD: UNLISTED_TOTEMS,
         RETRIEVE_QUOTES: True
     },
     WRATH: {
@@ -71,7 +95,7 @@ expansion_data = {
         NPC_CACHE: 'wowhead_wrath_npc_cache',
         METADATA_FILTERS: ('', '', ''),
         IGNORES: [],
-        FORCE_DOWNLOAD: [],
+        FORCE_DOWNLOAD: UNLISTED_TOTEMS + [CRAFTICUS],
         RETRIEVE_QUOTES: True
     },
     CATA: {
@@ -81,7 +105,7 @@ expansion_data = {
         NPC_CACHE: 'wowhead_cata_npc_cache',
         METADATA_FILTERS: ('', '', ''),
         IGNORES: [],
-        FORCE_DOWNLOAD: [],
+        FORCE_DOWNLOAD: CURRENT_TOTEMS + [CRAFTICUS],
         RETRIEVE_QUOTES: False
     },
     MISTS: {
@@ -91,7 +115,7 @@ expansion_data = {
         NPC_CACHE: 'wowhead_mists_npc_cache',
         METADATA_FILTERS: ('', '', ''),
         IGNORES: [],
-        FORCE_DOWNLOAD: [],
+        FORCE_DOWNLOAD: CURRENT_TOTEMS + [CRAFTICUS],
         RETRIEVE_QUOTES: False
     }
 }
@@ -675,8 +699,6 @@ def save_page(expansion, id):
         # You do it async - you fail
         # Have a tea break (or change IP, lol)
         raise Exception(f'Wowhead({expansion}) returned {r.status_code} for NPC #{id}')
-    if (f"<error>Item not found!</error>" in r.text):
-        return
     with open(html_file_path, 'w', encoding="utf-8") as output_file:
         output_file.write(r.text)
 
