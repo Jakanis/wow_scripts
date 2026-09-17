@@ -432,6 +432,10 @@ def merge_expansions(old_expansion: dict[int, dict[str, NPC_MD]], new_expansion:
 
 
 def fix_npc_data(all_npcs: dict[int, dict[str, NPC_MD]]):
+    all_npcs[185331][CLASSIC] = all_npcs[185331][SOD]
+    del all_npcs[185331][SOD]
+    all_npcs[185332][CLASSIC] = all_npcs[185332][SOD]
+    del all_npcs[185332][SOD]
     all_npcs[185336][CLASSIC] = all_npcs[185336][SOD]
     del all_npcs[185336][SOD]
 
@@ -1122,12 +1126,15 @@ def generate_entries_with_classicua(glossary: Glossary, entries_dir: str = 'inpu
 
 
 if __name__ == '__main__':
+    glossary = Glossary.load()
     download_csv_from_google_sheet('NPCs')
     sheet_translations = load_merged_translations()
 
     all_npcs_md, npc_quotes = retrieve_npc_data()
-
     populate_npc_locations(all_npcs_md)
+
+    # Regenerate ClassicUA's npc.lua directly from Crowdin glossary and update input of this script with fresh entries
+    glossary = generate_entries_with_classicua(glossary)
 
     classicua_translations = read_classicua_translations('input/entries')
     apply_translations_to_data(all_npcs_md, classicua_translations)
@@ -1147,16 +1154,12 @@ if __name__ == '__main__':
 
     # Pending NPCs -> new Crowdin glossary terms (replaces combine_npcs.py)
     download_csv_from_google_sheet('Pending NPCs', 'input/pending_npcs.csv')
-    glossary = Glossary.load()
     new_terms, description_updates = process_pending_npcs(glossary)
     update_glossary_on_crowdin(new_terms, description_updates)
 
-    # Regenerate ClassicUA's npc.lua from the updated glossary and take it as our input
-    # glossary = generate_entries_with_classicua(glossary)
-
     # Entries that exist in ClassicUA but were never recorded on the NPCs sheet
-    # missing_entries = filter_missing_entries(classicua_translations, sheet_translations)
-    # create_missing_entries_sheet(missing_entries, all_npcs_md, glossary)
+    missing_entries = filter_missing_entries(classicua_translations, sheet_translations)
+    create_missing_entries_sheet(missing_entries, all_npcs_md, glossary)
 
 
     sys.exit(log.finish())
