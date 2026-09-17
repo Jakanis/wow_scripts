@@ -100,13 +100,14 @@ class IssueLog:
                 writer.writerow([issue.severity, issue.rule, issue.entity, issue.id,
                                  issue.expansion, issue.field, issue.message, note])
 
-    def accept_new(self, note: str = '') -> int:
+    def accept_new(self, note: str = '', only=None) -> int:
         verified = self.load_verified()
         new, _, _ = self.compare()
-        for issue in new:
+        accepted = [issue for issue in new if only is None or only(issue)]
+        for issue in accepted:
             verified[issue] = note
         self.write_verified(verified)
-        return len(new)
+        return len(accepted)
 
     # -- comparison -------------------------------------------------------
 

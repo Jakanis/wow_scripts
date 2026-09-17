@@ -31,6 +31,7 @@ finding, 0 otherwise.
 from __future__ import annotations
 
 import argparse
+import contextlib
 import re
 import shutil
 import subprocess
@@ -855,8 +856,7 @@ def main() -> int:
             return log.finish(write_to=str(OUTPUT))
 
     files = sorted(p for p in root.rglob("*.lua")
-                   if kind_for(p) != "other"
-                   and (not args.expansion or p.parent.name in args.expansion))
+                   if kind_for(p) != "other")
 
     db = args.db or root.parent / "dev" / "database" / "classicua.db"
     crowdin_en = args.crowdin_en or root.parent / "dev" / "translation_from_crowdin" / "en"
@@ -871,15 +871,16 @@ def main() -> int:
     order = {ERROR: 0, WARN: 1, INFO: 2}
     findings.sort(key=lambda f: (order[f.severity], f.rule, f.file, f.line))
 
-    # the log always sees every finding: --severity and --rule narrow what is
-    # printed below, never what is compared, or a filtered run would report the
-    # rest as gone
+    # the log always sees every finding: --severity, --rule and --expansion
+    # narrow what is printed below, never what is compared, or a filtered run
+    # would report the rest as gone
     for f in findings:
         log.issues.append(f.to_issue())
 
     cut = order[args.severity]
     shown = [f for f in findings if order[f.severity] <= cut
-             and (not args.rule or f.rule in args.rule)]
+             and (not args.rule or f.rule in args.rule)
+             and (not args.expansion or f.expansion in args.expansion)]
 
     if args.format == "tsv":
         print("severity\trule\tfile\tline\tkey\tmessage\texcerpt")
@@ -906,10 +907,16 @@ def main() -> int:
                     print(f"    suggested fix: {f.suggestion!r}")
 
     if args.accept is not None:
-        accepted = log.accept_new(args.accept)
+        # with a filter, only what the filter shows is accepted
+        visible = {f.to_issue() for f in shown}
+        accepted = log.accept_new(args.accept, only=lambda issue: issue in visible)
         print(f"accepted {accepted} new issue(s) into {log.verified_path}")
         return 0
 
+    if args.format == "tsv":
+        # the rows own stdout, so the report goes beside them
+        with contextlib.redirect_stdout(sys.stderr):
+            return log.finish(write_to=str(OUTPUT))
     return log.finish(write_to=str(OUTPUT))
 
 

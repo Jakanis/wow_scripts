@@ -1,0 +1,11 @@
+severity	rule	entity	id	expansion	field	message	note
+warning	optional-no-default	gossip	448398259	classic		every variant is conditional; renders as empty text when none match	optional blocks by design; Argent Emissary and Argent Messenger gossips verified in-game
+warning	optional-no-default	gossip	1708285408	classic		every variant is conditional; renders as empty text when none match	optional blocks by design; Argent Emissary and Argent Messenger gossips verified in-game
+warning	optional-no-default	gossip	2072091967	classic		every variant is conditional; renders as empty text when none match	optional blocks by design; Argent Emissary and Argent Messenger gossips verified in-game
+warning	optional-no-default	gossip	2527784419	classic		every variant is conditional; renders as empty text when none match	optional blocks by design; Argent Emissary and Argent Messenger gossips verified in-game
+warning	optional-no-default	gossip	3133352255	classic		every variant is conditional; renders as empty text when none match	optional blocks by design; Argent Emissary and Argent Messenger gossips verified in-game
+warning	optional-no-default	gossip	3294003233	classic		every variant is conditional; renders as empty text when none match	optional blocks by design; Argent Emissary and Argent Messenger gossips verified in-game
+warning	optional-no-default	gossip	3481671681	classic		every variant is conditional; renders as empty text when none match	optional blocks by design; Argent Emissary and Argent Messenger gossips verified in-game
+warning	optional-no-default	gossip	3731930412	classic		every variant is conditional; renders as empty text when none match	optional blocks by design; Argent Emissary and Argent Messenger gossips verified in-game
+warning	optional-no-default	gossip	3869908532	classic		every variant is conditional; renders as empty text when none match	optional blocks by design; Argent Emissary and Argent Messenger gossips verified in-game
+note	percent-parity	chat	2030343839	tbc	A'dal	English has 1 %s but the translation has none; harmless under a single NPC key, the name is written out instead	deliberate: the NPC name is written out instead of %s

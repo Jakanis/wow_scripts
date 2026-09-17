@@ -23,6 +23,7 @@ UI_ESCAPE = re.compile(
     r'|\|h'                # link tail
     r'|\|n'                # newline
     r'|\|[14][^;]*;'       # plural or declension form
+    r'|%(?:\d+\$)?[sd]'     # format placeholder, which a case ending may follow: %sа
 )
 
 

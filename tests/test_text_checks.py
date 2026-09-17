@@ -30,6 +30,9 @@ CASES = [
     ('|TInterface\\Icons\\x:16|tЗброя', []),
     ('|Hitem:123|hПосилання|h', []),
     ('%d |4мідна монета:мідні монети:мідних монет;', []),
+    # a case ending glued to a format placeholder is not a word
+    ('Воля %sа слабшає.', []),
+    ('%dх %sу та %1$sа', []),
     ('|cFFFFFFFFcекунд|r', ['cекунд']),      # a real typo inside markup
     # one issue per distinct word, however often it repeats
     ('{1} cекунд, {2} cекунд, {3} cекунд', ['cекунд']),

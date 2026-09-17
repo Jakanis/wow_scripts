@@ -38,6 +38,14 @@ def main() -> int:
     failures += check('known passes', log.exit_code(), 0)
     failures += check('note kept', list(log.load_verified().values())[0], 'checked by hand')
 
+    # a selective accept files only what the predicate lets through
+    partial = make_log()
+    partial.warning('rule-a', 'item', 'one', id=1)
+    partial.warning('rule-b', 'item', 'two', id=2)
+    accepted = partial.accept_new('only a', only=lambda issue: issue.rule == 'rule-a')
+    new, known, gone = partial.compare()
+    failures += check('selective accept', (accepted, len(new), len(known)), (1, 1, 1))
+
     # a reworded message is a new identity plus a gone one, paired as changed
     reworded = IssueLog('test', log.verified_path)
     reworded.warning('redundant-translation', 'item', 'needs spell#9999', id=3912,
