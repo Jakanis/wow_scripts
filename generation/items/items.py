@@ -5,7 +5,7 @@ import sys
 
 from bs4 import BeautifulSoup, CData
 from generation.spells.spells import SpellData, load_spells_from_db, is_spell_translated
-from generation.utils.issues import IssueLog
+from generation.utils.issues import WARNING, Issue, IssueLog
 from generation.utils.text_checks import report_mixed_script
 from generation.utils.utils import (NOTE_NOT_TRANSLATED, NOTE_PRETRANSLATED, check_feedback,
                                     compare_directories, download_csv_from_google_sheet, format_notes,
@@ -374,7 +374,7 @@ def parse_wowhead_item_xml_page(expansion, id) -> ItemData:
             # There is another span with same class. It contains item level, damage, durability, etc
             continue
         if flavor:
-            print(f'Warning! Setting flavor text more than one time for item #{id}')
+            log.warning('flavor-twice', 'item', 'the page carries more than one flavor text', id=id)
         flavor = flavor_tag.text[1:-1]
 
     effects = list()
@@ -408,7 +408,8 @@ def parse_wowhead_item_xml_page(expansion, id) -> ItemData:
                 elif (id, expansion) in double_refered_items:
                     effects.append(ItemEffect(effect_type, rune_spell_id, a_tag.text))
                 else:
-                    print(f'Warning! Unexpected double reference effect for item #{id}:{expansion}!')
+                    log.warning('double-reference', 'item', 'an effect references two spells and the item is not listed as such',
+                                id=id, expansion=expansion)
             else:
                 effect_text = a_tag.text
                 effect_text = effect_text[:effect_text.find(' (Proc chance')] if ' (Proc chance' in effect_text else effect_text # Remove (Proc chance: x%) text
@@ -540,7 +541,7 @@ def load_object_lua() -> dict[str, str]:
         decoded_objects = lua.decode(lua_file)
         for object_name, object_translation in decoded_objects.items():
             if object_name.lower() in translations:
-                print('Warning! Duplicated object in ClassicUA.')
+                log.warning('duplicate-entry', 'object', 'the addon entries hold this object twice', id=object_name)
             translations[object_name.lower()] = object_translation
     return translations
 
@@ -772,7 +773,7 @@ def populate_book_text(item_data: dict[int, ItemData], readable_items: dict[int,
             if readable_item and readable_item.pages:
                 item.readable_pages = readable_item.pages
             else:
-                print(f'Warning! Item #{item_id} has no readable pages!')
+                log.warning('no-readable-pages', 'item', 'marked readable, but no pages were parsed', id=item_id)
         else:
             item.readable_pages = None
 
@@ -968,7 +969,8 @@ def read_translations_sheet() -> dict[int, dict[str, ItemData]]:
                 ref = effects_ua[0].effect_id
             all_translations[item_id] = all_translations.get(item_id, dict())
             if expansion in all_translations[item_id].keys():
-                print(f'Warning! Duplicate for item#{item_id}:{expansion}')
+                log.warning('duplicate-row', 'item', 'the sheet has more than one row for this item',
+                            id=item_id, expansion=expansion)
             all_translations[item_id][expansion] = ItemData(item_id, expansion, name=name_en, name_ua=name_ua,
                                                             effects=effects, effects_ua=effects_ua, ref=ref, notes=notes)
 
@@ -1018,7 +1020,8 @@ def read_classicua_translations(items_root_path: str, item_data: dict[int, dict[
         decoded_items = lua.decode(lua_table)
         for item_id, decoded_item in decoded_items.items():
             if item_id in all_items and expansion in all_items[item_id]:
-                print(f'Warning! Duplicate for item#{item_id}:{expansion}')
+                log.warning('duplicate-entry', 'item', 'the addon entries hold this item twice',
+                            id=item_id, expansion=expansion)
             if type(decoded_item) == list:
                 item = ItemData(id=id,
                                 expansion=expansion,
@@ -1042,7 +1045,9 @@ def build_name_pretranslation_map(items: dict[int, dict[str, ItemData]]) -> dict
         for expansion, item in sorted(items[key].items()):
             if item.name_ua:
                 if item.name in name_translations and name_translations[item.name] != item.name_ua:
-                    print(f'Warning! Name translation for {item.name}#{item.id} differs: {name_translations[item.name]} <> {item.name_ua}')
+                    log.warning('name-translated-two-ways', 'item',
+                                f'"{item.name}" is "{name_translations[item.name]}" elsewhere and "{item.name_ua}" here',
+                                id=item.id, expansion=expansion, field='name_ua')
                     name_translations[item.name] = name_translations[item.name] + " ???"
                 else:
                     name_translations[item.name] = item.name_ua
@@ -1162,11 +1167,13 @@ def apply_translations_to_data(item_data: dict[int, dict[str, ItemData]], transl
             orig_item = item_data[key][expansion]
             translation = translations[key][expansion]
             if orig_item.name != translation.name:
-                print(f'Warning! Original name differs for item#{key}:{expansion}:\n{__diff_fields(orig_item.name, translation.name)}')
+                log.warning('original-differs', 'item', __diff_fields(orig_item.name, translation.name),
+                            id=key, expansion=expansion, field='name')
             if not __effects_eq(orig_item.effects, translation.effects):
                 orig_effects = '\n'.join(map(lambda x: x.short_str(), orig_item.effects)) if orig_item.effects else None
                 translation_effects = '\n'.join(map(lambda x: x.short_str(), translation.effects)) if translation.effects else None
-                print(f'Warning! Original effect differs for item#{key}:{expansion}:\n{__diff_fields(orig_effects, translation_effects)}')
+                log.warning('original-differs', 'item', __diff_fields(orig_effects, translation_effects),
+                            id=key, expansion=expansion, field='effects')
             orig_item.name_ua = translation.name_ua
             orig_item.effects_ua = translation.effects_ua
             orig_item.ref = translation.ref
@@ -1185,13 +1192,15 @@ def compare_tsv_and_classicua(tsv_translations: dict[int, dict[str, ItemData]], 
     # for key in tsv_translations.keys() - classicua_translations.keys():
     #     print(f"Warning! Item#{key} doesn't exist in ClassicUA")
     for key in classicua_translations.keys() - tsv_translations.keys():
-        print(f"Warning! Item#{key} doesn't exist in sheet")
+        log.warning('missing-on-sheet', 'item', 'in the addon entries but not on the sheet', id=key)
     for key in tsv_translations.keys() & classicua_translations.keys():
         for expansion in tsv_translations[key].keys() - classicua_translations[key].keys():
             if tsv_translations[key][expansion].ref != key:
-                print(f"Warning! Item#{key}:{expansion} doesn't exist in ClassicUA")
+                log.warning('missing-in-classicua', 'item', 'on the sheet but not in the addon entries',
+                            id=key, expansion=expansion)
         for expansion in classicua_translations[key].keys() - tsv_translations[key].keys():
-            print(f"Warning! Item#{key}:{expansion} doesn't exist in sheet")
+            log.warning('missing-on-sheet', 'item', 'in the addon entries but not on the sheet',
+                        id=key, expansion=expansion)
         for expansion in tsv_translations[key].keys() & classicua_translations[key].keys():
             tsv_translation = tsv_translations[key][expansion]
             classicua_translation = classicua_translations[key][expansion]
@@ -1199,9 +1208,12 @@ def compare_tsv_and_classicua(tsv_translations: dict[int, dict[str, ItemData]], 
             tsv_effects = '\n'.join(map(lambda x: x.short_str(), sorted(tsv_translation.effects_ua, key=cmp_to_key(lambda x, y: EFFECT_TYPES.index(x.get_type()) - EFFECT_TYPES.index(y.get_type()))))) if tsv_translation.effects_ua else None
             classicua_effects = '\n'.join(map(lambda x: x.short_str(), sorted(classicua_translation.effects_ua, key=cmp_to_key(lambda x, y: EFFECT_TYPES.index(x.get_type()) - EFFECT_TYPES.index(y.get_type()))))) if classicua_translation.effects_ua else None
             if tsv_translation.name_ua != classicua_translation.name_ua:
-                print(f'Warning! Name translation differs for item#{key}:{expansion}:\n{__diff_fields(classicua_translation.name_ua, tsv_translation.name_ua)}')
+                log.warning('translation-differs', 'item',
+                            __diff_fields(classicua_translation.name_ua, tsv_translation.name_ua),
+                            id=key, expansion=expansion, field='name_ua')
             if tsv_effects != classicua_effects:
-                print(f'Warning! Effects translation differs for item#{key}:{expansion}:\n{__diff_fields(classicua_effects, tsv_effects)}')
+                log.warning('translation-differs', 'item', __diff_fields(classicua_effects, tsv_effects),
+                            id=key, expansion=expansion, field='effects_ua')
 
 
 def __prepare_lua_str(value: str) -> str:
@@ -1267,7 +1279,8 @@ def convert_translations_to_lua(translations: list[ItemData], expansion: str):
             for effect in item.effects_ua:
                 if effect.get_type() == "Desc":
                     if desc is not None:
-                        print(f"Warning! Double desc for item#{item.id}:{item.expansion}")
+                        log.warning('double-effect', 'item', 'more than one effect of this kind, the last one wins',
+                                    id=item.id, expansion=item.expansion, field='desc')
                     desc = __prepare_lua_str(effect.effect_text)
                 # if effect.effect_type == "Equip":
                 #     equips.append(effect.effect_text and __prepare_lua_str(effect.effect_text) or effect.effect_id)
@@ -1277,15 +1290,18 @@ def convert_translations_to_lua(translations: list[ItemData], expansion: str):
                 #     uses.append(effect.effect_text and __prepare_lua_str(effect.effect_text) or effect.effect_id)
                 if effect.get_type() == "Flavor":
                     if flavor is not None:
-                        print(f"Warning! Double flavor for item#{item.id}:{item.expansion}")
+                        log.warning('double-effect', 'item', 'more than one effect of this kind, the last one wins',
+                                    id=item.id, expansion=item.expansion, field='flavor')
                     flavor = __prepare_lua_str(effect.effect_text)
                 if effect.get_type() == "Item":
                     if item_result is not None:
-                        print(f"Warning! Double item_result for item#{item.id}:{item.expansion}")
+                        log.warning('double-effect', 'item', 'more than one effect of this kind, the last one wins',
+                                    id=item.id, expansion=item.expansion, field='item_result')
                     item_result = effect.effect_id
                 if effect.get_type() == "Ref":
                     if ref is not None:
-                        print(f"Warning! Double ref for item#{item.id}:{item.expansion}")
+                        log.warning('double-effect', 'item', 'more than one effect of this kind, the last one wins',
+                                    id=item.id, expansion=item.expansion, field='ref')
                     ref = effect.effect_id
 
             if item.id == ref:  # Manually set to preserve translation from previous expansion
@@ -1337,8 +1353,20 @@ def convert_translations_to_entries(all_translations: dict[int, dict[str, ItemDa
         convert_translations_to_lua(translations_group, expansion)
 
 
-def __validate_template(orig_effect: ItemEffect, ua_effect: ItemEffect):
-    pass
+def __validate_template(item: ItemData, i: int, orig_effect: ItemEffect, ua_effect: ItemEffect):
+    value = orig_effect.effect_text
+    translation = re.sub(r'\[.+?#.+?]', '', ua_effect.effect_text, flags=re.DOTALL)
+    start = translation.find('#')
+    if not value or start == -1:
+        return
+    where = dict(id=item.id, expansion=item.expansion, field=f'effect#{i}')
+    if set(re.findall(r'{\d+}', translation[:start])) != set(re.findall(r'{\d+}', translation[start + 1:])):
+        log.warning('template-numbers-mismatch', 'item',
+                    'placeholder numbers differ between the translation and its template', **where)
+    for template in translation[start + 1:].split('#'):
+        pattern = re.sub(r'\\{\d+\\}', r'(\\d+|\\d+\\.\\d+|\\.\\d+)', re.escape(template))
+        if len(re.findall(pattern, value)) != 1:
+            log.warning('template-failed', 'item', 'the template does not match the English text', **where)
 
 
 def __validate_script(item: ItemData):
@@ -1359,24 +1387,22 @@ def __validate_item(item: ItemData):
     orig_effects = list(filter(lambda x: x.get_type() in ['Use', 'Equip', 'Hit', 'Flavor'], sorted(item.effects, key=cmp_to_key(lambda x, y: EFFECT_TYPES.index(x.get_type()) - EFFECT_TYPES.index(y.get_type())))))
     ua_effects = list(filter(lambda x: x.get_type() in ['Use', 'Equip', 'Hit', 'Flavor'], sorted(item.effects_ua, key=cmp_to_key(lambda x, y: EFFECT_TYPES.index(x.get_type()) - EFFECT_TYPES.index(y.get_type())))))
     if len(orig_effects) != len(ua_effects):
-        print(f"Warning! Effects count doesn't match for item#{item.id}:{item.expansion}")
-    # TODO: return validations
-    # else:
-    #     for i in range(len(orig_effects)):
-    #         ua_effect = ua_effects[i]
-    #         orig_effect = orig_effects[i]
-    #
-    #         if (ua_effect.get_type() != orig_effect.get_type()
-    #                 and item.id not in [203992, 206384, 216738, 216740, 216744, 216745, 216746, 216747, 216748, 216764, 216767, 216768, 216769, 216770, 216771, 221978, 223163]):
-    #             print(f'Warning! Effect type differs for item#{item.id}:{item.expansion}[{i}]')
-    #         if ua_effect.effect_text:
-    #             if '#' in ua_effect.effect_text:
-    #                 __validate_template(orig_effect, ua_effect)
-    #             else:
-    #                 if (set(re.findall(r'\d+', orig_effect.effect_text)) != set(re.findall(r'\d+', ua_effect.effect_text))
-    #                         and item.id not in [744, 10725, 11808, 11819, 12794, 19883, 203784, 203785, 203786, 203787, 204688, 204689, 204690, 207106, 207107, 207108, 207109, 208035, 208036, 208037, 208038, 208213, 208215, 208218, 208219, 208601, 208602, 208603, 208604, 213701, 213709, 215461, 221307]):
-    #                     print(f"Warning! Numbers don't match for item#{item.id}:{item.expansion}[{i}]")
-
+        log.warning('effects-count', 'item',
+                    f'{len(orig_effects)} effect(s) in the original, {len(ua_effects)} in the translation',
+                    id=item.id, expansion=item.expansion)
+        return
+    for i, (orig_effect, ua_effect) in enumerate(zip(orig_effects, ua_effects)):
+        where = dict(id=item.id, expansion=item.expansion, field=f'effect#{i}')
+        if ua_effect.get_type() != orig_effect.get_type():
+            log.warning('effect-type-differs', 'item',
+                        f'{orig_effect.get_type()} in the original, {ua_effect.get_type()} in the translation', **where)
+        if not ua_effect.effect_text:
+            continue
+        if '#' in ua_effect.effect_text:
+            __validate_template(item, i, orig_effect, ua_effect)
+        elif orig_effect.effect_text and (set(re.findall(r'\d+', orig_effect.effect_text))
+                                          != set(re.findall(r'\d+', ua_effect.effect_text))):
+            log.warning('numbers-mismatch', 'item', 'the numbers differ from the English text', **where)
 
 
 def validate_translations(items: dict[int, dict[str, ItemData]]):
@@ -1504,9 +1530,13 @@ def check_for_translation_redundancies(items: dict[int, dict[str, ItemData]], sp
                     ua_effect = filtered_ua_effects[i]
                     if orig_effect.effect_id and not ua_effect.effect_id and ua_effect.effect_text:
                         if is_spell_translated(spells.get(int(orig_effect.effect_id))):
-                            print(f'Warning! Redundant translation for item#{item.id}:{item.expansion} effect#{i} - spell#{orig_effect.effect_id} is already translated.')
+                            log.warning('redundant-translation', 'item',
+                                        f'spell#{orig_effect.effect_id} is already translated',
+                                        id=item.id, expansion=item.expansion, field=f'effect#{i}')
                     if orig_effect.effect_id and not orig_effect.effect_text and ua_effect.effect_text:
-                        print(f'Warning! Redundant translation for item#{item.id}:{item.expansion} effect#{i} - original requires spell#{orig_effect.effect_id} reference.')
+                        log.warning('redundant-translation', 'item',
+                                    f'the original requires a spell#{orig_effect.effect_id} reference',
+                                    id=item.id, expansion=item.expansion, field=f'effect#{i}')
 
 if __name__ == '__main__':
     download_csv_from_google_sheet('Items')

@@ -1,0 +1,145 @@
+severity	rule	entity	id	expansion	field	message	note
+warning	effect-type-differs	item	203992	sod	effect#0	Flavor in the original, Use in the translation	carried over from the ignore list in __validate_item
+warning	effect-type-differs	item	206384	sod	effect#0	Flavor in the original, Use in the translation	carried over from the ignore list in __validate_item
+warning	effect-type-differs	item	216738	sod	effect#0	Flavor in the original, Use in the translation	carried over from the ignore list in __validate_item
+warning	effect-type-differs	item	216740	sod	effect#0	Flavor in the original, Use in the translation	carried over from the ignore list in __validate_item
+warning	effect-type-differs	item	216744	sod	effect#0	Flavor in the original, Use in the translation	carried over from the ignore list in __validate_item
+warning	effect-type-differs	item	216745	sod	effect#0	Flavor in the original, Use in the translation	carried over from the ignore list in __validate_item
+warning	effect-type-differs	item	216746	sod	effect#0	Flavor in the original, Use in the translation	carried over from the ignore list in __validate_item
+warning	effect-type-differs	item	216747	sod	effect#0	Flavor in the original, Use in the translation	carried over from the ignore list in __validate_item
+warning	effect-type-differs	item	216748	sod	effect#0	Flavor in the original, Use in the translation	carried over from the ignore list in __validate_item
+warning	effect-type-differs	item	216764	sod	effect#0	Flavor in the original, Use in the translation	carried over from the ignore list in __validate_item
+warning	effect-type-differs	item	216767	sod	effect#0	Flavor in the original, Use in the translation	carried over from the ignore list in __validate_item
+warning	effect-type-differs	item	216768	sod	effect#0	Flavor in the original, Use in the translation	carried over from the ignore list in __validate_item
+warning	effect-type-differs	item	216769	sod	effect#0	Flavor in the original, Use in the translation	carried over from the ignore list in __validate_item
+warning	effect-type-differs	item	216770	sod	effect#0	Flavor in the original, Use in the translation	carried over from the ignore list in __validate_item
+warning	effect-type-differs	item	216771	sod	effect#0	Flavor in the original, Use in the translation	carried over from the ignore list in __validate_item
+warning	effect-type-differs	item	221978	sod	effect#0	Flavor in the original, Use in the translation	carried over from the ignore list in __validate_item
+warning	effect-type-differs	item	223163	sod	effect#0	Flavor in the original, Use in the translation	carried over from the ignore list in __validate_item
+warning	numbers-mismatch	item	10725	classic	effect#0	the numbers differ from the English text	carried over from the ignore list in __validate_item
+warning	numbers-mismatch	item	19883	classic	effect#0	the numbers differ from the English text	carried over from the ignore list in __validate_item
+warning	numbers-mismatch	item	203784	sod	effect#0	the numbers differ from the English text	carried over from the ignore list in __validate_item
+warning	numbers-mismatch	item	203785	sod	effect#0	the numbers differ from the English text	carried over from the ignore list in __validate_item
+warning	numbers-mismatch	item	203786	sod	effect#0	the numbers differ from the English text	carried over from the ignore list in __validate_item
+warning	numbers-mismatch	item	203787	sod	effect#0	the numbers differ from the English text	carried over from the ignore list in __validate_item
+warning	numbers-mismatch	item	204688	sod	effect#0	the numbers differ from the English text	carried over from the ignore list in __validate_item
+warning	numbers-mismatch	item	204689	sod	effect#0	the numbers differ from the English text	carried over from the ignore list in __validate_item
+warning	numbers-mismatch	item	204690	sod	effect#0	the numbers differ from the English text	carried over from the ignore list in __validate_item
+warning	numbers-mismatch	item	207106	sod	effect#0	the numbers differ from the English text	carried over from the ignore list in __validate_item
+warning	numbers-mismatch	item	207107	sod	effect#0	the numbers differ from the English text	carried over from the ignore list in __validate_item
+warning	numbers-mismatch	item	207108	sod	effect#0	the numbers differ from the English text	carried over from the ignore list in __validate_item
+warning	numbers-mismatch	item	207109	sod	effect#0	the numbers differ from the English text	carried over from the ignore list in __validate_item
+warning	numbers-mismatch	item	208035	sod	effect#0	the numbers differ from the English text	carried over from the ignore list in __validate_item
+warning	numbers-mismatch	item	208036	sod	effect#0	the numbers differ from the English text	carried over from the ignore list in __validate_item
+warning	numbers-mismatch	item	208037	sod	effect#0	the numbers differ from the English text	carried over from the ignore list in __validate_item
+warning	numbers-mismatch	item	208038	sod	effect#0	the numbers differ from the English text	carried over from the ignore list in __validate_item
+warning	numbers-mismatch	item	208213	sod	effect#0	the numbers differ from the English text	carried over from the ignore list in __validate_item
+warning	numbers-mismatch	item	208215	sod	effect#0	the numbers differ from the English text	carried over from the ignore list in __validate_item
+warning	numbers-mismatch	item	208218	sod	effect#0	the numbers differ from the English text	carried over from the ignore list in __validate_item
+warning	numbers-mismatch	item	208219	sod	effect#0	the numbers differ from the English text	carried over from the ignore list in __validate_item
+warning	numbers-mismatch	item	208601	sod	effect#0	the numbers differ from the English text	carried over from the ignore list in __validate_item
+warning	numbers-mismatch	item	208602	sod	effect#0	the numbers differ from the English text	carried over from the ignore list in __validate_item
+warning	numbers-mismatch	item	208603	sod	effect#0	the numbers differ from the English text	carried over from the ignore list in __validate_item
+warning	numbers-mismatch	item	208604	sod	effect#0	the numbers differ from the English text	carried over from the ignore list in __validate_item
+warning	numbers-mismatch	item	213701	sod	effect#0	the numbers differ from the English text	carried over from the ignore list in __validate_item
+warning	numbers-mismatch	item	213709	sod	effect#0	the numbers differ from the English text	carried over from the ignore list in __validate_item
+warning	numbers-mismatch	item	215461	sod	effect#0	the numbers differ from the English text	carried over from the ignore list in __validate_item
+warning	numbers-mismatch	item	221307	sod	effect#0	the numbers differ from the English text	carried over from the ignore list in __validate_item
+warning	redundant-translation	item	3912	classic	effect#0	the original requires a spell#3607 reference	carried over from verified_warnings.txt
+warning	redundant-translation	item	4401	classic	effect#0	the original requires a spell#4055 reference	carried over from verified_warnings.txt
+warning	redundant-translation	item	5165	classic	effect#0	the original requires a spell#5316 reference	carried over from verified_warnings.txt
+warning	redundant-translation	item	8485	classic	effect#0	the original requires a spell#10673 reference	carried over from verified_warnings.txt
+warning	redundant-translation	item	8486	classic	effect#0	the original requires a spell#10674 reference	carried over from verified_warnings.txt
+warning	redundant-translation	item	8487	classic	effect#0	the original requires a spell#10676 reference	carried over from verified_warnings.txt
+warning	redundant-translation	item	8488	classic	effect#0	the original requires a spell#10678 reference	carried over from verified_warnings.txt
+warning	redundant-translation	item	8489	classic	effect#0	the original requires a spell#10679 reference	carried over from verified_warnings.txt
+warning	redundant-translation	item	8490	classic	effect#0	the original requires a spell#10677 reference	carried over from verified_warnings.txt
+warning	redundant-translation	item	8491	classic	effect#0	the original requires a spell#10675 reference	carried over from verified_warnings.txt
+warning	redundant-translation	item	8492	classic	effect#0	the original requires a spell#10683 reference	carried over from verified_warnings.txt
+warning	redundant-translation	item	8494	classic	effect#0	the original requires a spell#10682 reference	carried over from verified_warnings.txt
+warning	redundant-translation	item	8495	classic	effect#0	the original requires a spell#10684 reference	carried over from verified_warnings.txt
+warning	redundant-translation	item	8496	classic	effect#0	the original requires a spell#10680 reference	carried over from verified_warnings.txt
+warning	redundant-translation	item	8497	classic	effect#0	the original requires a spell#10711 reference	carried over from verified_warnings.txt
+warning	redundant-translation	item	8498	classic	effect#0	the original requires a spell#10698 reference	carried over from verified_warnings.txt
+warning	redundant-translation	item	8499	classic	effect#0	the original requires a spell#10697 reference	carried over from verified_warnings.txt
+warning	redundant-translation	item	8500	classic	effect#0	the original requires a spell#10707 reference	carried over from verified_warnings.txt
+warning	redundant-translation	item	8501	classic	effect#0	the original requires a spell#10706 reference	carried over from verified_warnings.txt
+warning	redundant-translation	item	8586	cata	effect#0	spell#16084 is already translated	carried over from verified_warnings.txt
+warning	redundant-translation	item	9618	classic	effect#0	the original requires a spell#11886 reference	carried over from verified_warnings.txt
+warning	redundant-translation	item	9618	wrath	effect#0	the original requires a spell#11886 reference	carried over from verified_warnings.txt
+warning	redundant-translation	item	10645	classic	effect#0	the original requires a spell#13278 reference	carried over from verified_warnings.txt
+warning	redundant-translation	item	10822	classic	effect#0	the original requires a spell#10695 reference	carried over from verified_warnings.txt
+warning	redundant-translation	item	11023	classic	effect#0	the original requires a spell#10685 reference	carried over from verified_warnings.txt
+warning	redundant-translation	item	11026	classic	effect#0	the original requires a spell#10704 reference	carried over from verified_warnings.txt
+warning	redundant-translation	item	11027	classic	effect#0	the original requires a spell#10703 reference	carried over from verified_warnings.txt
+warning	redundant-translation	item	11110	classic	effect#0	the original requires a spell#13548 reference	carried over from verified_warnings.txt
+warning	redundant-translation	item	11325	classic	effect#0	the original requires a spell#14814 reference	carried over from verified_warnings.txt
+warning	redundant-translation	item	11474	classic	effect#0	the original requires a spell#15067 reference	carried over from verified_warnings.txt
+warning	redundant-translation	item	11825	classic	effect#0	the original requires a spell#15048 reference	carried over from verified_warnings.txt
+warning	redundant-translation	item	11826	classic	effect#0	the original requires a spell#15049 reference	carried over from verified_warnings.txt
+warning	redundant-translation	item	11903	classic	effect#0	the original requires a spell#15648 reference	carried over from verified_warnings.txt
+warning	redundant-translation	item	12185	classic	effect#0	the original requires a spell#17567 reference	carried over from verified_warnings.txt
+warning	redundant-translation	item	12264	classic	effect#0	the original requires a spell#15999 reference	carried over from verified_warnings.txt
+warning	redundant-translation	item	12302	cata	effect#0	spell#16056 is already translated	carried over from verified_warnings.txt
+warning	redundant-translation	item	12303	cata	effect#0	spell#16055 is already translated	carried over from verified_warnings.txt
+warning	redundant-translation	item	12330	cata	effect#0	spell#16080 is already translated	carried over from verified_warnings.txt
+warning	redundant-translation	item	12351	cata	effect#0	spell#16081 is already translated	carried over from verified_warnings.txt
+warning	redundant-translation	item	12353	cata	effect#0	spell#16083 is already translated	carried over from verified_warnings.txt
+warning	redundant-translation	item	12354	cata	effect#0	spell#16082 is already translated	carried over from verified_warnings.txt
+warning	redundant-translation	item	12529	classic	effect#0	the original requires a spell#16450 reference	carried over from verified_warnings.txt
+warning	redundant-translation	item	12922	classic	effect#0	the original requires a spell#17161 reference	carried over from verified_warnings.txt
+warning	redundant-translation	item	13086	cata	effect#0	spell#17229 is already translated	carried over from verified_warnings.txt
+warning	redundant-translation	item	13317	cata	effect#0	spell#17450 is already translated	carried over from verified_warnings.txt
+warning	redundant-translation	item	13326	cata	effect#0	spell#15779 is already translated	carried over from verified_warnings.txt
+warning	redundant-translation	item	13327	cata	effect#0	spell#17459 is already translated	carried over from verified_warnings.txt
+warning	redundant-translation	item	13328	cata	effect#0	spell#17461 is already translated	carried over from verified_warnings.txt
+warning	redundant-translation	item	13329	cata	effect#0	spell#17460 is already translated	carried over from verified_warnings.txt
+warning	redundant-translation	item	13334	cata	effect#0	spell#17465 is already translated	carried over from verified_warnings.txt
+warning	redundant-translation	item	13335	cata	effect#0	spell#17481 is already translated	carried over from verified_warnings.txt
+warning	redundant-translation	item	13462	classic	effect#0	the original requires a spell#17550 reference	carried over from verified_warnings.txt
+warning	redundant-translation	item	13582	classic	effect#0	the original requires a spell#17709 reference	carried over from verified_warnings.txt
+warning	redundant-translation	item	13583	classic	effect#0	the original requires a spell#17707 reference	carried over from verified_warnings.txt
+warning	redundant-translation	item	13584	classic	effect#0	the original requires a spell#17708 reference	carried over from verified_warnings.txt
+warning	redundant-translation	item	15292	cata	effect#0	spell#18991 is already translated	carried over from verified_warnings.txt
+warning	redundant-translation	item	15293	cata	effect#0	spell#18992 is already translated	carried over from verified_warnings.txt
+warning	redundant-translation	item	15766	classic	effect#0	the original requires a spell#19470 reference	carried over from verified_warnings.txt
+warning	redundant-translation	item	15908	classic	effect#0	the original requires a spell#19548 reference	carried over from verified_warnings.txt
+warning	redundant-translation	item	15911	classic	effect#0	the original requires a spell#19674 reference	carried over from verified_warnings.txt
+warning	redundant-translation	item	15913	classic	effect#0	the original requires a spell#19687 reference	carried over from verified_warnings.txt
+warning	redundant-translation	item	15914	classic	effect#0	the original requires a spell#19688 reference	carried over from verified_warnings.txt
+warning	redundant-translation	item	15915	classic	effect#0	the original requires a spell#19689 reference	carried over from verified_warnings.txt
+warning	redundant-translation	item	15916	classic	effect#0	the original requires a spell#19692 reference	carried over from verified_warnings.txt
+warning	redundant-translation	item	15917	classic	effect#0	the original requires a spell#19694 reference	carried over from verified_warnings.txt
+warning	redundant-translation	item	15919	classic	effect#0	the original requires a spell#19696 reference	carried over from verified_warnings.txt
+warning	redundant-translation	item	15920	classic	effect#0	the original requires a spell#19697 reference	carried over from verified_warnings.txt
+warning	redundant-translation	item	15921	classic	effect#0	the original requires a spell#19693 reference	carried over from verified_warnings.txt
+warning	redundant-translation	item	15922	classic	effect#0	the original requires a spell#19699 reference	carried over from verified_warnings.txt
+warning	redundant-translation	item	15923	classic	effect#0	the original requires a spell#19700 reference	carried over from verified_warnings.txt
+warning	redundant-translation	item	16339	cata	effect#0	spell#16082 is already translated	carried over from verified_warnings.txt
+warning	redundant-translation	item	17757	classic	effect#0	the original requires a spell#21960 reference	carried over from verified_warnings.txt
+warning	redundant-translation	item	19450	classic	effect#0	the original requires a spell#23811 reference	carried over from verified_warnings.txt
+warning	redundant-translation	item	19974	classic	effect#0	the original requires a spell#24325 reference	carried over from verified_warnings.txt
+warning	redundant-translation	item	20371	classic	effect#0	the original requires a spell#24696 reference	carried over from verified_warnings.txt
+warning	redundant-translation	item	20651	classic	effect#0	the original requires a spell#25018 reference	carried over from verified_warnings.txt
+warning	redundant-translation	item	20769	classic	effect#0	the original requires a spell#25162 reference	carried over from verified_warnings.txt
+warning	redundant-translation	item	21144	classic	effect#0	the original requires a spell#25793 reference	carried over from verified_warnings.txt
+warning	redundant-translation	item	21168	classic	effect#0	the original requires a spell#25849 reference	carried over from verified_warnings.txt
+warning	redundant-translation	item	21277	classic	effect#0	the original requires a spell#26010 reference	carried over from verified_warnings.txt
+warning	redundant-translation	item	21302	wrath	effect#0	spell#25347 is already translated	carried over from verified_warnings.txt
+warning	redundant-translation	item	21305	classic	effect#0	the original requires a spell#26541 reference	carried over from verified_warnings.txt
+warning	redundant-translation	item	22114	classic	effect#0	the original requires a spell#27241 reference	carried over from verified_warnings.txt
+warning	redundant-translation	item	22200	classic	effect#0	the original requires a spell#27662 reference	carried over from verified_warnings.txt
+warning	redundant-translation	item	22235	classic	effect#0	the original requires a spell#27570 reference	carried over from verified_warnings.txt
+warning	redundant-translation	item	22780	classic	effect#0	the original requires a spell#28487 reference	carried over from verified_warnings.txt
+warning	redundant-translation	item	22781	classic	effect#0	the original requires a spell#28505 reference	carried over from verified_warnings.txt
+warning	redundant-translation	item	23002	classic	effect#0	the original requires a spell#28738 reference	carried over from verified_warnings.txt
+warning	redundant-translation	item	23007	classic	effect#0	the original requires a spell#28739 reference	carried over from verified_warnings.txt
+warning	redundant-translation	item	23015	classic	effect#0	the original requires a spell#28740 reference	carried over from verified_warnings.txt
+warning	redundant-translation	item	23083	classic	effect#0	the original requires a spell#28871 reference	carried over from verified_warnings.txt
+warning	redundant-translation	item	23712	classic	effect#0	the original requires a spell#30152 reference	carried over from verified_warnings.txt
+warning	redundant-translation	item	23713	classic	effect#0	the original requires a spell#30156 reference	carried over from verified_warnings.txt
+warning	redundant-translation	item	23735	tbc	effect#0	the original requires a spell#30230 reference	carried over from verified_warnings.txt
+warning	redundant-translation	item	25535	tbc	effect#0	the original requires a spell#32298 reference	carried over from verified_warnings.txt
+warning	redundant-translation	item	31702	tbc	effect#0	the original requires a spell#39010 reference	carried over from verified_warnings.txt
+warning	redundant-translation	item	33218	tbc	effect#0	the original requires a spell#42760 reference	carried over from verified_warnings.txt
+warning	redundant-translation	item	180089	classic	effect#0	the original requires a spell#330659 reference	carried over from verified_warnings.txt
