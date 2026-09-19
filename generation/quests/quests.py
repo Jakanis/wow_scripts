@@ -16,6 +16,7 @@ TBC = 'tbc'
 WRATH = 'wrath'
 CATA = 'cata'
 MISTS = 'mists'
+FOREVER = 'forever'
 RETAIL = 'retail'
 WOWHEAD_URL = 'wowhead_url'
 METADATA_CACHE = 'metadata_cache'
@@ -51,6 +52,15 @@ expansion_data = {
             2358,  # Horns of Nez'ra (added in Wrath)
         ]
     },
+    # WoW: Forever, in beta since 2026-09-17. Shares data with classic and SoD; its place in the merge order is not settled.
+    # FOREVER: {
+    #     WOWHEAD_URL: 'https://www.wowhead.com/forever',
+    #     METADATA_CACHE: 'wowhead_forever_metadata_cache',
+    #     HTML_CACHE: 'wowhead_forever_quests_html',
+    #     QUESTS_CACHE: 'wowhead_forever_quest_cache',
+    #     METADATA_FILTERS: ('', '', ''),
+    #     IGNORES: []
+    # },
     TBC: {
         WOWHEAD_URL: 'https://www.wowhead.com/tbc',
         METADATA_CACHE: 'wowhead_tbc_metadata_cache',

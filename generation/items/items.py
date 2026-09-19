@@ -22,6 +22,7 @@ TBC = 'tbc'
 WRATH = 'wrath'
 CATA = 'cata'
 MISTS = 'mists'
+FOREVER = 'forever'
 WOWHEAD_URL = 'wowhead_url'
 METADATA_CACHE = 'metadata_cache'
 XML_CACHE = 'xml_cache'
@@ -69,6 +70,19 @@ expansion_data = {
     #     IGNORES: [759, 9232, 202256, 202316, 215235, 215394, 215405, 215406, 215410, 215412, 215450, 231752, 235583, 239061],
     #     FORCE_DOWNLOAD: []
     # },
+    # WoW: Forever, in beta since 2026-09-17. Shares data with classic and SoD; its place in the merge order is not settled.
+    FOREVER: {
+        INDEX: 0,
+        WOWHEAD_URL: 'https://www.wowhead.com/forever',
+        METADATA_CACHE: 'wowhead_forever_metadata_cache',
+        XML_CACHE: 'wowhead_forever_item_xml',
+        HTML_CACHE: 'wowhead_forever_item_html',
+        ITEM_CACHE: 'wowhead_forever_item_cache',
+        BOOK_CACHE: 'wowhead_forever_book_cache',
+        METADATA_FILTERS: ('', '', ''),
+        IGNORES: [],
+        FORCE_DOWNLOAD: []
+    },
     TBC: {
         INDEX: 1,
         WOWHEAD_URL: 'https://www.wowhead.com/tbc',

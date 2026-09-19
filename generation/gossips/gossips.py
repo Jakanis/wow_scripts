@@ -9,6 +9,7 @@ TBC = 'tbc'
 WRATH = 'wrath'
 CATA = 'cata'
 MISTS = 'mists'
+FOREVER = 'forever'
 INDEX = 'index'
 expansion_data = {
     CLASSIC: {
@@ -17,6 +18,10 @@ expansion_data = {
     SOD: {
         INDEX: 0,
     },
+    # WoW: Forever, in beta since 2026-09-17. Shares data with classic and SoD; its place in the merge order is not settled.
+    # FOREVER: {
+    #     INDEX: 0,
+    # },
     TBC: {
         INDEX: 1,
     },
