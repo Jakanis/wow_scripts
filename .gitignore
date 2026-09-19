@@ -19,3 +19,6 @@ credentials.json
 # snapshots are a local backup, not repository content
 crowdin/snapshots/
 __pycache__/
+fetch/inventory.json
+fetch/manifest.txt
+fetch/*.tar.gz
