@@ -76,6 +76,10 @@ class Run:
             with open(MANIFEST, 'a', encoding='utf-8') as f:
                 f.write(f'generation/{self.module}/{path}\n')
             self.written += 1
+            if self.written % 100 == 0:
+                print(f'{self.written} written, last {folder}/{id}.{ext}')
+        else:
+            print(f'no {folder}/{id}.{ext} after fetching it')
         return True
 
     def note_metadata(self, folder: str):
