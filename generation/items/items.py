@@ -14,7 +14,8 @@ from generation.utils.utils import (NOTE_NOT_TRANSLATED, NOTE_PRETRANSLATED, che
 
 log = IssueLog('items')
 
-THREADS = 16
+SCRAPE_THREADS = 1
+PARSE_THREADS = os.cpu_count()
 CLASSIC = 'classic'
 SOD = 'sod'
 SOD_PTR = 'sod_ptr'
@@ -335,7 +336,7 @@ def save_xmls_from_wowhead(expansion, ids: set[int]):
     #     print("Saving XML for item #" + str(id))
     #     save_page(expansion, id)
     save_func = partial(save_xml_page, expansion)
-    with multiprocessing.Pool(THREADS) as p:
+    with multiprocessing.Pool(SCRAPE_THREADS) as p:
         p.map(save_func, save_ids)
 
 
@@ -363,7 +364,7 @@ def save_htmls_from_wowhead(expansion, ids: set[int]):
     #     print("Saving XML for item #" + str(id))
     #     save_page(expansion, id)
     save_func = partial(save_html_page, expansion)
-    with multiprocessing.Pool(THREADS) as p:
+    with multiprocessing.Pool(SCRAPE_THREADS) as p:
         p.map(save_func, save_ids)
 
 
@@ -508,7 +509,7 @@ def parse_wowhead_xml_pages(expansion: str, item_ids: set[int]) -> dict[int, Ite
         print(f'Parsing Wowhead({expansion}) item pages')
         # wowhead_items = {id: parse_wowhead_item_xml_page(expansion, id) for id in item_ids}
         parse_func = partial(parse_wowhead_item_xml_page, expansion)
-        with multiprocessing.Pool(THREADS) as p:
+        with multiprocessing.Pool(PARSE_THREADS) as p:
             wowhead_items = p.map(parse_func, item_ids)
         wowhead_items = {item.id: item for item in wowhead_items}
 
@@ -536,7 +537,7 @@ def parse_wowhead_html_pages(expansion: str, items_ids: set[int]) -> dict[int, R
         print(f'Parsing Wowhead({expansion}) readable items')
         # wowhead_items = {id: parse_wowhead_item_html_page(expansion, id) for id in items_ids}
         parse_func = partial(parse_wowhead_item_html_page, expansion)
-        with multiprocessing.Pool(THREADS) as p:
+        with multiprocessing.Pool(PARSE_THREADS) as p:
             wowhead_items = p.map(parse_func, items_ids)
         wowhead_items = {item.id: item for item in wowhead_items if item is not None}
 
