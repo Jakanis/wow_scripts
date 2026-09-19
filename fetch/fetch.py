@@ -69,6 +69,7 @@ class Run:
         if self.have(folder, id, ext):
             self.skipped += 1
             return False
+        os.makedirs(f'cache/{folder}', exist_ok=True)  # the per-page savers expect it
         save()
         path = f'cache/{folder}/{id}.{ext}'
         if os.path.exists(path):
@@ -104,7 +105,6 @@ def fetch_spells(m, run: Run, expansion: str, args):
     for id in sorted(ids):
         run.fetch(props[m.HTML_CACHE] + '_raw', id, 'html', lambda: m.save_page_raw(expansion, id))
     if args.render:
-        os.makedirs(f'cache/{props[m.HTML_CACHE]}_rendered', exist_ok=True)
         for id in sorted(ids):
             run.fetch(props[m.HTML_CACHE] + '_rendered', id, 'html', lambda: m.save_page_calc(expansion, id))
 
