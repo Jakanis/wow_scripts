@@ -33,6 +33,9 @@ sys.path.insert(0, str(ROOT))
 
 import __main__  # noqa: E402
 
+# progress shows up in a piped log as it happens, not in 8 KB chunks
+sys.stdout.reconfigure(line_buffering=True)
+
 MODULES = ('items', 'spells', 'npc', 'quests', 'objects')
 INVENTORY = pathlib.Path(__file__).with_name('inventory.json')
 MANIFEST = pathlib.Path(__file__).with_name('manifest.txt')
