@@ -24,6 +24,9 @@ WRATH = 'wrath'
 CATA = 'cata'
 MISTS = 'mists'
 FOREVER = 'forever'
+# Merged after the others and without touching them: Forever tooltips are still being obfuscated
+# for undiscovered items, so its data is a branch off classic/SoD rather than a link in the chain
+BRANCH_EXPANSIONS = (FOREVER,)
 WOWHEAD_URL = 'wowhead_url'
 METADATA_CACHE = 'metadata_cache'
 XML_CACHE = 'xml_cache'
@@ -716,6 +719,20 @@ def merge_item(id: int, old_items: dict[str, ItemData], new_item: ItemData, spel
         print(f'Skip: Item #{id} instance number unexpected')
 
 
+def merge_branch(mainline: dict[int, dict[str, ItemData]], branch: dict[int, ItemData]) -> dict[int, dict[str, ItemData]]:
+    # A branch is compared with the mainline but never changes it: an item that matches one of the
+    # existing variants is folded into it, anything else becomes its own variant.
+    def effects_of(item: ItemData) -> str:
+        return '\n'.join(str(effect) for effect in item.effects)
+
+    for id, item in branch.items():
+        variants = mainline.setdefault(id, dict())
+        if not any(variant.name.lower() == item.name.lower() and effects_of(variant) == effects_of(item)
+                   for variant in variants.values()):
+            variants[item.expansion] = item
+    return mainline
+
+
 def merge_expansions(old_expansion: dict[int, dict[str, ItemData]], new_expansion: dict[int, ItemData], spells: dict[int, dict[str, SpellData]]) -> dict[int, dict[str, ItemData]]:
     result = dict()
 
@@ -902,8 +919,15 @@ def retrieve_item_data() -> tuple[dict[int, dict[str, ItemData]], dict[str, dict
         readable_items[expansion] = parse_wowhead_html_pages(expansion, readable_items_ids)
         fix_readables(expansion, readable_items[expansion])
         # populate_book_text(wowhead_items[expansion], readable_items[expansion])
+        if expansion in BRANCH_EXPANSIONS:
+            continue
         print(f'Merging with {expansion}')
         all_items = merge_expansions(all_items, wowhead_items[expansion], raw_spells)
+        all_readable_items = merge_readable_items(all_readable_items, readable_items[expansion])
+
+    for expansion in BRANCH_EXPANSIONS:
+        print(f'Adding {expansion} as a branch')
+        all_items = merge_branch(all_items, wowhead_items[expansion])
         all_readable_items = merge_readable_items(all_readable_items, readable_items[expansion])
 
     # translations = load_item_lua_names('input/entries/item.lua')
