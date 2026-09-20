@@ -2,6 +2,7 @@ import os
 
 from bs4 import BeautifulSoup
 
+from generation.database.build_classicua_db import update_table
 from generation.utils.utils import compare_directories, update_on_crowdin, wowhead_get
 
 THREADS = os.cpu_count() // 2
@@ -500,3 +501,5 @@ if __name__ == '__main__':
     generate_crowdin_sources(all_objects)
     diffs, removals, additions = compare_directories('input/source_from_crowdin', 'output/source_for_crowdin')
     update_on_crowdin(diffs, removals, additions)
+
+    update_table('objects')

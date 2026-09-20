@@ -13,6 +13,9 @@ from generation.utils.utils import classicua_root
 #
 # Not to be confused with generation/quests/classicua.db, an input to quests.py that merge_with_db
 # folds hand fixes forward from. Nothing here writes to it.
+#
+# Run as a script it rebuilds every table; quests.py, npc.py and objects.py call update_table() at the
+# end of their run to replace their own table after the owner types UPDATE.
 
 REPO_ROOT = pathlib.Path(__file__).parents[2]
 
@@ -52,7 +55,51 @@ SOURCES = {
                 react TEXT
         )''',
     ),
+    'objects': (
+        REPO_ROOT / 'generation' / 'objects' / 'cache' / 'objects.db',
+        '''CREATE TABLE objects (
+                id INT NOT NULL,
+                expansion TEXT,
+                name TEXT,
+                name_ua TEXT,
+                text_pages INT,
+                type TEXT
+        )''',
+    ),
 }
+
+
+def target_path() -> pathlib.Path:
+    root = classicua_root()
+    if not root:
+        raise Exception('CLASSICUA_ROOT is not set - add it to .env in the repository root')
+    return pathlib.Path(root) / 'dev' / 'database' / 'classicua.db'
+
+
+def update_table(table: str) -> bool:
+    # Replaces one table of the addon database in place, once the owner has typed UPDATE.
+    source, schema = SOURCES[table]
+    target = target_path()
+    before = count_rows(target, table)
+    after = count_rows(source, table)
+    columns = schema_columns(schema)
+    same = before is not None and content_hash(target, table, columns) == content_hash(source, table, columns)
+    print('-' * 100)
+    print(f'{target}: "{table}" holds {"-" if before is None else before} row(s), '
+          f'the cache holds {after}, contents {"identical" if same else "CHANGED"}')
+    if same:
+        print('Nothing to update.')
+        return False
+    if input(f'Type UPDATE to replace the "{table}" table: ').strip() != 'UPDATE':
+        print('Left as is.')
+        return False
+    conn = sqlite3.connect(f'file:{target.as_posix()}', uri=True)
+    try:
+        copy_table(conn, source, table, schema)
+    finally:
+        conn.close()
+    print(f'Updated "{table}" in {target}')
+    return True
 
 
 def __columns(conn: sqlite3.Connection, table: str) -> list[str]:
@@ -76,13 +123,19 @@ def count_rows(path: pathlib.Path, table: str) -> int:
         conn.close()
 
 
-def content_hash(path: pathlib.Path, table: str) -> str:
+def schema_columns(schema: str) -> list[str]:
+    conn = sqlite3.connect(':memory:')
+    conn.execute(schema)
+    return __columns(conn, schema.split('(')[0].split()[-1])
+
+
+def content_hash(path: pathlib.Path, table: str, columns: list[str] = None) -> str:
     # Rows, not bytes: two SQLite files with the same contents differ byte for byte by page layout.
     if count_rows(path, table) is None:
         return None
     conn = __read_only(path)
     try:
-        columns = ', '.join(__columns(conn, table))
+        columns = ', '.join(columns or __columns(conn, table))
         digest = hashlib.sha256()
         for row in conn.execute(f'SELECT {columns} FROM {table} ORDER BY 1, 2'):
             digest.update(repr(row).encode('utf-8'))

@@ -5,6 +5,7 @@ import multiprocessing
 from bs4 import BeautifulSoup
 import sqlite3
 import difflib
+from generation.database.build_classicua_db import update_table
 from generation.utils.utils import (check_feedback, compare_directories, write_crowdin_xml_file,
                                     update_on_crowdin, wowhead_get)
 
@@ -1777,6 +1778,8 @@ if __name__ == '__main__':
     check_feedback('quests', 'Quest', all_quests)
 
     update_on_crowdin(diffs, removals, additions)
+
+    update_table('quests')
 
     # TODO: Validations for duplicating strings (may be wrong data from ClassicDB)
     # TODO: Validations for empty rows (\n\n\n\n) (may be skipped in Wowhead)

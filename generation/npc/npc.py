@@ -5,6 +5,7 @@ import sys
 
 from bs4 import BeautifulSoup
 
+from generation.database.build_classicua_db import update_table
 from generation.utils.issues import IssueLog
 from generation.utils.text_checks import report_mixed_script
 from generation.utils.glossary import Glossary, GlossaryTerm, NPC_TAG, glossary_path
@@ -1195,5 +1196,7 @@ if __name__ == '__main__':
     missing_entries = filter_missing_entries(classicua_translations, sheet_translations)
     create_missing_entries_sheet(missing_entries, all_npcs_md, glossary)
 
+
+    update_table('npcs')
 
     sys.exit(log.finish())
