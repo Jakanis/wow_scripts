@@ -32,9 +32,11 @@ ITEM_CACHE = 'item_cache'
 BOOK_CACHE = 'book_cache'
 IGNORES = 'ignores'
 FORCE_DOWNLOAD = 'force_download'
-# An expansion with parents is a branch off them: merged after the chain, compared with the parents
-# only, and never changing them. SoD is not one, its data comes from the classic Wowhead by patch filter.
+# The expansion an item is reconciled against when it appears in both, first present one wins
 PARENT_EXPANSIONS = 'parent_expansions'
+# False: compare with the parents but never change their effects. Forever tooltips are still
+# obfuscated for undiscovered items, so what Wowhead holds for it cannot be trusted that far.
+RECONCILE_PARENTS = 'reconcile_parents'
 INDEX = 'index'
 METADATA_FILTERS = 'metadata_filters'
 
@@ -53,6 +55,7 @@ expansion_data = {
     },
     SOD: {
         INDEX: 0,
+        PARENT_EXPANSIONS: [CLASSIC],
         WOWHEAD_URL: 'https://www.wowhead.com/classic',
         METADATA_CACHE: 'wowhead_sod_metadata_cache',
         XML_CACHE: 'wowhead_sod_item_xml',
@@ -86,11 +89,12 @@ expansion_data = {
         METADATA_FILTERS: ('', '', ''),
         IGNORES: [],
         FORCE_DOWNLOAD: [],
-        # tooltips are still obfuscated for undiscovered items, so the data cannot be trusted to reconcile anything
-        PARENT_EXPANSIONS: [CLASSIC, SOD]
+        PARENT_EXPANSIONS: [CLASSIC, SOD],
+        RECONCILE_PARENTS: False
     },
     TBC: {
         INDEX: 1,
+        PARENT_EXPANSIONS: [CLASSIC],
         WOWHEAD_URL: 'https://www.wowhead.com/tbc',
         METADATA_CACHE: 'wowhead_tbc_metadata_cache',
         XML_CACHE: 'wowhead_tbc_item_xml',
@@ -103,6 +107,7 @@ expansion_data = {
     },
     WRATH: {
         INDEX: 2,
+        PARENT_EXPANSIONS: [TBC],
         WOWHEAD_URL: 'https://www.wowhead.com/wotlk',
         METADATA_CACHE: 'wowhead_wrath_metadata_cache',
         XML_CACHE: 'wowhead_wrath_item_xml',
@@ -115,6 +120,7 @@ expansion_data = {
     },
     CATA: {
         INDEX: 3,
+        PARENT_EXPANSIONS: [WRATH],
         WOWHEAD_URL: 'https://www.wowhead.com/cata',
         METADATA_CACHE: 'wowhead_cata_metadata_cache',
         XML_CACHE: 'wowhead_cata_item_xml',
@@ -127,6 +133,7 @@ expansion_data = {
     },
     MISTS: {
         INDEX: 4,
+        PARENT_EXPANSIONS: [CATA],
         WOWHEAD_URL: 'https://www.wowhead.com/mop-classic',
         METADATA_CACHE: 'wowhead_mists_metadata_cache',
         XML_CACHE: 'wowhead_mists_item_xml',
@@ -634,12 +641,31 @@ def is_equal_ignoring_symbols(s1: str, s2: str) -> bool:
     return s1.translate(mapping) == s2.translate(mapping)
 
 
+def __ancestor_variant(variants: dict, expansion: str):
+    # a parent identical to its own parent is folded into it and leaves no variant, so keep walking up
+    for parent in expansion_data[expansion].get(PARENT_EXPANSIONS, []):
+        if parent in variants:
+            return variants[parent]
+        found = __ancestor_variant(variants, parent)
+        if found is not None:
+            return found
+    return None
+
+
+def __parent_variant(variants: dict, expansion: str):
+    # the nearest ancestor with a variant, or the last one merged when the ancestry has none
+    found = __ancestor_variant(variants, expansion)
+    return found if found is not None else variants[list(variants.keys())[-1]]
+
+
 def __merge_item_effects(old_item: ItemData, new_item: ItemData, spells: dict[int, dict[str, SpellData]]):
     from collections import defaultdict
     from functools import cmp_to_key
     old_item.raw_effects = '\n'.join(map(lambda x: str(x), sorted(old_item.effects, key=cmp_to_key(lambda x, y: EFFECT_TYPES.index(x.get_type()) - EFFECT_TYPES.index(y.get_type()))))) if old_item.raw_effects is None else old_item.raw_effects
     new_item.raw_effects = '\n'.join(map(lambda x: str(x), sorted(new_item.effects, key=cmp_to_key(lambda x, y: EFFECT_TYPES.index(x.get_type()) - EFFECT_TYPES.index(y.get_type()))))) if new_item.raw_effects is None else new_item.raw_effects
     if len(old_item.effects) != len(new_item.effects):
+        return
+    if not expansion_data[new_item.expansion].get(RECONCILE_PARENTS, True):
         return
 
     old_item_effects_by_type = defaultdict(list)
@@ -683,56 +709,15 @@ def __merge_item_effects(old_item: ItemData, new_item: ItemData, spells: dict[in
 
 
 def merge_item(id: int, old_items: dict[str, ItemData], new_item: ItemData, spells: dict[int, dict[str, SpellData]]) -> dict[str, ItemData]:
-    import re
-    if len(old_items) > 1:
-        last_old_item_key = list(old_items.keys())[-1]
-        result = merge_item(id, {last_old_item_key: old_items[last_old_item_key]}, new_item, spells)
-        del old_items[last_old_item_key]
-        return {**old_items, **result}
-    if len(old_items) == 1:
-        old_item = next(iter(old_items.values()))
-
-        # all effects' full_strs are equal - return old_items
-        # else - merge_item_effects:
-        # sort effects
-        # for each effect:
-        #   if both GOT same spell id - delete text for both
-        #   if both GOT same text - delete spell id for both
-        #   ignore rune_spell_id?
-        # if full_strs equal - return only one item
-        # if full_strs diffed - return both items
-        # test data: item#833classic/wrath (different order), item#728(classic/tbc) (same text, different spell), item#159/862/867/868/875/943 (same spell, different text)
-        #
-        # if name differs - merge their effects and return both
-
-        __merge_item_effects(old_item, new_item, spells)
-        if old_item.name.lower() != new_item.name.lower():
-            return {**old_items, **{new_item.expansion: new_item}}
-        elif '\n'.join([str(effect) for effect in old_item.effects]) != '\n'.join([str(effect) for effect in new_item.effects]):
-            return {**old_items, **{new_item.expansion: new_item}}
-        else:
-            return old_items
-
-        # if old_item.name != new_item.name or '\n'.join([str(effect) for effect in old_item.effects]) != '\n'.join([str(effect) for effect in new_item.effects]):
-        #     return {**old_items, **{new_item.expansion: new_item}}
-        # else:
-        #     return old_items
+    # test data: item#833classic/wrath (different order), item#728(classic/tbc) (same text, different spell), item#159/862/867/868/875/943 (same spell, different text)
+    old_item = __parent_variant(old_items, new_item.expansion)
+    __merge_item_effects(old_item, new_item, spells)
+    if old_item.name.lower() != new_item.name.lower():
+        return {**old_items, **{new_item.expansion: new_item}}
+    elif '\n'.join([str(effect) for effect in old_item.effects]) != '\n'.join([str(effect) for effect in new_item.effects]):
+        return {**old_items, **{new_item.expansion: new_item}}
     else:
-        print(f'Skip: Item #{id} instance number unexpected')
-
-
-def merge_branch(mainline: dict[int, dict[str, ItemData]], branch: dict[int, ItemData], parents: list[str]) -> dict[int, dict[str, ItemData]]:
-    # A branch is compared with its parents but never changes them: an item that matches a parent's
-    # variant is folded into it, anything else becomes its own variant.
-    def effects_of(item: ItemData) -> str:
-        return '\n'.join(str(effect) for effect in item.effects)
-
-    for id, item in branch.items():
-        variants = mainline.setdefault(id, dict())
-        if not any(variant.name.lower() == item.name.lower() and effects_of(variant) == effects_of(item)
-                   for expansion, variant in variants.items() if expansion in parents):
-            variants[item.expansion] = item
-    return mainline
+        return old_items
 
 
 def merge_expansions(old_expansion: dict[int, dict[str, ItemData]], new_expansion: dict[int, ItemData], spells: dict[int, dict[str, SpellData]]) -> dict[int, dict[str, ItemData]]:
@@ -751,13 +736,8 @@ def merge_expansions(old_expansion: dict[int, dict[str, ItemData]], new_expansio
 
 
 def merge_readable_item(id: int, old_items: dict[str, ReadableItem], new_item: ReadableItem) -> dict[str, ReadableItem]:
-    if len(old_items) > 1:
-        last_old_item_key = list(old_items.keys())[-1]
-        result = merge_readable_item(id, {last_old_item_key: old_items[last_old_item_key]}, new_item)
-        del old_items[last_old_item_key]
-        return {**old_items, **result}
-    if len(old_items) == 1:
-        old_item = next(iter(old_items.values()))
+    if old_items:
+        old_item = __parent_variant(old_items, new_item.expansion)
 
         if len(old_item.pages) != len(new_item.pages):
             # print(f'Warning! Readable item #{id} changed between {old_item.expansion} and {new_item.expansion}!')
@@ -921,17 +901,8 @@ def retrieve_item_data() -> tuple[dict[int, dict[str, ItemData]], dict[str, dict
         readable_items[expansion] = parse_wowhead_html_pages(expansion, readable_items_ids)
         fix_readables(expansion, readable_items[expansion])
         # populate_book_text(wowhead_items[expansion], readable_items[expansion])
-        if PARENT_EXPANSIONS in expansion_properties:
-            continue
         print(f'Merging with {expansion}')
         all_items = merge_expansions(all_items, wowhead_items[expansion], raw_spells)
-        all_readable_items = merge_readable_items(all_readable_items, readable_items[expansion])
-
-    for expansion, expansion_properties in expansion_data.items():
-        if PARENT_EXPANSIONS not in expansion_properties:
-            continue
-        print(f'Adding {expansion} as a branch of {", ".join(expansion_properties[PARENT_EXPANSIONS])}')
-        all_items = merge_branch(all_items, wowhead_items[expansion], expansion_properties[PARENT_EXPANSIONS])
         all_readable_items = merge_readable_items(all_readable_items, readable_items[expansion])
 
     # translations = load_item_lua_names('input/entries/item.lua')
