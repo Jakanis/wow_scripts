@@ -14,7 +14,7 @@ from generation.utils.utils import classicua_root
 # Not to be confused with generation/quests/classicua.db, an input to quests.py that merge_with_db
 # folds hand fixes forward from. Nothing here writes to it.
 #
-# Run as a script it rebuilds every table; quests.py, npc.py and objects.py call update_table() at the
+# Run as a script it rebuilds every table and asks before installing; quests.py, npc.py and objects.py call update_table() at the
 # end of their run to replace their own table after the owner types UPDATE.
 
 REPO_ROOT = pathlib.Path(__file__).parents[2]
@@ -188,12 +188,14 @@ def build(target_path: pathlib.Path, write: bool) -> bool:
               f'   {"identical" if same else "CHANGED"}')
     print()
 
-    if write:
+    if unchanged:
+        print('Nothing to update.')
+    elif write or input('Type UPDATE to install it: ').strip() == 'UPDATE':
         target_path.parent.mkdir(parents=True, exist_ok=True)
         shutil.copyfile(staging, target_path)
         print(f'Written: {target_path}')
     else:
-        print('Nothing written. Pass --write to install it.')
+        print('Left as is.')
 
     shutil.rmtree(staging.parent, ignore_errors=True)
     return unchanged
@@ -205,7 +207,7 @@ def main() -> int:
     parser.add_argument('--classicua', type=pathlib.Path,
                         help='ClassicUA checkout (default: CLASSICUA_ROOT from .env)')
     parser.add_argument('--write', action='store_true',
-                        help='install the rebuilt database (default: report the deltas and stop)')
+                        help='install the rebuilt database without asking (default: ask to type UPDATE)')
     args = parser.parse_args()
 
     root = args.classicua or classicua_root()
