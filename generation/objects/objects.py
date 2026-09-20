@@ -3,6 +3,7 @@ import os
 from bs4 import BeautifulSoup
 
 from generation.database.build_classicua_db import update_table
+from generation.utils.books import parse_book_pages
 from generation.utils.utils import compare_directories, update_on_crowdin, wowhead_get
 
 THREADS = os.cpu_count() // 2
@@ -229,44 +230,14 @@ def save_htmls_from_wowhead(expansion, ids: set[int]):
 
 
 def parse_wowhead_page(expansion, id) -> ObjectData:
-    import json5
-    import re
     html_path = f'cache/{expansion_data[expansion][HTML_CACHE]}/{id}.html'
     with open(html_path, 'r', encoding="utf-8") as file:
         html = file.read()
 
-    # soup = BeautifulSoup(html, 'html.parser')
     soup = BeautifulSoup(html, 'html5lib')
     name = soup.find('h1').text
 
-    for item in html.split("\n"):
-        if f"new Book(" in item:
-            start = item.find('new Book({') + 9
-            end = item.find('})', start) + 1
-            json_raw = item[start:end]
-            json_data = json5.loads(json_raw).get('pages')
-            pages = []
-            page_no = 1
-            for page in json_data:
-                page_soup = BeautifulSoup(page, 'html5lib')
-                for element in page_soup.find_all('br'):
-                    # if br.previous_sibling and br.previous_sibling.name == 'p':
-                    #     br.replace_with('\n\n')
-                    # else:
-                    element.replace_with('\n')
-                for element in page_soup.find_all('p'):
-                    if element.next_sibling:
-                        element.replace_with(element.text + '\n')
-                for element in page_soup.find_all(['h1', 'h2', 'h3', 'h4', 'h5', 'h6']):
-                    element.replace_with(element.text + '\n')
-                page_content = page_soup.text.replace(' ', '')
-                if page_content.strip():
-                    pages.append(page_content)
-                    page_no += 1
-
-            return ObjectData(id=id, expansion=expansion, name=name, text=list(pages))
-
-    return ObjectData(id=id, expansion=expansion, name=name)
+    return ObjectData(id=id, expansion=expansion, name=name, text=parse_book_pages(html))
 
 
 def parse_wowhead_pages(expansion, metadata: dict[int, ObjectData]) -> dict[int, ObjectData]:

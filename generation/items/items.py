@@ -5,6 +5,7 @@ import sys
 
 from bs4 import BeautifulSoup, CData
 from generation.spells.spells import SpellData, load_spells_from_db, is_spell_translated
+from generation.utils.books import parse_book_pages
 from generation.utils.issues import WARNING, Issue, IssueLog
 from generation.utils.text_checks import report_mixed_script
 from generation.utils.utils import (NOTE_NOT_TRANSLATED, NOTE_PRETRANSLATED, check_feedback,
@@ -468,43 +469,14 @@ def parse_wowhead_item_xml_page(expansion, id) -> ItemData:
 
 
 def parse_wowhead_item_html_page(expansion, id) -> ReadableItem|None:
-    import json5
     html_path = f'cache/{expansion_data[expansion][HTML_CACHE]}/{id}.html'
-    content = None
     with open(html_path, 'r', encoding="utf-8") as file:
         content = file.read()
 
     soup = BeautifulSoup(content, 'html.parser')
     item_name = soup.find('h1').text
 
-    for item in content.split("\n"):
-        if f"new Book(" in item:
-            start = item.find('new Book({') + 9
-            end = item.find('})', start) + 1
-            json_raw = item[start:end]
-            json_data = json5.loads(json_raw).get('pages')
-            pages = []
-            page_no = 1
-            for page in json_data:
-                page_soup = BeautifulSoup(page, 'html5lib')
-                for element in page_soup.find_all('br'):
-                    # if br.previous_sibling and br.previous_sibling.name == 'p':
-                    #     br.replace_with('\n\n')
-                    # else:
-                    element.replace_with('\n')
-                for element in page_soup.find_all('p'):
-                    if element.next_sibling:
-                        element.replace_with(element.text + '\n')
-                for element in page_soup.find_all(['h1', 'h2', 'h3', 'h4', 'h5', 'h6']):
-                    element.replace_with(element.text + '\n')
-                page_content = page_soup.text.replace(' ', '')
-                if page_content.strip():
-                    pages.append(page_content)
-                    page_no += 1
-
-            return ReadableItem(id, expansion, item_name, list(pages))
-
-    return ReadableItem(id, expansion, item_name, [])
+    return ReadableItem(id, expansion, item_name, parse_book_pages(content))
 
 
 def parse_wowhead_xml_pages(expansion: str, item_ids: set[int]) -> dict[int, ItemData]:
