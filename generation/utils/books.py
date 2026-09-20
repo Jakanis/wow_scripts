@@ -18,6 +18,8 @@ __HTML_CLOSE = '\n</body>\n</html>'
 # becomes Interface\Pictures\21037_crudemap_256.
 __ZAMIMG_SRC = re.compile(r'(<img[^>]*?\bsrc=")//wow\.zamimg\.com/images/wow/([^"]+)(")', re.I)
 
+__STRAY_BR_CLOSE = re.compile(r'</br\s*>', re.I)
+
 # One block per line, with the breaks that follow it, so a translator on Crowdin sees the structure
 # instead of a single long line.
 __BLOCK_END = re.compile(r'(</(?:p|h[1-6])>|<img[^>]*/?>)((?:\s*<br\s*/?>)*)', re.I)
@@ -32,6 +34,9 @@ def __to_game_texture(match: re.Match) -> str:
 
 
 def __as_markup(page: str) -> str:
+    # Wowhead writes some breaks as "<br /></br>"; the stray closing tag means nothing, and the old
+    # flattening dropped it without a word. Passing it on would put it in front of a translator.
+    page = __STRAY_BR_CLOSE.sub('', page)
     page = __ZAMIMG_SRC.sub(__to_game_texture, page)
     page = __BLOCK_END.sub(lambda m: m.group(1) + m.group(2).strip() + '\n', page)
     return __HTML_OPEN + page.strip() + __HTML_CLOSE
