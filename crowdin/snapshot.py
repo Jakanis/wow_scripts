@@ -35,6 +35,17 @@ from generation.utils.utils import CROWDIN_PROJECT_ID
 LANGUAGE = 'uk'
 PAGE = 500
 
+# Crowdin runs one build at a time, so a build of our own may have to queue behind someone else's
+BUSY_TIMEOUT = 10 * 60
+BUSY_POLL = 10
+
+# A build usually takes a couple of minutes, but a large project on a busy server has legitimately
+# taken far longer. Waiting costs nothing when the build is already done - it is started before the
+# sources and has the whole download to finish in - so the limit is only there to end a build that
+# has plainly stopped moving.
+BUILD_TIMEOUT = 60 * 60
+BUILD_POLL = 5
+
 
 def get_client() -> CrowdinClient:
     from dotenv import load_dotenv
@@ -105,31 +116,42 @@ def download_sources(client: CrowdinClient, root: pathlib.Path) -> tuple[int, in
     return len(files), len(seen)
 
 
-def download_translations(client: CrowdinClient, root: pathlib.Path) -> tuple[int, int]:
-    build = None
-    for attempt in range(30):
+def start_translation_build(client: CrowdinClient) -> dict:
+    """Ask Crowdin to build the translation and return without waiting for it. Crowdin builds on its
+    own side, so the build and the source download - the two slow steps - can run at the same time."""
+    waited = 0
+    while True:
         try:
             build = client.translations.build_project_translation(
                 request_data={'targetLanguageIds': [LANGUAGE], 'skipUntranslatedStrings': True},
                 projectId=CROWDIN_PROJECT_ID)['data']
-            break
+            print(f'Started {LANGUAGE} translation build {build["id"]}')
+            return build
         except Exception as exc:
             # Crowdin allows one build at a time, so wait for whoever started the other one
             if '409' not in str(exc):
                 raise
-            print(f'\rAnother build is running, waiting... {attempt * 10}s', end='', flush=True)
-            time.sleep(10)
-    if build is None:
-        raise Exception('Crowdin stayed busy with another build')
+            if waited >= BUSY_TIMEOUT:
+                raise Exception(f'Crowdin stayed busy with another build for {waited // 60} min')
+            print(f'\rAnother build is running, waiting... {waited}s', end='', flush=True)
+            time.sleep(BUSY_POLL)
+            waited += BUSY_POLL
 
-    print(f'Building {LANGUAGE} translations (build {build["id"]})...', end='', flush=True)
+
+def download_translations(client: CrowdinClient, build: dict, root: pathlib.Path) -> tuple[int, int]:
+    """Collect the build started earlier. It has had the whole source download to work in, so this
+    usually finds it finished."""
+    print(f'Waiting for build {build["id"]}...', end='', flush=True)
+    deadline = time.time() + BUILD_TIMEOUT
     status = build
-    for _ in range(600):
-        if status['status'] in ('finished', 'failed', 'canceled'):
-            break
-        time.sleep(2)
+    while status['status'] not in ('finished', 'failed', 'canceled'):
+        if time.time() > deadline:
+            raise Exception(f'Crowdin translation build {build["id"]} was still "{status["status"]}" '
+                            f'after {BUILD_TIMEOUT // 60} min')
+        time.sleep(BUILD_POLL)
         status = client.translations.check_project_build_status(projectId=CROWDIN_PROJECT_ID,
                                                                 buildId=build['id'])['data']
+        print(f'\rWaiting for build {build["id"]}... {status.get("progress", 0)}%', end='', flush=True)
     if status['status'] != 'finished':
         raise Exception(f'Crowdin translation build {status["status"]}')
 
@@ -198,12 +220,17 @@ def main() -> int:
     print(f'Snapshot of Crowdin project {CROWDIN_PROJECT_ID} into {root}')
     client = get_client()
 
+    # Started first and collected last: Crowdin builds while we are still reading the sources, which
+    # is the slowest step by far. The translation therefore reflects a moment slightly before the
+    # sources rather than slightly after - immaterial for a snapshot taken before pushing anything.
+    build = start_translation_build(client)
+
     files = strings = 0
     if args.skip_sources:
         print('Sources skipped')
     else:
         files, strings = download_sources(client, root / 'en')
-    translated, build_id = download_translations(client, root / LANGUAGE)
+    translated, build_id = download_translations(client, build, root / LANGUAGE)
     terms = download_glossary(client, root / 'ClassicUA.tbx', args.glossary)
 
     took = time.time() - started
