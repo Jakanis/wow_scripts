@@ -45,7 +45,9 @@ def __as_text(soup: BeautifulSoup) -> str:
             element.replace_with(element.text + '\n')
     for element in soup.find_all(['h1', 'h2', 'h3', 'h4', 'h5', 'h6']):
         element.replace_with(element.text + '\n')
-    return soup.text.replace('  ', '')
+    # the game pads sentence breaks with a non-breaking space; dropping it leaves the single space
+    # that is already beside it, which is what the translated sources have always been written against
+    return soup.text.replace(' ', '')
 
 
 def parse_book_page(page: str) -> str:
