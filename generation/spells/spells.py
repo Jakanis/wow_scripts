@@ -11,13 +11,17 @@ from generation.utils.issues import ERROR, WARNING, Issue, IssueLog
 from generation.utils.text_checks import mixed_script_words
 from generation.utils.utils import (NOTE_ALREADY_TRANSLATED, NOTE_NOT_TRANSLATED, NOTE_PRETRANSLATED,
                                     check_feedback, download_csv_from_google_sheet,
-                                    format_notes, notes_hold_back_row, parse_notes, __to_tsv_val,
-                                    wowhead_get)
+                                    format_notes, keep_render_browser, notes_hold_back_row, parse_notes,
+                                    __to_tsv_val, wowhead_get, wowhead_render)
 
 # THREADS = os.cpu_count()
 log = IssueLog('spells')
 
-SCRAPE_THREADS = 1
+SCRAPE_THREADS = 2
+# Each is a headless Chromium of a few hundred MB. Every page load still goes through Wowhead's pacing
+# (wowhead_delay, then a growing wait on any refusal), so more of them is more pages in flight, not
+# more pressure than the pacing allows.
+RENDER_THREADS = 4
 PARSE_THREADS = os.cpu_count()
 CLASSIC = 'classic'
 SOD = 'sod'
@@ -273,48 +277,35 @@ def save_page_raw(expansion, id):
         # raise Exception(f'Wowhead({expansion}) returned {r.status_code} for spell #{id}')
         print(f'Error! Wowhead({expansion}) returned {r.status_code} for spell #{id}:{expansion}')
     else:
-        with open(xml_file_path, 'w', encoding="utf-8") as output_file:
-            output_file.write(r.text)
+        __write_atomically(xml_file_path, r.text)
+
+
+def __write_atomically(path: str, text: str) -> None:
+    # A cached page is trusted for being there at all, so a run stopped mid-write would leave a cut-off
+    # page that no later run replaces. The partial file lives in cache/tmp, where the listing of cached
+    # ids does not look.
+    tmp_path = os.path.join('cache', 'tmp', f'partial_{os.getpid()}.html')
+    os.makedirs(os.path.dirname(tmp_path), exist_ok=True)
+    with open(tmp_path, 'w', encoding='utf-8') as output_file:
+        output_file.write(text)
+    os.replace(tmp_path, path)
 
 
 def save_page_calc(expansion, id):
-    import time
-    from requests_html import HTMLSession
-    max_retries = 3
-    for attempt in range(1, max_retries + 1):
-        session = HTMLSession()
-        try:
-            url = expansion_data[expansion][WOWHEAD_URL] + f'/spell={id}/'
-            xml_file_path = f'cache/{expansion_data[expansion][HTML_CACHE]}_rendered/{id}.html'
-            if os.path.exists(xml_file_path):
-                print(f'Warning! Trying to download existing HTML for #{id}')
-                # return
-            # headers = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/135.0.0.0 Safari/537.36 Edg/135.0.0.0'}
-            # r = session.get(url, headers=headers)
-            r = session.get(url)
-            # r = wowhead_get(url)
-            if not r.ok:
-                raise Exception(f'Wowhead({expansion}) returned {r.status_code} for spell #{id}')
-                # print(f'Error! Wowhead({expansion}) returned {r.status_code} for spell #{id}')
-            r.html.render()
-            result = r.html.html
-            with open(xml_file_path, 'w', encoding="utf-8") as output_file:
-                output_file.write(result)
-            return
-        except Exception as e:
-            if attempt < max_retries:
-                print(f'Error! Got exception({e}) for spell #{id}:{expansion}. Retrying ({attempt}/{max_retries})...')
-                time.sleep(5)
-            else:
-                print(f'Error! Got exception({e}) for spell #{id}:{expansion}. Giving up after {max_retries} attempts.')
-        finally:
-            # Always tear down the pyppeteer/Chromium process the session spawned,
-            # otherwise every call leaks a browser and eventually exhausts memory.
-            try:
-                session.close()
-            except Exception as close_err:
-                print(f'Warning! Failed to close HTMLSession for #{id}:{expansion}: {close_err}')
-
+    url = expansion_data[expansion][WOWHEAD_URL] + f'/spell={id}/'
+    html_file_path = f'cache/{expansion_data[expansion][HTML_CACHE]}_rendered/{id}.html'
+    if os.path.exists(html_file_path):
+        print(f'Warning! Trying to download existing HTML for #{id}')
+    try:
+        status, html = wowhead_render(url)
+    except Exception as e:
+        # left out of the cache, so the next run asks for it again
+        print(f'Error! Could not render spell #{id}:{expansion} ({e}). Skipping it for this run.')
+        return
+    if status == 404:
+        print(f'Error! Wowhead({expansion}) returned 404 for spell #{id}:{expansion}')
+        return
+    __write_atomically(html_file_path, html)
 
 def save_pages_async(expansion, ids):
     from requests_html import AsyncHTMLSession
@@ -362,8 +353,19 @@ def save_htmls_from_wowhead(expansion, ids: set[int], render: bool, force: set[i
     # for id in save_ids:
     #     save_page_func(expansion, id)
     save_func = partial(save_page_func, expansion)
-    with multiprocessing.Pool(SCRAPE_THREADS) as p:
-        p.map(save_func, save_ids)
+    # A rendering worker keeps one browser for all its pages, and only a worker that exits on its own
+    # takes that browser with it - so the pool is closed and joined, and terminated only on the way out
+    # of an error.
+    pool = multiprocessing.Pool(RENDER_THREADS if render else SCRAPE_THREADS,
+                                initializer=keep_render_browser if render else None)
+    try:
+        pool.map(save_func, save_ids)
+        pool.close()
+    except BaseException:
+        pool.terminate()
+        raise
+    finally:
+        pool.join()
     # save_pages_async(expansion, list(save_ids)[:100])
 
 

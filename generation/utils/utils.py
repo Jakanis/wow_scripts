@@ -26,20 +26,130 @@ def wowhead_delay() -> float:
     return random.uniform(float(low), float(high or low))
 
 
-def wowhead_get(url: str) -> requests.Response:
+def __wowhead_paced(fetch, url: str):
+    # Every way of loading a Wowhead page goes through this: the delay before the request, and for
+    # anything but a page or a 404 a wait that grows until the server lets us back in. fetch returns
+    # (status, result).
     time.sleep(wowhead_delay())
     wait = 60
     attempt = 0
     while True:
-        # r = requests.get(url, headers=_WOWHEAD_HEADERS)
-        r = requests.get(url)
-        if r.ok or r.status_code == 404:
-            return r
+        status, result = fetch(url)
+        if status < 400 or status == 404:
+            return status, result
+        attempt += 1
+        print(f'[wowhead] {status} — waiting {wait}s (attempt {attempt})...')
+        time.sleep(wait)
+        wait = int(wait * 1.5)
+
+
+def wowhead_get(url: str) -> requests.Response:
+    def fetch(u):
+        # r = requests.get(u, headers=_WOWHEAD_HEADERS)
+        r = requests.get(u)
+        return r.status_code, r
+    return __wowhead_paced(fetch, url)[1]
+
+
+RENDER_TIMEOUT = 60    # seconds for one page to finish loading in the browser
+RENDER_ATTEMPTS = 3    # for a timeout or a crashed browser - not for an answer from Wowhead
+
+# What a tooltip cannot depend on: pictures, video and fonts, and whatever Wowhead does not serve
+# itself - ads, analytics, consent. Rendered with and without these blocked, 22 spells whose text only
+# comes out right once the page's scripts have run parsed identically, at about a quarter of the
+# time; it is also a fraction of the requests.
+_RENDER_PASSIVE = ('image', 'media', 'font')
+_RENDER_OWN_HOSTS = ('wowhead.com', 'zamimg.com')
+
+_render_loop = None
+_render_browser = None
+_keep_render_browser = False
+
+
+def keep_render_browser() -> None:
+    # Pool initializer: the worker keeps one browser for every page it renders rather than starting
+    # one per page, which is most of what a page used to cost. Only for a pool that is closed and
+    # joined - a terminated worker cannot take its browser down with it.
+    global _keep_render_browser
+    _keep_render_browser = True
+
+
+def __launch_render_browser():
+    import asyncio
+    import pyppeteer
+    global _render_loop, _render_browser
+    if _render_loop is None:
+        _render_loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(_render_loop)
+    # launched as requests_html launched it, so a page renders the way it always has
+    _render_browser = _render_loop.run_until_complete(pyppeteer.launch(headless=True, args=['--no-sandbox']))
+    return _render_browser
+
+
+def __close_render_browser() -> None:
+    global _render_browser
+    if _render_browser is None:
+        return
+    try:
+        _render_loop.run_until_complete(_render_browser.close())
+    except Exception as e:
+        print(f'[wowhead] could not close the browser: {e}')
+    _render_browser = None
+
+
+async def __filter_render_request(request) -> None:
+    from urllib.parse import urlparse
+    host = urlparse(request.url).hostname or ''
+    own = host.endswith(_RENDER_OWN_HOSTS) or request.url.startswith('data:')
+    try:
+        if request.resourceType in _RENDER_PASSIVE or not own:
+            await request.abort()
         else:
-            attempt += 1
-            print(f'[wowhead] {r.status_code} — waiting {wait}s (attempt {attempt})...')
-            time.sleep(wait)
-            wait = int(wait * 1.5)
+            await request.continue_()
+    except Exception:
+        pass  # the page closed before the browser asked about this request
+
+
+def __render_once(url: str) -> tuple[int, str]:
+    import asyncio
+
+    async def load(browser):
+        page = await browser.newPage()
+        try:
+            await page.setRequestInterception(True)
+            page.on('request', lambda request: asyncio.ensure_future(__filter_render_request(request)))
+            response = await page.goto(url, {'timeout': RENDER_TIMEOUT * 1000})
+            if response is None:
+                raise Exception('the browser got no response for the page')
+            return response.status, await page.content()
+        finally:
+            await page.close()
+
+    browser = _render_browser if _render_browser is not None else __launch_render_browser()
+    try:
+        return _render_loop.run_until_complete(load(browser))
+    finally:
+        if not _keep_render_browser:
+            __close_render_browser()
+
+
+def wowhead_render(url: str) -> tuple[int, str]:
+    # The page as the browser leaves it once its scripts have run, as (status, html). The browser
+    # fetches the page itself, so without the pacing wowhead_get has it would reach Wowhead
+    # unthrottled - and requests_html never looked at the status, so a rate-limit page would render
+    # and be cached as if it were the page asked for.
+    def fetch(u):
+        for attempt in range(1, RENDER_ATTEMPTS + 1):
+            try:
+                return __render_once(u)
+            except Exception as e:
+                # a timeout or a browser that died: the next attempt starts a fresh one
+                __close_render_browser()
+                if attempt == RENDER_ATTEMPTS:
+                    raise
+                print(f'[wowhead] render failed ({e}), retrying ({attempt}/{RENDER_ATTEMPTS})...')
+                time.sleep(5)
+    return __wowhead_paced(fetch, url)
 
 
 class ValidationError:
