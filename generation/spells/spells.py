@@ -11,8 +11,8 @@ from generation.utils.issues import ERROR, WARNING, Issue, IssueLog
 from generation.utils.text_checks import mixed_script_words
 from generation.utils.utils import (NOTE_ALREADY_TRANSLATED, NOTE_NOT_TRANSLATED, NOTE_PRETRANSLATED,
                                     check_feedback, download_csv_from_google_sheet,
-                                    format_notes, keep_render_browser, notes_hold_back_row, parse_notes,
-                                    __to_tsv_val, wowhead_get, wowhead_render)
+                                    format_notes, init_wowhead_worker, notes_hold_back_row, parse_notes,
+                                    __to_tsv_val, wowhead_get, wowhead_pool_state, wowhead_render)
 
 # THREADS = os.cpu_count()
 log = IssueLog('spells')
@@ -291,8 +291,21 @@ def __write_atomically(path: str, text: str) -> None:
     os.replace(tmp_path, path)
 
 
+def __render_url(expansion, id) -> str:
+    # The raw page, already on disk, knows the page's canonical address. Asking for that directly saves
+    # the redirect from /spell=<id>/ to /spell=<id>/<name> - a second request to Wowhead for every page.
+    import html
+    raw_path = f'cache/{expansion_data[expansion][HTML_CACHE]}_raw/{id}.html'
+    if os.path.exists(raw_path):
+        with open(raw_path, 'r', encoding='utf-8') as raw_file:
+            match = re.search(r'<link rel="canonical" href="([^"]+)"', raw_file.read())
+        if match:
+            return html.unescape(match.group(1))
+    return expansion_data[expansion][WOWHEAD_URL] + f'/spell={id}/'
+
+
 def save_page_calc(expansion, id):
-    url = expansion_data[expansion][WOWHEAD_URL] + f'/spell={id}/'
+    url = __render_url(expansion, id)
     html_file_path = f'cache/{expansion_data[expansion][HTML_CACHE]}_rendered/{id}.html'
     if os.path.exists(html_file_path):
         print(f'Warning! Trying to download existing HTML for #{id}')
@@ -306,6 +319,7 @@ def save_page_calc(expansion, id):
         print(f'Error! Wowhead({expansion}) returned 404 for spell #{id}:{expansion}')
         return
     __write_atomically(html_file_path, html)
+
 
 def save_pages_async(expansion, ids):
     from requests_html import AsyncHTMLSession
@@ -353,11 +367,11 @@ def save_htmls_from_wowhead(expansion, ids: set[int], render: bool, force: set[i
     # for id in save_ids:
     #     save_page_func(expansion, id)
     save_func = partial(save_page_func, expansion)
-    # A rendering worker keeps one browser for all its pages, and only a worker that exits on its own
-    # takes that browser with it - so the pool is closed and joined, and terminated only on the way out
-    # of an error.
+    # The workers share one pause, so a refusal from Wowhead holds all of them. A rendering worker also
+    # keeps one browser for all its pages, and only a worker that exits on its own takes that browser with
+    # it - so the pool is closed and joined, and terminated only on the way out of an error.
     pool = multiprocessing.Pool(RENDER_THREADS if render else SCRAPE_THREADS,
-                                initializer=keep_render_browser if render else None)
+                                initializer=init_wowhead_worker, initargs=(wowhead_pool_state(), render))
     try:
         pool.map(save_func, save_ids)
         pool.close()

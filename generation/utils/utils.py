@@ -26,6 +26,44 @@ def wowhead_delay() -> float:
     return random.uniform(float(low), float(high or low))
 
 
+# A pool's workers share one of these (made by wowhead_pool_state, handed over by init_wowhead_worker),
+# so a refusal from Wowhead holds every worker rather than each finding the limit on its own and all of
+# them coming back in the same second. Without a pool it stays None and each call waits for itself.
+_wowhead_resume_at = None
+
+
+def wowhead_pool_state():
+    import multiprocessing
+    return multiprocessing.Value('d', 0.0)
+
+
+def init_wowhead_worker(resume_at, keep_browser: bool = False) -> None:
+    # Pool initializer. keep_browser lets the worker keep one browser for every page it renders rather
+    # than starting one per page - only for a pool that is closed and joined, as a terminated worker
+    # cannot take its browser down with it.
+    global _wowhead_resume_at, _keep_render_browser
+    _wowhead_resume_at = resume_at
+    _keep_render_browser = keep_browser
+
+
+def __wait_for_wowhead() -> None:
+    if _wowhead_resume_at is None:
+        return
+    pause = _wowhead_resume_at.value - time.time()
+    if pause > 0:
+        # spread out again, or every worker comes back in the same second
+        time.sleep(pause + random.uniform(0, 5))
+
+
+def __hold_wowhead(seconds: float) -> None:
+    if _wowhead_resume_at is None:
+        time.sleep(seconds)
+        return
+    with _wowhead_resume_at.get_lock():
+        _wowhead_resume_at.value = max(_wowhead_resume_at.value, time.time() + seconds)
+    __wait_for_wowhead()
+
+
 def __wowhead_paced(fetch, url: str):
     # Every way of loading a Wowhead page goes through this: the delay before the request, and for
     # anything but a page or a 404 a wait that grows until the server lets us back in. fetch returns
@@ -34,12 +72,13 @@ def __wowhead_paced(fetch, url: str):
     wait = 60
     attempt = 0
     while True:
+        __wait_for_wowhead()
         status, result = fetch(url)
         if status < 400 or status == 404:
             return status, result
         attempt += 1
         print(f'[wowhead] {status} — waiting {wait}s (attempt {attempt})...')
-        time.sleep(wait)
+        __hold_wowhead(wait)
         wait = int(wait * 1.5)
 
 
@@ -61,17 +100,32 @@ RENDER_ATTEMPTS = 3    # for a timeout or a crashed browser - not for an answer 
 _RENDER_PASSIVE = ('image', 'media', 'font')
 _RENDER_OWN_HOSTS = ('wowhead.com', 'zamimg.com')
 
+# A script or stylesheet whose url carries a version (?dv=, ?hash=...) is the same bytes on every page.
+# Request interception switches the browser's cache off, so every page fetched them all again - seven
+# data files from nether.wowhead.com alone, where a raw page is one request. A worker keeps them from
+# the first page it renders; the version in the url means a kept one cannot go stale.
+_RENDER_KEPT_TYPES = ('script', 'stylesheet')
+_render_kept: dict[str, tuple[int, dict, bytes]] = {}
+
+# The status alone is not trusted: a CloudFront "Request blocked" page was once cached as spell 1316379
+# behind a status that passed. A page with this title is refused whatever status came with it.
+_BLOCKED_PAGE = re.compile(r'<title>\s*ERROR: The request could not be satisfied\s*</title>', re.I)
+
 _render_loop = None
 _render_browser = None
 _keep_render_browser = False
 
 
-def keep_render_browser() -> None:
-    # Pool initializer: the worker keeps one browser for every page it renders rather than starting
-    # one per page, which is most of what a page used to cost. Only for a pool that is closed and
-    # joined - a terminated worker cannot take its browser down with it.
-    global _keep_render_browser
-    _keep_render_browser = True
+def __quiet_closed_page(loop, context) -> None:
+    # pyppeteer sends some messages without waiting for the answer - it detaches every iframe and
+    # service worker that attaches to a page (page.py, _onTargetAttached). If that happens as the page
+    # closes, the message fails with nobody left to collect it and asyncio reports the failure. The page
+    # has been read by then, so there is nothing to report.
+    from pyppeteer.errors import NetworkError
+    exception = context.get('exception')
+    if isinstance(exception, NetworkError) and 'No session with given id' in str(exception):
+        return
+    loop.default_exception_handler(context)
 
 
 def __launch_render_browser():
@@ -80,6 +134,7 @@ def __launch_render_browser():
     global _render_loop, _render_browser
     if _render_loop is None:
         _render_loop = asyncio.new_event_loop()
+        _render_loop.set_exception_handler(__quiet_closed_page)
         asyncio.set_event_loop(_render_loop)
     # launched as requests_html launched it, so a page renders the way it always has
     _render_browser = _render_loop.run_until_complete(pyppeteer.launch(headless=True, args=['--no-sandbox']))
@@ -97,17 +152,37 @@ def __close_render_browser() -> None:
     _render_browser = None
 
 
+def __is_kept(request) -> bool:
+    return request.method == 'GET' and request.resourceType in _RENDER_KEPT_TYPES and '?' in request.url
+
+
 async def __filter_render_request(request) -> None:
     from urllib.parse import urlparse
-    host = urlparse(request.url).hostname or ''
-    own = host.endswith(_RENDER_OWN_HOSTS) or request.url.startswith('data:')
     try:
+        host = urlparse(request.url).hostname or ''
+        own = host.endswith(_RENDER_OWN_HOSTS) or request.url.startswith('data:')
         if request.resourceType in _RENDER_PASSIVE or not own:
             await request.abort()
+        elif request.url in _render_kept and __is_kept(request):
+            status, headers, body = _render_kept[request.url]
+            await request.respond({'status': status, 'headers': headers, 'body': body})
         else:
             await request.continue_()
     except Exception:
         pass  # the page closed before the browser asked about this request
+
+
+async def __keep_render_response(response) -> None:
+    try:
+        if response.status != 200 or response.url in _render_kept or not __is_kept(response.request):
+            return
+        body = await response.buffer()
+    except Exception:
+        return  # the page closed first; a later page fetches it again
+    # the body comes back decoded, so a content-encoding or content-length kept from it would be wrong
+    headers = {name: value for name, value in response.headers.items()
+               if name.lower() in ('content-type', 'access-control-allow-origin')}
+    _render_kept[response.url] = (response.status, headers, body)
 
 
 def __render_once(url: str) -> tuple[int, str]:
@@ -115,13 +190,30 @@ def __render_once(url: str) -> tuple[int, str]:
 
     async def load(browser):
         page = await browser.newPage()
+        documents = []
+
+        def on_response(response):
+            # A handler that raises can stall the navigation, so nothing here may. The page's status is
+            # the last document the main frame received - not an ad's iframe, and not what goto() pairs
+            # up, which it does by hashing the request.
+            try:
+                request = response.request
+                if request.isNavigationRequest() and request.frame == page.mainFrame:
+                    documents.append(response)
+            except Exception:
+                pass
+            asyncio.ensure_future(__keep_render_response(response))
+
         try:
             await page.setRequestInterception(True)
             page.on('request', lambda request: asyncio.ensure_future(__filter_render_request(request)))
+            page.on('response', on_response)
             response = await page.goto(url, {'timeout': RENDER_TIMEOUT * 1000})
-            if response is None:
+            final = documents[-1] if documents else response
+            if final is None:
                 raise Exception('the browser got no response for the page')
-            return response.status, await page.content()
+            html = await page.content()
+            return (403 if _BLOCKED_PAGE.search(html) else final.status), html
         finally:
             await page.close()
 
