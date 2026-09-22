@@ -13,6 +13,7 @@ from generation.utils.utils import (NOTE_ALREADY_TRANSLATED, NOTE_NOT_TRANSLATED
                                     check_feedback, download_csv_from_google_sheet,
                                     format_notes, init_wowhead_worker, notes_hold_back_row, parse_notes,
                                     __to_tsv_val, wowhead_get, wowhead_pool_state, wowhead_render)
+from generation.utils.wowhead_tooltips import render_tooltips
 
 # THREADS = os.cpu_count()
 log = IssueLog('spells')
@@ -23,6 +24,15 @@ SCRAPE_THREADS = 2
 # more pressure than the pacing allows.
 RENDER_THREADS = 4
 PARSE_THREADS = os.cpu_count()
+
+# Where a page's tooltips come from. The raw page holds everything: its own script carries the tooltip
+# markup and fills the empty divs in. TOOLTIPS does that here (see utils/wowhead_tooltips.py), so no page
+# has to go through a browser. RENDERED reads the pages a browser did leave, which are kept as they were
+# so that the interpreter can be held against them.
+RAW = 'raw'
+RENDERED = 'rendered'
+TOOLTIPS = 'tooltips'
+
 CLASSIC = 'classic'
 SOD = 'sod'
 TBC = 'tbc'
@@ -340,38 +350,38 @@ def save_pages_async(expansion, ids):
             output_file.write(response.html.html)
 
 
-def save_htmls_from_wowhead(expansion, ids: set[int], render: bool, force: set[int] = None):
+def save_htmls_from_wowhead(expansion, ids: set[int], source: str, force: set[int] = None):
     from functools import partial
     import multiprocessing
-    html_type = 'rendered' if render else 'raw'
-    cache_dir = f'cache/{expansion_data[expansion][HTML_CACHE]}_{html_type}'
+    cache_dir = f'cache/{expansion_data[expansion][HTML_CACHE]}_{source}'
     os.makedirs(cache_dir, exist_ok=True)
     existing_files = os.listdir(cache_dir)
     existing_ids = set(int(file_name.split('.')[0]) for file_name in existing_files)
 
     if os.path.exists(cache_dir) and existing_ids == ids and not force:
-        print(f'HTML({html_type}) cache for all Wowhead({expansion}) spells ({len(ids)}) exists and seems legit. Skipping.')
+        print(f'HTML({source}) cache for all Wowhead({expansion}) spells ({len(ids)}) exists and seems legit. Skipping.')
         return
 
     save_ids = ids - existing_ids
     if force:
-        print(f'Force saving HTMLs({html_type}) for {len(force)} spells from Wowhead({expansion}): {force}.')
+        print(f'Force saving HTMLs({source}) for {len(force)} spells from Wowhead({expansion}): {force}.')
         save_ids = save_ids | force
-    print(f'Saving HTMLs({html_type}) for {len(save_ids)} of {len(ids)} spells from Wowhead({expansion}).')
+    print(f'Saving HTMLs({source}) for {len(save_ids)} of {len(ids)} spells from Wowhead({expansion}).')
 
     redundant_ids = existing_ids - ids
     if len(redundant_ids) > 0:
         print(f"There's some redundant IDs: {redundant_ids}")
 
-    save_page_func = save_page_calc if render else save_page_raw
+    save_page_func = save_page_calc if source == RENDERED else save_page_raw
     # for id in save_ids:
     #     save_page_func(expansion, id)
     save_func = partial(save_page_func, expansion)
     # The workers share one pause, so a refusal from Wowhead holds all of them. A rendering worker also
     # keeps one browser for all its pages, and only a worker that exits on its own takes that browser with
     # it - so the pool is closed and joined, and terminated only on the way out of an error.
-    pool = multiprocessing.Pool(RENDER_THREADS if render else SCRAPE_THREADS,
-                                initializer=init_wowhead_worker, initargs=(wowhead_pool_state(), render))
+    pool = multiprocessing.Pool(RENDER_THREADS if source == RENDERED else SCRAPE_THREADS,
+                                initializer=init_wowhead_worker,
+                                initargs=(wowhead_pool_state(), source == RENDERED))
     try:
         pool.map(save_func, save_ids)
         pool.close()
@@ -383,13 +393,21 @@ def save_htmls_from_wowhead(expansion, ids: set[int], render: bool, force: set[i
     # save_pages_async(expansion, list(save_ids)[:100])
 
 
-def parse_wowhead_spell_page(expansion, render, id) -> SpellData:
+def parse_wowhead_spell_page(expansion, source, id) -> SpellData:
     import re
-    html_path = f'cache/{expansion_data[expansion][HTML_CACHE]}_{'rendered' if render else 'raw'}/{id}.html'
+    page_type = RAW if source == TOOLTIPS else source
+    html_path = f'cache/{expansion_data[expansion][HTML_CACHE]}_{page_type}/{id}.html'
     with open(html_path, 'r', encoding="utf-8") as file:
         html = file.read()
 
-    soup = BeautifulSoup(html, 'html.parser')
+    if source == TOOLTIPS:
+        html = render_tooltips(html, 'spells', id)
+
+    # [!] html.parser makes a container out of a <br> that Wowhead leaves unclosed and swallows every
+    # line after it, which costs a tooltip all but its first line. lxml reads it as a browser does, so
+    # the raw page is only right when read with lxml; the browser's own pages are left on html.parser,
+    # which is what the stored parses of them were made with.
+    soup = BeautifulSoup(html, 'lxml' if source == TOOLTIPS else 'html.parser')
     name = soup.find('h1').text
 
     tooltip_div = soup.find('div', {'id': f'tt{id}'})
@@ -434,21 +452,20 @@ def parse_wowhead_spell_page(expansion, render, id) -> SpellData:
     return SpellData(id, expansion, name, description, aura)
 
 
-def parse_wowhead_pages(expansion, metadata: dict[int, SpellMD], render: bool) -> dict[int, SpellData]:
+def parse_wowhead_pages(expansion, metadata: dict[int, SpellMD], source: str) -> dict[int, SpellData]:
     import pickle
     import multiprocessing
     from functools import partial
-    spells_type = 'rendered' if render else 'raw'
-    cache_path = f'cache/tmp/{expansion_data[expansion][SPELL_CACHE]}_{spells_type}.pkl'
+    cache_path = f'cache/tmp/{expansion_data[expansion][SPELL_CACHE]}_{source}.pkl'
 
     if os.path.exists(cache_path):
         print(f'Loading cached Wowhead({expansion}) spells')
         with open(cache_path, 'rb') as f:
             wowhead_spells = pickle.load(f)
     else:
-        print(f'Parsing {spells_type} Wowhead({expansion}) spell pages')
-        # wowhead_spells = {id: parse_wowhead_spell_page(expansion, render, id) for id in metadata.keys()}
-        parse_func = partial(parse_wowhead_spell_page, expansion, render)
+        print(f'Parsing {source} Wowhead({expansion}) spell pages')
+        # wowhead_spells = {id: parse_wowhead_spell_page(expansion, source, id) for id in metadata.keys()}
+        parse_func = partial(parse_wowhead_spell_page, expansion, source)
         with multiprocessing.Pool(PARSE_THREADS) as p:
             wowhead_spells = p.map(parse_func, metadata.keys())
         wowhead_spells = {spell.id: spell for spell in wowhead_spells}
@@ -822,13 +839,13 @@ def merge_expansions(old_expansion: dict[int, dict[str, SpellData]], new_expansi
     return result
 
 
-def compare_stored_raw_spells(expansion, fresh_spells: dict[int, SpellData]) -> set[int]:
+def compare_stored_spells(expansion, fresh_spells: dict[int, SpellData]) -> set[int]:
     import pickle
     diffed_spells = set()
-    print(f'Comparing raw spells for {expansion}')
-    cache_path = f'cache/tmp/wowhead_{expansion}_spell_cache_raw_stored.pkl'
+    print(f'Comparing spells for {expansion}')
+    cache_path = f'cache/tmp/wowhead_{expansion}_spell_cache_stored.pkl'
     if os.path.exists(cache_path):
-        print(f'Loading stored raw Wowhead({expansion}) spells')
+        print(f'Loading stored Wowhead({expansion}) spells')
         with open(cache_path, 'rb') as f:
             stored_spells = pickle.load(f)
         absent_keys = stored_spells.keys() ^ fresh_spells.keys()
@@ -839,12 +856,13 @@ def compare_stored_raw_spells(expansion, fresh_spells: dict[int, SpellData]) -> 
                     stored_spells[spell_id].description != fresh_spells[spell_id].description or
                     stored_spells[spell_id].aura != fresh_spells[spell_id].aura):
                 diffed_spells.add(spell_id)
+        print(f'Wowhead changed {len(diffed_spells)} of {len(fresh_spells)} spells since the last run')
     return diffed_spells
 
 
-def store_raw_spells(expansion, fresh_spells: dict[int, SpellData]):
+def store_spells(expansion, fresh_spells: dict[int, SpellData]):
     import pickle
-    cache_path = f'cache/tmp/wowhead_{expansion}_spell_cache_raw_stored.pkl'
+    cache_path = f'cache/tmp/wowhead_{expansion}_spell_cache_stored.pkl'
     os.makedirs('cache/tmp', exist_ok=True)
     with open(cache_path, 'wb') as f:
         pickle.dump(fresh_spells, f)
@@ -887,26 +905,23 @@ def retrieve_spell_data() -> tuple[dict[int, dict[str, SpellData]], dict[int, di
         for force_id in expansion_properties.get(FORCE_DOWNLOAD, []):
             wowhead_md[force_id] = SpellMD(force_id, "FORCE LOAD", expansion)
 
-        save_htmls_from_wowhead(expansion, set(wowhead_md.keys()), render=False)
-        wowhead_spells_raw = parse_wowhead_pages(expansion, wowhead_md, render=False) # First, store raw spells (delete 'wowhead_<expansion>_spell_html.raw' to do that)
+        save_htmls_from_wowhead(expansion, set(wowhead_md.keys()), RAW) # Only the raw page is downloaded: its tooltips are filled in below
+        wowhead_spells = parse_wowhead_pages(expansion, wowhead_md, TOOLTIPS) # Delete 'tmp/<spell_cache>_tooltips.pkl' to parse the pages again
 
-        changed_spells = compare_stored_raw_spells(expansion, wowhead_spells_raw) # Then, compare downloaded raw pages with stored in 'tmp/wowhead_<expansion>_spell_cache_raw_stored'
-        save_htmls_from_wowhead(expansion, set(wowhead_md.keys()), render=True, force=changed_spells) # Download absent rendered pages and force-download changed pages from 'changed_spells'
-        wowhead_spells_rendered = parse_wowhead_pages(expansion, wowhead_md, render=True)
+        compare_stored_spells(expansion, wowhead_spells) # What Wowhead changed since 'tmp/wowhead_<expansion>_spell_cache_stored'
+        store_spells(expansion, wowhead_spells)
 
-        store_raw_spells(expansion, wowhead_spells_raw) # Store current raw pages as 'tmp/wowhead_<expansion>_spell_cache_raw_stored'
-
-        raw_spells[expansion] = wowhead_spells_rendered.copy()
+        raw_spells[expansion] = wowhead_spells.copy()
 
         if expansion == CLASSIC:
-            stored_classic_spells = wowhead_spells_rendered.copy()
+            stored_classic_spells = wowhead_spells.copy()
         if expansion == SOD:
             # populating refs including classic spells, as they don't overlap with SoD
-            populate_similarities({**stored_classic_spells, **wowhead_spells_rendered})
+            populate_similarities({**stored_classic_spells, **wowhead_spells})
         else:
-            populate_similarities(wowhead_spells_rendered)
+            populate_similarities(wowhead_spells)
         print(f'Merging with {expansion}')
-        merged_spells = merge_expansions(merged_spells, wowhead_spells_rendered)
+        merged_spells = merge_expansions(merged_spells, wowhead_spells)
 
     return merged_spells, raw_spells
 
