@@ -418,7 +418,7 @@ def generate_crowdin_sources(readable_objects: dict[int, dict[str, ObjectData]])
                 suffix = '_' + item.expansion
 
             object_filename = __object_filename(item.id, item.name)
-            path = f'output/source_for_crowdin/objects{suffix}/{object_filename.capitalize()[:1]}/{object_filename}.xml'
+            path = f'output/source_for_crowdin/object_texts{suffix}/{object_filename.capitalize()[:1]}/{object_filename}.xml'
 
             objects_by_path[path] = item
 

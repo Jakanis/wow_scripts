@@ -1461,7 +1461,7 @@ def generate_book_sources(readable_items: dict[str, dict[int, ReadableItem]]):
                 suffix = '_' + item.expansion
 
             book_filename = __book_filename(item.id, item.name)
-            path = f'output/source_for_crowdin/books{suffix}/{book_filename.capitalize()[:1]}/{book_filename}.xml'
+            path = f'output/source_for_crowdin/item_texts{suffix}/{book_filename.capitalize()[:1]}/{book_filename}.xml'
 
             books_by_path[path] = item
 
