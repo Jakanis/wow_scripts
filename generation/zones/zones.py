@@ -1,792 +1,638 @@
+import csv
 import os
+import re
+import sys
+import time
 
 import requests
-import multiprocessing
 
-from bs4 import BeautifulSoup
+from generation.utils.glossary import Glossary
+from generation.utils.issues import IssueLog
+from generation.utils.utils import feedback_path
 
-from generation.utils.utils import feedback_path, wowhead_get
+log = IssueLog('zones')
 
+CLASSIC = 'classic'
+SOD = 'sod'
+FOREVER = 'forever'
+TBC = 'tbc'
+WRATH = 'wrath'
+CATA = 'cata'
+MISTS = 'mists'
+INDEX = 'index'
+WAGO_PRODUCT = 'wago_product'
+WAGO_BUILD = 'wago_build'
 
-THREADS = 16
-WOWDB = 'WOWDB'
-CLASSICDB = 'CLASSICDB'
-EVOWOW = 'EVOWOW'
-TWINHEAD = 'TWINSTAR'
-WARCRAFTDB = 'WARCRAFTDB'
-WOWHEAD = 'WOWHEAD'
-URL = 'URL'
-HTML_FOLDER = 'HTML_FOLDER'
-ZONES_CACHE = 'ZONES_CACHE'
-
-sources = {
-    WOWDB: {
-        URL: 'https://www.wowdb.com',
-        HTML_FOLDER: 'cache/wowdb_zone_htmls',
-        ZONES_CACHE: 'cache/tmp/wowdb_zone_cache.pkl'
+# Zone names come from the clients' own tables, as wago.tools exports them per build. The builds are pinned like
+# the other modules pin their Wowhead URLs: check_newer_builds() only reports a newer one, because the names it
+# brings are a change to look at, not something to take in silently.
+expansion_data = {
+    CLASSIC: {
+        INDEX: 0,
+        WAGO_PRODUCT: 'wow_classic_era',
+        WAGO_BUILD: '1.14.4.51829'  # the era client just before SoD arrived with 1.15.0
     },
-    CLASSICDB: {
-        URL: 'https://classicdb.ch',
-        HTML_FOLDER: 'cache/classicdb_zone_htmls',
-        ZONES_CACHE: 'cache/tmp/classicdb_zone_cache.pkl'
+    SOD: {
+        INDEX: 0.1,
+        WAGO_PRODUCT: 'wow_classic_era',
+        WAGO_BUILD: '1.15.9.69722'  # shared with classic, so what it has beyond 1.14.4 is SoD's
     },
-    EVOWOW: {  # Actually it's a private server, but it's at least limited with Wrath content
-        URL: 'https://wotlk.evowow.com',
-        HTML_FOLDER: 'cache/evowow_zone_htmls',
-        ZONES_CACHE: 'cache/tmp/evowow_zone_cache.pkl'
+    # WoW: Forever, in beta since 2026-09-17. Shares data with classic and SoD; its place in the merge order is not settled.
+    FOREVER: {
+        INDEX: 0.2,
+        WAGO_PRODUCT: 'wow_classic_beta',
+        WAGO_BUILD: '1.60.1.69977'
     },
-    TWINHEAD: {  # Actually it's a private server, but it's at least limited with Wrath content
-        URL: 'https://cata-twinhead.twinstar.cz/',
-        HTML_FOLDER: 'cache/twinhead_zone_htmls',
-        ZONES_CACHE: 'cache/tmp/twinhead_zone_cache.pkl'
+    TBC: {
+        INDEX: 1,
+        WAGO_PRODUCT: 'wow_anniversary',
+        WAGO_BUILD: '2.5.6.69795'
     },
-    WARCRAFTDB: {  # Actually it's a private server, but it's at least limited with Wrath content
-        URL: 'https://warcraftdb.com/cataclysm',
-        HTML_FOLDER: 'cache/warcraftdb_zone_htmls',
-        ZONES_CACHE: 'cache/tmp/warcraftdb_zone_cache.pkl'
+    WRATH: {
+        INDEX: 2,
+        WAGO_PRODUCT: 'wow_classic',
+        WAGO_BUILD: '3.4.3.58936'  # ClassicUA_Wrath.toc is 30403, not the later 3.4.4 and 3.4.5 clients
     },
-    WOWHEAD: {
-        URL: 'https://www.wowhead.com/cata'
+    CATA: {
+        INDEX: 3,
+        WAGO_PRODUCT: 'wow_classic',
+        WAGO_BUILD: '4.4.2.60895'
+    },
+    MISTS: {
+        INDEX: 4,
+        WAGO_PRODUCT: 'wow_classic',
+        WAGO_BUILD: '5.5.4.69934'
     }
 }
-IGNORES = [5, 30, 49, 81, 82, 83, 84, 471, 472, 473, 500, 877, 926, 1218, 1518, 2037, 2159, 2238, 2239, 2280, 2877,
-           3428, 3695, 3817, 3941, 3948, 3995, 4072, 4076, 4096, 4471, 4602, 4621, 4688, 4774, 5311, 5894, 5895, 14284,
-           14285, 14286, 14287]
+# Forever's client is built on retail's and carries retail's rooms as well, most of which no Forever map places.
+# A room this retail build has and the SoD client does not is taken for one of those.
+RETAIL_BUILD = '12.1.0.69933'
 
-CATEGORIES = {
-    "Northrend": "Нортренд",
-    "dungeon": "підземелля",
-    "raid": "рейд",
-    "battleground": "поле битви",
-    "Eastern Kingdoms": "Східні Королівства",
-    "Kalimdor": "Калімдор",
-    "Outland": "Позамежжя",
-    "arena": "арена",
+WAGO_URL = 'https://wago.tools'
+# Absolute, because npc.py reads the zone ids from here with generation/npc as its working directory
+WAGO_CACHE = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'cache', 'wago')
+
+AREA = 'AreaTable'
+MAP = 'Map'
+UI_MAP = 'UiMap'
+WMO_AREA = 'WMOAreaTable'
+UI_MAP_FLOOR = 'UiMapGroupMember'
+TAXI = 'TaxiNodes'
+POI = 'AreaPOI'
+LFG = 'LfgDungeons'
+# DB2 table -> the columns read from it, the name first
+TABLES = {
+    AREA: ('AreaName_lang', 'ID', 'ContinentID', 'ParentAreaID'),
+    MAP: ('MapName_lang', 'ID', 'MapType', 'InstanceType', 'ParentMapID', 'Flags_0'),
+    UI_MAP: ('Name_lang', 'ID', 'ParentUiMapID'),
+    WMO_AREA: ('AreaName_lang', 'ID', 'WMOID', 'AreaTableID'),
+    UI_MAP_FLOOR: ('Name_lang', 'ID', 'UiMapID'),
+    TAXI: ('Name_lang', 'ID', 'Flags', 'CharacterBitNumber'),
+    POI: ('Name_lang', 'ID', 'ContinentID'),
+    LFG: ('Name_lang', 'ID')
 }
+OPTIONAL_TABLES = (UI_MAP_FLOOR,)  # only the Cata and Mists clients have it
+# The names that reach ClassicUA as zone text and so go on the translation sheet: zone and room text, map titles,
+# instance names, flight points and the pins of a battleground's map. Nothing hooks the dungeon floor menu, and
+# dungeon finder names never arrive as zone text; those rows only tell a location term the glossary keeps for
+# them apart from a stale one.
+LISTED_SOURCES = (AREA, MAP, UI_MAP, WMO_AREA, TAXI, POI)
 
-class WowheadZone:
-    def __init__(self, id, name, category=None, expansion=None, instance=None, territory=None):
-        self.id = id
-        self.name = name
-        self.category = category
-        self.expansion = expansion
-        self.instance = instance
-        self.territory = territory
+INSTANCE_TYPES = {1: 'dungeon', 2: 'raid', 3: 'battleground', 4: 'arena', 5: 'scenario'}  # Map.InstanceType
+CATEGORIES = {
+    'dungeon': 'підземелля',
+    'raid': 'рейд',
+    'battleground': 'поле битви',
+    'arena': 'арена',
+    'scenario': 'сценарій'
+}
+DEVELOPMENT_MAP = 0x2  # Map.Flags_0
+ON_FLIGHT_MAP = 0x3  # TaxiNodes.Flags: shown to the Alliance, to the Horde
 
-    def __str__(self):
-        return f'{self.id},"{self.name}"'
-
-    def get_category(self) -> str:
-        if self.category == 0:
-            return 'Eastern Kingdoms'
-        if self.category == 1:
-            return 'Kalimdor'
-        elif self.category == 2:
-            return 'dungeon'
-        elif self.category == 3:
-            return 'raid'
-        elif self.category == 6:
-            return 'battleground'
-        elif self.category == 8:
-            return 'Outland'
-        elif self.category == 9:
-            return 'arena'
-        elif self.category == 10:
-            return 'Northrend'
-        else:
-            None
-
-    def get_expansion(self) -> str:
-        if self.expansion is None:
-            return 'classic'
-        elif self.expansion == 1:
-            return 'tbc'
-        elif self.expansion == 2:
-            return 'wrath'
-        elif self.expansion == 3:
-            return 'cata'
-        else:
-            return 'unknown'
+# Rows the clients carry but never show. They stay in zones.db and are only kept off the translation sheet, so a
+# wrong match costs a missing row there, never a translation. [!] Do not match a bare "OLD": ScholomanceOLD is a
+# live map name players reported.
+UNUSED = re.compile(
+    r'unused|\bDNT\b|\*\*\*|\[(?:PH|PL|TEMP|TEMPNAME\s*|RENAME ME)\]|\((?:PH|TEMP|STM)\)|TEMPNAME|RENAME ME|'
+    r'do not (?:use|reuse)|not used|delete me|^reuse\b|deprecated|\bprototype\b|\bplaceholder\b|'
+    r'\btest(?:ing)?\b|test\d*$|^test|smoketest|'
+    r'programmer isle|designer island|development land|dev only|\bdev\b|'
+    r'\bjeff [ns][ew] quadrant|\(old\b|\bOLD\)|\bOLD$|^\d+\.\d+[\d.]* ?(?:-|\w)|hackathon|\bcopy$|\w_\w|'
+    r'wowedit|spooky area|happy fun land|nothing to see here|^zz|�',
+    re.I)
+DEVELOPMENT_MAP_NAME = re.compile(r'\btest\b|test$|unused|development land|dev only|nothing to see here', re.I)
+# Flight paths of quests, vehicles and lifts that still show on the flight map
+TAXI_INTERNAL = re.compile(r' - |->|\b(?:quest|generic|world target|test|start|end|begin|stop|target|log ride)\b|'
+                           r'^AAA|\(new\)', re.I)
+# Unmarked names the clients never show
+IGNORES = ['Nine', 'Class Quest', 'Force Interior', 'CashTest', 'ElevatorSpawnTest', 'CTF3', 'Sarahland',
+           'Pattymack Land', 'Familiars', 'Sub zone', 'TrevorsHouse', 'VaultDungeon', 'LostIsles', 'Gilneas2',
+           'Firelands Terrain 2', 'foo', 'always draw', 'SunkenTemple']
 
 
 class Zone:
-    def __init__(self, id, name, parent_zone=None, translation=None, expansion=None, category=None, source=None):
+    # One named row of one client table. A name usually has several: a dungeon is an AreaTable row, a Map row and
+    # a UiMap row, in every client that has it.
+    def __init__(self, expansion, source, id, name, parent=None, category=None, unused=None, translation=None):
+        self.expansion = expansion
+        self.source = source
         self.id = id
         self.name = name
-        self.parent_zone = parent_zone
-        self.translation = translation
-        self.expansion = expansion
+        self.parent = parent
         self.category = category
-        self.source = source
+        self.unused = unused  # why the row stays off the translation sheet
+        self.translation = translation
 
     def __str__(self):
-        res = ''
-        res += f'#{self.id}'
-        res += f':{self.expansion} ' if self.expansion else ' '
-        res += f'{self.parent_zone}/' if self.parent_zone else ''
+        res = f'{self.source}#{self.id}:{self.expansion} '
+        res += f'{self.parent}/' if self.parent else ''
         res += self.name
         res += f' -> {self.translation}' if self.translation else ''
         return res
 
 
-def save_wowdb_zone_page(id) -> str:
-    if os.path.exists(f'{sources[WOWDB][HTML_FOLDER]}/{id}.html'):
-        return
-    url = sources[WOWDB][URL] + f'/zones/{id}'
-    r = requests.get(url)
-    with open(f'{sources[WOWDB][HTML_FOLDER]}/{id}.html', 'w', encoding="utf-8") as output_file:
-        output_file.write(r.text)
-
-def save_wowdb_zones_htmls():
-    ids = range(1, 10000)
-    os.makedirs(sources[WOWDB][HTML_FOLDER], exist_ok=True)
-    with multiprocessing.Pool(THREADS) as p:
-        p.map(save_wowdb_zone_page, ids)
-
-def save_classicdb_zone_page(id) -> str:
-    if os.path.exists(f'{sources[CLASSICDB][HTML_FOLDER]}/{id}.html'):
-        return
-    url = sources[CLASSICDB][URL] + f'/?zone={id}'
-    r = requests.get(url)
-    with open(f'{sources[CLASSICDB][HTML_FOLDER]}/{id}.html', 'w', encoding="utf-8") as output_file:
-        output_file.write(r.text)
-
-def save_classicdb_zones_htmls():
-    ids = range(1, 10000)
-    os.makedirs(sources[CLASSICDB][HTML_FOLDER], exist_ok=True)
-    with multiprocessing.Pool(THREADS) as p:
-        p.map(save_classicdb_zone_page, ids)
+def __version_key(version: str) -> tuple[int, ...]:
+    return tuple(int(part) for part in version.split('.'))
 
 
-def save_evowow_zone_page(id) -> str:
-    if os.path.exists(f'{sources[EVOWOW][HTML_FOLDER]}/{id}.html'):
-        return
-    url = sources[EVOWOW][URL] + f'/?zone={id}'
-    r = requests.get(url)
-    with open(f'{sources[EVOWOW][HTML_FOLDER]}/{id}.html', 'w', encoding="utf-8") as output_file:
-        output_file.write(r.text)
-
-def save_evowow_zones_htmls():
-    ids = range(1, 10000)
-    os.makedirs(sources[EVOWOW][HTML_FOLDER], exist_ok=True)
-    with multiprocessing.Pool(THREADS) as p:
-        p.map(save_evowow_zone_page, ids)
+def __wago_get(url: str) -> requests.Response:
+    time.sleep(1)  # wago.tools publishes no limits, so stay at a polite one request a second
+    return requests.get(url, headers={'User-Agent': 'ClassicUA wow_scripts'}, timeout=120)
 
 
-def save_twinhead_zone_page(id) -> str:
-    # if os.path.exists(f'{sources[TWINHEAD][HTML_FOLDER]}/{id}.html'):
-    #     return
-    url = sources[TWINHEAD][URL] + f'/?zone={id}'
-    r = requests.get(url)
-    if 'Sorry, you have been blocked' in r.text:
-        print('CloudFlare')
-    with open(f'{sources[TWINHEAD][HTML_FOLDER]}/{id}.html', 'w', encoding="utf-8") as output_file:
-        output_file.write(r.text)
-
-def save_twinhead_zones_htmls():
-    ids = range(1, 10000)
-    os.makedirs(sources[TWINHEAD][HTML_FOLDER], exist_ok=True)
-    with multiprocessing.Pool(THREADS) as p:
-        p.map(save_twinhead_zone_page, ids)
-
-
-def save_warcraftdb_zone_page(id) -> str:
-    # if os.path.exists(f'{sources[TWINHEAD][HTML_FOLDER]}/{id}.html'):
-    #     return
-    url = sources[WARCRAFTDB][URL] + f'/zone/{id}'
-    r = requests.get(url)
-    if not r.ok:
-        print(f'Not OK for {id}!')
-        return
-    with open(f'{sources[WARCRAFTDB][HTML_FOLDER]}/{id}.html', 'w', encoding="utf-8") as output_file:
-        output_file.write(r.text)
-
-def save_warcraftdb_zones_htmls():
-    ids = range(1, 10000)
-    os.makedirs(sources[WARCRAFTDB][HTML_FOLDER], exist_ok=True)
-    with multiprocessing.Pool(THREADS) as p:
-        p.map(save_warcraftdb_zone_page, ids)
-    # for id in ids:
-    #     save_warcraftdb_zone_page(id)
+def download_wago_table(table: str, build: str) -> str:
+    path = os.path.join(WAGO_CACHE, f'{table}_{build}.csv')
+    if os.path.exists(path):  # a build never changes, so neither does its export
+        return path
+    print(f'Downloading {table} of {build} from wago.tools')
+    r = __wago_get(f'{WAGO_URL}/db2/{table}/csv?build={build}')
+    if r.status_code == 404 and 'Table not found' in r.text and table in OPTIONAL_TABLES:
+        text = ''  # not in this client; the empty file remembers that
+    elif r.ok:
+        text = r.text
+    else:
+        raise Exception(f'wago.tools returned {r.status_code} for {table} of {build}')
+    os.makedirs(WAGO_CACHE, exist_ok=True)
+    with open(path + '.tmp', 'w', encoding='utf-8', newline='') as f:
+        f.write(text)
+    os.replace(path + '.tmp', path)
+    return path
 
 
-def parse_wowdb_zone_page(file_name) -> (int, str):
-    id = int(file_name.removesuffix(".html"))
-    html_path = f'{sources[WOWDB][HTML_FOLDER]}/{id}.html'
-    with open(html_path, 'r', encoding="utf-8") as file:
-        html = file.read()
-    soup = BeautifulSoup(html, 'html5lib')
+def read_wago_table(table: str, build: str) -> list[dict[str, str]]:
+    # newline='' because quoted fields hold line breaks; columns go by name, since their order and the
+    # Field_* extras differ between builds
+    with open(download_wago_table(table, build), 'r', encoding='utf-8', newline='') as f:
+        rows = list(csv.DictReader(f))
+    if not rows and table not in OPTIONAL_TABLES:
+        raise Exception(f'{table} of {build} is empty')
+    missing = [column for column in TABLES[table] if rows and column not in rows[0]]
+    if missing:
+        raise Exception(f'{table} of {build} has no {", ".join(missing)} column')
+    return rows
 
-    zone_name_tag = soup.find('h2', class_='header')
-    if zone_name_tag:
-        return (id, zone_name_tag.text)
 
+def __trim(text: str) -> str:
+    return text.strip(' \t\r\n')  # string.trim in WoW's Lua, which leaves any other whitespace be
+
+
+def __unused_name(name: str) -> str:
+    if name in IGNORES:
+        return 'ignored'
+    if UNUSED.search(name):
+        return 'marked unused'
     return None
 
 
-def parse_wowdb_zone_pages() -> dict[int, str]:
-    import pickle
-    cache_path = sources[WOWDB][ZONES_CACHE]
-    if os.path.exists(cache_path):
-        print(f'Loading cached WOWDB zones')
-        with open(cache_path, 'rb') as f:
-            wowdb_zones = pickle.load(f)
-    else:
-        print(f'Parsing WOWDB zones')
-        with multiprocessing.Pool(THREADS) as p:
-            wowdb_zones = p.map(parse_wowdb_zone_page, os.listdir(sources[WOWDB][HTML_FOLDER]))
-
-        # wowdb_zones = []
-        # for file_name in os.listdir(sources[WOWDB][HTML_FOLDER])[:100]:
-        #     wowdb_zones.append(parse_wowdb_zone_page(file_name))
-
-        os.makedirs('cache/tmp', exist_ok=True)
-        with open(cache_path, 'wb') as f:
-            pickle.dump(wowdb_zones, f)
-
-    return {zone[0]: zone[1:] for zone in wowdb_zones if zone}
+def __is_development_map(map: dict[str, str]) -> bool:
+    return bool(int(map['Flags_0']) & DEVELOPMENT_MAP) or bool(DEVELOPMENT_MAP_NAME.search(map['MapName_lang']))
 
 
-def parse_classicdb_zone_page(file_name) -> (int, str):
-    id = int(file_name.removesuffix(".html"))
-    html_path = f'{sources[CLASSICDB][HTML_FOLDER]}/{id}.html'
-    with open(html_path, 'r', encoding="utf-8") as file:
-        html = file.read()
-    soup = BeautifulSoup(html, 'html5lib')
-    zone_name = soup.find_all('h1')[1].text
-
-    if zone_name == '':
-        return None
-
-    for link in soup.find_all('a', href=True):
-        if link['href'].startswith('?zone='):
-            zone_parent = link.text
-            return (id, zone_name, zone_parent)
-
-    return (id, zone_name)
+def __retail_rooms(rows: list[dict[str, str]]) -> set[str]:
+    # Forever's rooms that are retail's and not SoD's, unless Forever uses their building with a room of its own
+    sod_rooms = {row['ID'] for row in read_wago_table(WMO_AREA, expansion_data[SOD][WAGO_BUILD])}
+    retail_only = {row['ID'] for row in read_wago_table(WMO_AREA, RETAIL_BUILD)} - sod_rooms
+    own_buildings = {row['WMOID'] for row in rows if row['ID'] not in retail_only}
+    return {row['ID'] for row in rows if row['ID'] in retail_only and row['WMOID'] not in own_buildings}
 
 
-def parse_classicdb_zone_pages() -> dict[int, str]:
-    import pickle
-    cache_path = sources[CLASSICDB][ZONES_CACHE]
-    if os.path.exists(cache_path):
-        print(f'Loading cached CLASSICDB zones')
-        with open(cache_path, 'rb') as f:
-            classicdb_zones = pickle.load(f)
-    else:
-        print(f'Parsing CLASSICDB zones')
-        with multiprocessing.Pool(THREADS) as p:
-            classicdb_zones = p.map(parse_classicdb_zone_page, os.listdir(sources[CLASSICDB][HTML_FOLDER]))
+def parse_zones(expansion) -> list[Zone]:
+    build = expansion_data[expansion][WAGO_BUILD]
+    tables = {table: read_wago_table(table, build) for table in TABLES}
+    maps = {int(row['ID']): row for row in tables[MAP]}
+    areas = {int(row['ID']): row for row in tables[AREA]}
+    ui_maps = {int(row['ID']): row for row in tables[UI_MAP]}
+    rows = []  # (source, id, name, parent, category, unused)
 
-        # classicdb_zones = []
-        # for file_name in os.listdir(sources[CLASSICDB][HTML_FOLDER]):
-        #     classicdb_zones.append(parse_classicdb_zone_page(file_name))
+    area_unused = dict()
+    for id, row in areas.items():
+        map = maps.get(int(row['ContinentID']))
+        if not map:
+            area_unused[id] = 'no map'
+        elif __is_development_map(map):
+            area_unused[id] = 'development map'
+        else:
+            area_unused[id] = __unused_name(__trim(row['AreaName_lang']))
+    for id, row in areas.items():
+        map = maps.get(int(row['ContinentID']))
+        parent = areas.get(int(row['ParentAreaID']))
+        unused = area_unused[id] or ('parent unused' if parent and area_unused[int(row['ParentAreaID'])] else None)
+        category = None
+        if parent:
+            parent_name = parent['AreaName_lang']
+        elif map and int(map['InstanceType']) in INSTANCE_TYPES:
+            parent_name = None  # the top area of an instance, whose map is the instance itself
+            category = INSTANCE_TYPES[int(map['InstanceType'])]
+        else:
+            parent_name = map['MapName_lang'] if map else None  # a top-level zone sits on its continent
+        rows.append((AREA, id, row['AreaName_lang'], parent_name, category, unused))
 
-        os.makedirs('cache/tmp', exist_ok=True)
-        with open(cache_path, 'wb') as f:
-            pickle.dump(classicdb_zones, f)
+    for id, row in maps.items():
+        unused = None
+        if __is_development_map(row):
+            unused = 'development map'
+        elif row['MapType'] == '3':
+            unused = 'transport'
+        elif row['ParentMapID'] != '-1':
+            unused = 'phase map'  # a phase or a terrain swap of another map
+        rows.append((MAP, id, row['MapName_lang'], None, INSTANCE_TYPES.get(int(row['InstanceType'])), unused))
 
-    return {zone[0]: zone[1:] for zone in classicdb_zones if zone}
+    for id, row in ui_maps.items():
+        parent = ui_maps.get(int(row['ParentUiMapID']))
+        rows.append((UI_MAP, id, row['Name_lang'], parent['Name_lang'] if parent else None, None, None))
 
+    retail_rooms = __retail_rooms(tables[WMO_AREA]) if expansion == FOREVER else set()
+    for row in tables[WMO_AREA]:
+        # [!] In Forever, a room taken over from retail can point at an area id Forever uses for something else
+        # (Utgarde Keep's rooms at 206, Westfall), so trust such a parent less than a classic one
+        area = areas.get(int(row['AreaTableID']))
+        rows.append((WMO_AREA, int(row['ID']), row['AreaName_lang'], area['AreaName_lang'] if area else None, None,
+                     'retail room' if row['ID'] in retail_rooms else None))
 
-def parse_evowow_zone_page(file_name) -> (int, str):
-    import re
-    id = int(file_name.removesuffix(".html"))
-    html_path = f'{sources[EVOWOW][HTML_FOLDER]}/{id}.html'
-    with open(html_path, 'r', encoding="utf-8") as file:
-        html = file.read()
+    for row in tables[UI_MAP_FLOOR]:
+        ui_map = ui_maps.get(int(row['UiMapID']))
+        rows.append((UI_MAP_FLOOR, int(row['ID']), row['Name_lang'], ui_map['Name_lang'] if ui_map else None,
+                     None, None))
 
-    if "This zone doesn't exist." in html:
-        return None
+    for row in tables[TAXI]:
+        # [!] ClassicUA looks a flight point up whole, or split at the last ", " into two parts it looks up as zones
+        # (entries.lua translate_taxi_node_name)
+        name = __trim(row['Name_lang'])
+        unused = None
+        if not int(row['Flags']) & ON_FLIGHT_MAP:
+            unused = 'not on the flight map'
+        elif row['CharacterBitNumber'] == '0':
+            unused = 'never learned'  # a quest's or a vehicle's: every node a player learns carries its own bit
+        elif TAXI_INTERNAL.search(name):
+            unused = 'internal flight path'
+        node, _, zone = name.rpartition(', ')
+        if node:
+            rows.append((TAXI, int(row['ID']), node, zone, None, unused))
+            rows.append((TAXI, int(row['ID']), zone, None, None, unused))
+        else:
+            rows.append((TAXI, int(row['ID']), name, None, None, unused))
 
-    soup = BeautifulSoup(html, 'html5lib')
-    zone_name = soup.find_all('h1')[1].text
+    for row in tables[POI]:
+        # A pin's name reaches the map's area label on a battleground or an arena; elsewhere pins are mostly
+        # NPCs and trainers
+        map = maps.get(int(row['ContinentID']))
+        pvp_map = map['MapName_lang'] if map and int(map['InstanceType']) in (3, 4) else None
+        rows.append((POI, int(row['ID']), row['Name_lang'], pvp_map, None,
+                     None if pvp_map else 'map pin off a battleground'))
 
-    match = re.search(r'This zone is part of [zone=(\d+)]', html)
-    if match:
-        parent_zone_id = int(match.group(1))
-        return (id, zone_name, parent_zone_id)
+    for row in tables[LFG]:
+        rows.append((LFG, int(row['ID']), row['Name_lang'], None, None, None))
 
-    return (id, zone_name)
-
-
-def parse_evowow_zone_pages() -> dict[int, str]:
-    import pickle
-    cache_path = sources[EVOWOW][ZONES_CACHE]
-    if os.path.exists(cache_path):
-        print(f'Loading cached EVOWOW zones')
-        with open(cache_path, 'rb') as f:
-            evowow_zones = pickle.load(f)
-    else:
-        print(f'Parsing EVOWOW zones')
-        with multiprocessing.Pool(THREADS) as p:
-            evowow_zones = p.map(parse_evowow_zone_page, os.listdir(sources[EVOWOW][HTML_FOLDER]))
-
-        # zones = []
-        # for file_name in os.listdir(sources[EVOWOW][HTML_FOLDER]):
-        #     evowow_zones.append(parse_evowow_zone_page(file_name))
-
-        os.makedirs('cache/tmp', exist_ok=True)
-        with open(cache_path, 'wb') as f:
-            pickle.dump(evowow_zones, f)
-
-    zones_dict = {zone[0]: zone[1:] for zone in evowow_zones if zone}
-
-    for zone_id, zone in zones_dict.items():
-        if len(zone) == 2:
-            zones_dict[zone_id] = (zone[0], zones_dict[zone[1]][0])
-
-    return zones_dict
-
-
-def parse_twinhead_zone_page(file_name) -> (int, str):
-    import re
-    id = int(file_name.removesuffix(".html"))
-    html_path = f'{sources[TWINHEAD][HTML_FOLDER]}/{id}.html'
-    with open(html_path, 'r', encoding="utf-8") as file:
-        html = file.read()
-
-    if "Zone does not exist" in html:
-        return None
-
-    soup = BeautifulSoup(html, 'html5lib')
-    zone_name_divs = soup.find_all('h1')
-    zone_name = zone_name_divs[0].text if zone_name_divs else None
-
-    match = re.search(r'This is an area of zone [zone=(\d+)]', html)
-    if match:
-        parent_zone_id = int(match.group(1))
-        return (id, zone_name, parent_zone_id)
-
-    return (id, zone_name)
-
-
-def parse_twinhead_zone_pages() -> dict[int, str]:
-    import pickle
-    cache_path = sources[TWINHEAD][ZONES_CACHE]
-    if os.path.exists(cache_path):
-        print(f'Loading cached TWINHEAD zones')
-        with open(cache_path, 'rb') as f:
-            twinhead_zones = pickle.load(f)
-    else:
-        print(f'Parsing TWINHEAD zones')
-        # with multiprocessing.Pool(THREADS) as p:
-        #     twinhead_zones = p.map(parse_twinhead_zone_page, os.listdir(sources[TWINHEAD][HTML_FOLDER]))
-
-        twinhead_zones = []
-        for file_name in os.listdir(sources[TWINHEAD][HTML_FOLDER]):
-            twinhead_zones.append(parse_twinhead_zone_page(file_name))
-
-        os.makedirs('cache/tmp', exist_ok=True)
-        with open(cache_path, 'wb') as f:
-            pickle.dump(twinhead_zones, f)
-
-    zones_dict = {zone[0]: zone[1:] for zone in twinhead_zones if zone}
-
-    for zone_id, zone in zones_dict.items():
-        if len(zone) == 2:
-            zones_dict[zone_id] = (zone[0], zones_dict[zone[1]][0])
-
-    return zones_dict
+    zones = []
+    for source, id, name, parent, category, unused in rows:
+        name = __trim(name)
+        if name:
+            parent = __trim(parent) if parent else None
+            zones.append(Zone(expansion, source, id, name, parent if parent != name else None, category,
+                              unused or __unused_name(name)))
+    return zones
 
 
-def parse_warcraftdb_zone_page(file_name) -> (int, str):
-    import json
-    import re
-    id = int(file_name.removesuffix(".html"))
-    html_path = f'{sources[WARCRAFTDB][HTML_FOLDER]}/{id}.html'
-    with open(html_path, 'r', encoding="utf-8") as file:
-        html = file.read()
+def retrieve_zone_data() -> list[Zone]:
+    zones = {expansion: parse_zones(expansion) for expansion in expansion_data}
+    # Classic is read from the era client as it was before SoD, but players see today's: a name that client has
+    # dropped since - a typo fixed, a room gone - is shown to no one
+    era_names = {zone.name.lower() for zone in zones[SOD]}
+    for zone in zones[CLASSIC]:
+        if not zone.unused and zone.name.lower() not in era_names:
+            zone.unused = 'gone from the era client'
 
-    if "Zone does not exist" in html:
-        return None
-
-    soup = BeautifulSoup(html, 'html5lib')
-    script_content = soup.find_all('script')[1].string
-    json_data = script_content[16:]
-    if not json_data:
-        return None
-    zone_json = json.loads(json_data)
-
-    zone_name = zone_json['dataView']['title']
-    content_xml = zone_json['dataView']['content']
-    soup = BeautifulSoup(content_xml, 'lxml')
-    zone_name2 = soup.find('tt-item-line', {'data-line-type': 'zone-name'}).text
-    if zone_name != zone_name2:
-        print(f"Different names for #{id}")
-    parent_zone_div = soup.find('tt-item-line', {'data-line-type': 'zone-parent'})
-    if parent_zone_div:
-        parent_zone_name = parent_zone_div.text.replace('Location: ', '')
-        return (id, zone_name, parent_zone_name)
-
-    return (id, zone_name)
-
-
-def parse_warcraftdb_zone_pages() -> dict[int, str]:
-    import pickle
-    cache_path = sources[WARCRAFTDB][ZONES_CACHE]
-    if os.path.exists(cache_path):
-        print(f'Loading cached WARCRAFTDB zones')
-        with open(cache_path, 'rb') as f:
-            warcraftdb_zones = pickle.load(f)
-    else:
-        print(f'Parsing TWINHEAD zones')
-        # with multiprocessing.Pool(THREADS) as p:
-        #     warcraftdb_zones = p.map(parse_warcraftdb_zone_page, os.listdir(sources[WARCRAFTDB][HTML_FOLDER]))
-
-        warcraftdb_zones = []
-        for file_name in os.listdir(sources[WARCRAFTDB][HTML_FOLDER]):
-            warcraftdb_zones.append(parse_warcraftdb_zone_page(file_name))
-
-        os.makedirs('cache/tmp', exist_ok=True)
-        with open(cache_path, 'wb') as f:
-            pickle.dump(warcraftdb_zones, f)
-
-    zones_dict = {zone[0]: zone[1:] for zone in warcraftdb_zones if zone}
-
-    for zone_id, zone in zones_dict.items():
-        if len(zone) == 2:
-            zones_dict[zone_id] = (zone[0], zone[1])
-
-    return zones_dict
-
-
-def save_temp_zones_to_cache_db(wowhead: dict[int, WowheadZone], wowdb: dict[int, str], classicdb: dict[int, str], evowow: dict[int, str], warcraftdb: dict[int, str]):
-    import sqlite3
-    print('Saving temp zones data to cache DB')
-    conn = sqlite3.connect('cache/zones.db')
-    conn.execute('DROP TABLE IF EXISTS zones_temp')
-    conn.execute('''CREATE TABLE zones_temp (
-                        id INTEGER NOT NULL,
-                        wowhead_name TEXT,
-                        wowdb_name TEXT,
-                        classicdb_name TEXT,
-                        classicdb_parent TEXT,
-                        evowow_name TEXT,
-                        evowow_parent TEXT,
-                        warcraftdb_name TEXT,
-                        warcraftdb_parent TEXT
-                )''')
-
-    conn.commit()
-    with conn:
-        for key in wowdb.keys() | classicdb.keys() | evowow.keys() | warcraftdb.keys() | wowhead.keys():
-            wowhead_zone = wowhead.get(key)
-            wowhead_name = None
-            if wowhead_zone:
-                wowhead_name = wowhead_zone.name
-            wowdb_name = wowdb.get(key)
-            if wowdb_name:
-                wowdb_name = wowdb_name[0]
-
-            classicdb_name = None
-            classicdb_parent = None
-            classicdb_zone = classicdb.get(key)
-            if classicdb_zone:
-                classicdb_name = classicdb_zone[0]
-                if len(classicdb_zone) == 2:  # Has parent id - replacing with its name
-                    classicdb_parent = classicdb_zone[1]
-
-            evowow_name = None
-            evowow_parent = None
-            evowow_zone = evowow.get(key)
-            if evowow_zone:
-                evowow_name = evowow_zone[0]
-                if len(evowow_zone) == 2:  # Has parent id - replacing with its name
-                    evowow_parent = evowow_zone[1]
-
-            warcraftdb_name = None
-            warcraftdb_parent = None
-            warcraftdb_zone = warcraftdb.get(key)
-            if warcraftdb_zone:
-                warcraftdb_name = warcraftdb_zone[0]
-                if len(warcraftdb_zone) == 2:  # Has parent id - replacing with its name
-                    warcraftdb_parent = warcraftdb_zone[1]
-
-            conn.execute(f'''INSERT INTO zones_temp(id, wowhead_name, wowdb_name, classicdb_name, classicdb_parent, evowow_name, evowow_parent, warcraftdb_name, warcraftdb_parent)
-                                VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?)''',
-                        (key, wowhead_name, wowdb_name, classicdb_name, classicdb_parent, evowow_name, evowow_parent, warcraftdb_name, warcraftdb_parent))
-
-
-def read_new_translations() -> dict[str, Zone]:
-    import csv
-    all_zones = dict()
-    with open('input/new_translations.tsv', 'r', encoding="utf-8") as input_file:
-        reader = csv.reader(input_file, delimiter="\t")
-        for row in reader:
-            if (len(row) < 2):
-                print(f'Skipping {row}')
-                continue
-            zone_name = row[0]
-            name_ua = row[1]
-            parent_zone = None
-            if len(row) > 2:
-                parent_zone = row[2]
-            all_zones[zone_name] = Zone(None, zone_name, translation=name_ua, parent_zone=parent_zone)
+    all_zones = []
+    for expansion, expansion_zones in zones.items():
+        print(f'Wago({expansion}) {expansion_data[expansion][WAGO_BUILD]}: {len(expansion_zones)} named rows, '
+              f'{len({zone.name.lower() for zone in expansion_zones})} names')
+        all_zones.extend(expansion_zones)
     return all_zones
 
 
-def get_wowhead_zones() -> dict[int, WowheadZone]:
-    import json
-    url = sources[WOWHEAD][URL] + '/zones'
-    r = wowhead_get(url)
-    soup = BeautifulSoup(r.text, 'html.parser')
-    script_tag = soup.find('script', {'id': 'data.page.listPage.listviews'}, type='application/json', src=None)
-    if script_tag:
-        script_content = json.loads(script_tag.text)[0]["data"]
-        return {md.get('id'): WowheadZone(md.get('id'), md.get('name'), md.get('category'), md.get('expansion'), md.get('instance'), md.get('territory')) for md in script_content}
-    else:
-        return None
+def get_zone_ids(expansion: str) -> set[int]:
+    # For npc.py, which reads the NPCs of a zone off its Wowhead page. Top-level areas only, as those are the
+    # ones with a page: zones and instances.
+    rows = read_wago_table(AREA, expansion_data[expansion][WAGO_BUILD])
+    return {int(row['ID']) for row in rows if row['ParentAreaID'] == '0'}
 
 
-def __cleanup_name(name: str) -> str:
-    import re
-    result = re.sub(r'\[.*?\]|\(.*?\)', '', name)  # Remove [UNUSED], (Arena) and (Outland)
-    result = result.replace('UNUSED', '')
-    return result.strip()
+def check_newer_builds():
+    try:
+        builds = __wago_get(f'{WAGO_URL}/api/builds').json()
+    except (requests.RequestException, ValueError) as e:
+        log.warning('newer-build-check-failed', 'zone', f'wago.tools builds are out of reach: {type(e).__name__}')
+        return
+    for expansion, expansion_properties in expansion_data.items():
+        pinned = expansion_properties[WAGO_BUILD]
+        versions = [build['version'] for build in builds.get(expansion_properties[WAGO_PRODUCT], [])
+                    if build['version'].split('.')[:2] == pinned.split('.')[:2] and not build.get('is_bgdl')]
+        newest = max(versions, key=__version_key, default=pinned)
+        if __version_key(newest) > __version_key(pinned):
+            log.note('newer-build', 'zone', f'wago.tools has {newest} ({expansion_properties[WAGO_PRODUCT]}), '
+                                            f'zones read {pinned}', expansion=expansion)
 
-def merge_zones(wowhead: dict[int, WowheadZone], wowdb: dict[int, str], classicdb: dict[int, str], evowow: dict[int, str], warcraftdb: dict[int, str], translated: dict[str, Zone]) -> dict[str, Zone]:
-    added_names = set()
-    merged_zones = dict()
 
-    for zone_id in wowhead.keys() | wowdb.keys() | classicdb.keys() | evowow.keys() | warcraftdb.keys():
-        if zone_id in IGNORES:
+def read_classicua_translations(glossary: Glossary) -> dict[str, str]:
+    # [!] Mirrors ClassicUA's dev/gen_zone_lua.py collect_zones, which writes entries/zone.lua from this glossary:
+    # every location term in order, each followed by its ~aliases~ where the key is still free
+    translations = dict()
+    aliases = set()
+    for term in glossary:
+        if not term.is_location():
             continue
-        name_set = set()
-        parent_set = set()
-        wowhead_zone = wowhead.get(zone_id)
-        if wowhead_zone:
-            name_set.add(__cleanup_name(wowhead_zone.name))
-
-        wowdb_zone = wowdb.get(zone_id)
-        if wowdb_zone:
-            name_set.add(__cleanup_name(wowdb_zone[0]))
-
-        classicdb_zone = classicdb.get(zone_id)
-        if classicdb_zone:
-            name_set.add(__cleanup_name(classicdb_zone[0]))
-            if len(classicdb_zone) == 2:  # Has parent id - replacing with its name
-                parent_set.add(__cleanup_name(classicdb_zone[1]))
-
-        evowow_zone = evowow.get(zone_id)
-        if evowow_zone:
-            name_set.add(__cleanup_name(evowow_zone[0]))
-            if len(evowow_zone) == 2:  # Has parent id - replacing with its name
-                parent_set.add(__cleanup_name(evowow_zone[1]))
-
-        warcraftdb_zone = warcraftdb.get(zone_id)
-        if warcraftdb_zone:
-            name_set.add(__cleanup_name(warcraftdb_zone[0]))
-            if len(warcraftdb_zone) == 2:  # Has parent id - replacing with its name
-                parent_set.add(__cleanup_name(warcraftdb_zone[1]))
-
-        if len(name_set) < 1:
-            print(f'! No name for id #{zone_id}')
-            continue
-
-        if len(parent_set) > 1:
-            print(f'! Parent name differs for id #{zone_id}: {str(parent_set)}')  # 0
-            continue
-
-        parent_name = None
-        if len(parent_set) == 1:
-            parent_name = next(iter(parent_set))
-
-        for zone_name in name_set.copy():
-            if 'UNUSED' in zone_name.upper() or '***' in zone_name:
-                name_set.remove(zone_name)
-                continue
-
-            sources = []
-            if wowhead_zone and zone_name == __cleanup_name(wowhead_zone.name):
-                sources.append('wowhead')
-            if wowdb_zone and zone_name == __cleanup_name(wowdb_zone[0]):
-                sources.append('wowdb')
-            if classicdb_zone and zone_name == __cleanup_name(classicdb_zone[0]):
-                sources.append('classicdb')
-            if evowow_zone and zone_name == __cleanup_name(evowow_zone[0]):
-                sources.append('evowow')
-            if warcraftdb_zone and zone_name == __cleanup_name(warcraftdb_zone[0]):
-                sources.append('warcraftdb')
-
-            translated_zone = None
-            if translated.get(zone_name):
-                translated_zone = translated.get(zone_name)
-            elif translated.get('The ' + zone_name):
-                translated_zone = translated.get('The ' + zone_name)
-            elif translated.get(zone_name.replace('The ', '')):
-                translated_zone = translated.get(zone_name.replace('The ', ''))
-
-            merged_zones[zone_name] = Zone(zone_id, zone_name, parent_name,
-                                           translated_zone.translation if translated_zone else None,
-                                           wowhead[zone_id].get_expansion() if wowhead.get(zone_id) else None,
-                                           wowhead[zone_id].get_category() if wowhead.get(zone_id) else None,
-                                           ', '.join(sources))
-
-        if len(name_set) > 1:
-            print(f'? Name differs for id #{zone_id}: {name_set}')  # 48
-            # continue
-
-        # if zone_name in added_names:
-        #     print(f'? Name {zone_name} duplicated for id #{zone_id}')  # 159
-        #     # continue
-        # added_names.add(zone_name)
-
-    return merged_zones
+        if term.text_en in aliases and translations[term.text_en] != term.text_uk:
+            log.warning('alias-overwritten', 'zone', f'the term "{term.text_en}" -> "{term.text_uk}" replaces an '
+                                                     f'alias of the same name -> "{translations[term.text_en]}"',
+                        id=term.text_en)
+        translations[term.text_en] = term.text_uk
+        for alias in term.location_aliases():
+            if alias not in translations:
+                translations[alias] = term.text_uk
+                aliases.add(alias)
+            elif alias not in aliases:
+                log.warning('alias-taken', 'zone', f'the alias "{alias}" of "{term.text_en}" is a term of its own',
+                            id=alias)
+    return translations
 
 
-def save_zones_to_db(zones: dict[str, Zone]):
+__ASCII_LOWER = str.maketrans('ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz')
+
+
+def __lower(text: str) -> str:
+    return text.translate(__ASCII_LOWER)  # Lua's lower() changes ASCII letters only
+
+
+def build_addon_glossary(translations: dict[str, str]) -> dict[str, str]:
+    # [!] Mirrors ClassicUA's scripts/entries.lua prepare_glossary for the zone entries: a key is trimmed and
+    # lowered, and also takes its "the " twin - the one without "the " only when the key is longer than 8 bytes.
+    # The first write wins. The addon puts misc, string and object entries in before zone ones; they are left out
+    # here, so a zone name another entry takes (object's "Rock of Durotan") still counts as the zone's.
+    glossary = dict()
+    for key, value in translations.items():
+        key = __lower(__trim(key))
+        glossary.setdefault(key, value)
+        if key.startswith('the ') and len(key.encode('utf-8')) > 8:
+            glossary.setdefault(key[4:], value)
+        else:
+            glossary.setdefault('the ' + key, value)
+    return glossary
+
+
+def __glossary_key(text: str) -> str:
+    # [!] Mirrors how ClassicUA's get_glossary_text prepares a text: utils.lua strip_color_codes pass by pass,
+    # first_line_only, then trimmed and lowered
+    text = re.sub(r'\|c[0-9a-fA-F]{8}', '', text)
+    text = re.sub(r'\|c[0-9a-fA-F]{6} [0-9a-fA-F]', '', text)
+    text = text.replace('|r', '')
+    text = re.split(r'\n|\r|\|n', text, maxsplit=1)[0]
+    return __lower(__trim(text))
+
+
+def translate(glossary: dict[str, str], text: str) -> str:
+    # [!] Mirrors ClassicUA's scripts/entries.lua get_glossary_text: the text itself, Questie's "[..] X" and
+    # "[..] X (Y)", and "X (Y)", which answers with X's translation, followed by Y's in brackets when Y has one
+    key = __glossary_key(text)
+    if key in glossary:
+        return glossary[key]
+    match = re.search(r'\[.+\] (.*)', key)
+    if match and match[1] in glossary:
+        return glossary[match[1]]
+    match = re.search(r'\[.+\] (.*) \((.*)\)', key)
+    if match and match[1] in glossary:
+        return glossary[match[1]]
+    match = re.match(r'(.*) \((.*)\)', key)
+    if match and match[1] in glossary:
+        return glossary[match[1]] + (f' ({glossary[match[2]]})' if match[2] in glossary else '')
+    return None
+
+
+def apply_translations_to_data(zones: list[Zone], glossary: dict[str, str]):
+    for zone in zones:
+        zone.translation = translate(glossary, zone.name)
+
+
+def save_zones_to_db(zones: list[Zone]):
     import sqlite3
     print('Saving zones to DB')
     conn = sqlite3.connect('cache/zones.db')
     conn.execute('DROP TABLE IF EXISTS zones')
+    conn.execute('DROP TABLE IF EXISTS zones_temp')  # the old side-by-side of the scraped sites
     conn.execute('''CREATE TABLE zones (
+                        expansion TEXT NOT NULL,
+                        source TEXT NOT NULL,
                         id INT NOT NULL,
-                        parent_zone TEXT,
-                        name TEXT PRIMARY KEY,
-                        translation TEXT,
-                        expansion TEXT,
+                        name TEXT NOT NULL,
+                        parent TEXT,
                         category TEXT,
-                        source TEXT
+                        unused TEXT,
+                        translation TEXT
                 )''')
     conn.commit()
 
     with conn:
-        for key, zone in zones.items():
-            conn.execute('INSERT INTO zones(id, parent_zone, name, translation, expansion, category, source) VALUES(?, ?, ?, ?, ?, ?, ?)',
-                        (zone.id, zone.parent_zone, zone.name, zone.translation, zone.expansion, zone.category, zone.source))
+        for zone in zones:
+            conn.execute('INSERT INTO zones(expansion, source, id, name, parent, category, unused, translation) '
+                         'VALUES(?, ?, ?, ?, ?, ?, ?, ?)',
+                         (zone.expansion, zone.source, zone.id, zone.name, zone.parent, zone.category, zone.unused,
+                          zone.translation))
 
 
-def read_zones_from_glossary() -> dict[str, Zone]:
-    import csv
-    zones = dict()
-    with open('input/glossary.csv', 'r', encoding="utf-8") as input_file:
-        reader = csv.reader(input_file)
-        for row in reader:
-            if row[0] == 'Term [uk]':
-                continue
-            if 'локація' in row[1]:
-                translation = row[3]
-                name = row[0]
-                if name in zones.keys():
-                    print(f'Zone "{name}" duplicated')
-                zones[name] = Zone(None, name, translation=translation)
-                if name.startswith('The '):
-                    zones[name[4:]] = Zone(None, name[4:], translation=translation)
-                else:
-                    zones['The ' + name] = Zone(None, 'The ' + name, translation=translation)
-    return zones
+def load_zones_from_db(db_path: str = 'cache/zones.db') -> list[Zone]:
+    import sqlite3
+    conn = sqlite3.connect(db_path)
+    return [Zone(*row) for row in conn.execute('SELECT expansion, source, id, name, parent, category, unused, '
+                                               'translation FROM zones')]
 
 
-def generate_glossary_row(translation: Zone, zones: dict[str, Zone]) -> str:
-    zone = zones.get(translation.name) or translation
-    zone_description = 'локація'
-    if zone.parent_zone and zone.parent_zone in zones and zones[zone.parent_zone].translation:
-        zone_description += f', {zones[zone.parent_zone].translation}'
-    elif translation.parent_zone and translation.parent_zone in zones and zones[translation.parent_zone].translation:
-        zone_description += f', {zones[translation.parent_zone].translation}'
-    else:
-        if translation.parent_zone not in ('підземелля', 'сценарій'):
-            print(f'Warning! No translation for parent zone "{translation.parent_zone}" from {zone.name}')
-        zone_description += f', {translation.parent_zone}'
-    if zone.category:
-        if zones.get(zone.category):
-            zone_description += f', {zones[zone.category].translation}'
-        if zone.category in CATEGORIES:
-            zone_description += f', {CATEGORIES[zone.category]}'
-        else:
-            print(f'! No parent zone for {zone.name} ({zone.category})')
-    zone_name = zone.name[4:] if zone.name.startswith('The ') else zone.name
-    row = '"{}","{}","{}"'.format(
-        zone.translation.replace('"', '""'),
-        zone_name.replace('"', '""'),
-        zone_description
-    )
-    return row
+def __names_glossary(names) -> dict[str, str]:
+    # The addon's lookup over plain names, which answers with the name it matched
+    return build_addon_glossary({name: name for name in names})
 
 
-def save_translations_to_glossary(translated_zones: dict[str, Zone], glossary_zones: dict[str, Zone], merged_zones: dict[str, Zone]):
-    glossary_import_lines = list()
-    glossary_import_lines.append('"Term [uk]","Term [en]","Description [en]"')
-    for zone_name in glossary_zones.keys() & translated_zones.keys():
-        print(f'! Zone {zone_name} already exists.')
-    for zone_name in translated_zones.keys() - glossary_zones.keys():
-        glossary_import_lines.append(generate_glossary_row(translated_zones[zone_name], merged_zones))
+def check_glossary_locations(translations: dict[str, str], zones: list[Zone]):
+    # A location term no client shows is often fine - lore and short names that quests use - but it is also how a
+    # renamed zone or a typo in a term shows up. Every client name is looked up the way the addon looks it up,
+    # noting the term that answers: the "the " rule works one way for keys of 8 bytes or less.
+    terms = dict()  # addon key -> every term that has it, as "Jade Forest" and "The Jade Forest" share theirs
+    for term in translations:
+        for key in build_addon_glossary({term: term}):
+            terms.setdefault(key, set()).add(term)
+    seen = set()
+    for name in {zone.name for zone in zones}:
+        key = __glossary_key(name)
+        match = re.match(r'(.*) \((.*)\)', key)
+        for candidate in (key, *(match.groups() if match else ())):
+            seen |= terms.get(candidate, set())
+    for term in sorted(translations.keys() - seen):
+        log.note('not-in-client', 'zone', f'"{term}" -> "{translations[term]}" is no name in any client', id=term)
 
-    with open('output/new_zones_dictionary.csv', 'w', encoding="utf-8") as out_file:
-        out_file.writelines('\n'.join(glossary_import_lines))
 
-
-def generate_translation_csv(merged_zones: dict[str, Zone], translated_zones: dict[str, Zone]):
-    import csv
-
-    feedback_zone_names = set()
+def read_zone_feedback() -> set[str]:
+    # Zone feedback holds names rather than ids, so check_feedback and read_feedback do not fit it
+    names = set()
     with open(feedback_path('zones'), 'r', encoding='utf-8') as input_file:
-        reader = csv.reader(input_file, delimiter="\t")
-        for row in reader:
-            feedback_zone_names.add(row[0].strip())
+        for row in csv.reader(input_file, delimiter='\t'):
+            if row and __trim(row[0]):
+                names.add(__trim(row[0]))
+    return names
 
-    result_lines = list()
-    result_lines.append('ID\tName(en)\tName (ua)\tParent zone\texpansion\tcategory\tsource')
-    for zone_name in merged_zones.keys() & feedback_zone_names:
-        zone = merged_zones[zone_name]
+
+def check_zone_feedback(zones: list[Zone], feedback: set[str], glossary: dict[str, str]):
+    names = __names_glossary(zone.name for zone in zones)
+    unknown = sorted(name for name in feedback if translate(names, name) is None)
+    untranslated = sorted(name for name in feedback if translate(glossary, name) is None)
+    print(f'[feedback] Zone: {len(feedback)} reported, {len(unknown)} unknown, {len(untranslated)} untranslated')
+    for name in unknown:
+        log.warning('feedback-unknown', 'zone', f'"{name}" is no name in any client', id=name)
+
+
+def __group_key(name: str) -> str:
+    # One key per name the way the addon sees it: "The X" and "X" are one once the key is longer than 8 bytes
+    key = __lower(__trim(name))
+    return key[4:] if key.startswith('the ') and len(key.encode('utf-8')) > 8 else key
+
+
+def __first(zones: list[Zone]) -> Zone:
+    # The row a name's parent and category come from: the earliest client, then the table a zone name comes from
+    # first - an area before its map, a map before a room
+    sources = list(TABLES)
+    return min(zones, key=lambda zone: (expansion_data[zone.expansion][INDEX], sources.index(zone.source), zone.id))
+
+
+def __listed(zones: list[Zone]) -> list[Zone]:
+    return [zone for zone in zones if zone.source in LISTED_SOURCES and not zone.unused]
+
+
+def create_translation_sheet(zones: list[Zone], feedback: set[str], glossary: dict[str, str],
+                             path: str = 'output/translate_this.tsv'):
+    reported = __names_glossary(feedback)
+    by_name = dict()
+    for zone in zones:
         if zone.translation is None:
-            result_lines.append(f'{zone.id}\t{zone_name}\t{zone.translation}\t{zone.parent_zone}\t{zone.expansion}\t{zone.category}\t{zone.source}')
+            by_name.setdefault(__group_key(zone.name), []).append(zone)
 
-    for zone_name in feedback_zone_names - translated_zones.keys() - merged_zones.keys():
-        result_lines.append(f'?\t{zone_name}\t\t\t\t\tfeedback')
+    rows = []
+    for name_zones in by_name.values():
+        in_feedback = any(translate(reported, zone.name) is not None for zone in name_zones)
+        shown = __listed(name_zones) or (name_zones if in_feedback else [])
+        if not shown:
+            continue
+        first = __first(shown)
+        expansions = sorted({zone.expansion for zone in shown}, key=lambda exp: expansion_data[exp][INDEX])
+        sources = [source for source in TABLES if any(zone.source == source for zone in shown)]
+        rows.append([first.name, '', ', '.join(expansions), ', '.join(sources), first.parent or '',
+                     translate(glossary, first.parent) or '' if first.parent else '', first.category or '',
+                     'feedback' if in_feedback else '',
+                     expansion_data[expansions[0]][INDEX]])
 
-    with open('output/translate_this.csv', 'w', encoding="utf-8") as out_file:
-        out_file.writelines('\n'.join(result_lines))
+    names = __names_glossary(zone.name for zone in zones)
+    for name in sorted(feedback):
+        if translate(names, name) is None and translate(glossary, name) is None:
+            rows.append([name, '', '', '', '', '', '', 'feedback', -1])
+
+    rows.sort(key=lambda row: (row[-1], row[0].lower()))
+    os.makedirs(os.path.dirname(path), exist_ok=True)
+    with open(path, 'w', encoding='utf-8', newline='') as output_file:
+        writer = csv.writer(output_file, delimiter='\t', lineterminator='\n')
+        writer.writerow(['Name(EN)', 'Name(UA)', 'expansions', 'sources', 'Parent(EN)', 'Parent(UA)', 'category',
+                         'Note'])
+        writer.writerows(row[:-1] for row in rows)
+    print(f'Wrote {len(rows)} untranslated zone name(s) to {path}')
 
 
-def read_zones_from_lua() -> dict[str, Zone]:
-    from slpp import slpp as lua
-    zones = dict()
-    with open('input/zone.lua', 'r', encoding="utf-8") as lua_file:
-        file_content = lua_file.read()
-        lua_table = file_content[file_content.find(' = { ') + 2:file_content.find('\n}\n') + 2]
-        decoded_items = lua.decode(lua_table)
-        for zone_name, zone_translation in decoded_items.items():
-            if zone_name in zones.keys():
-                print(f'Zone "{zone_name}" duplicated')
-            zones[zone_name] = Zone(None, zone_name, translation=zone_translation)
-            if zone_name.startswith('The '):
-                zones[zone_name[4:]] = Zone(None, zone_name[4:], translation=zone_translation)
-            else:
-                zones['The ' + zone_name] = Zone(None, 'The ' + zone_name, translation=zone_translation)
-    return zones
+def read_new_translations(path: str = 'input/new_translations.tsv') -> list[tuple[str, str, str]]:
+    # English name, its translation and, optionally, the parent: in English when the clients' parent is not the
+    # one, or already in Ukrainian as the older rows have it
+    result = []
+    if not os.path.exists(path):
+        return result
+    with open(path, 'r', encoding='utf-8') as input_file:
+        for row in csv.reader(input_file, delimiter='\t'):
+            if len(row) < 2 or not row[0].strip() or not row[1].strip():
+                print(f'Skipping {row}')
+                continue
+            result.append((row[0].strip(), row[1].strip(), row[2].strip() if len(row) > 2 else ''))
+    return result
+
+
+def create_glossary_import(zones: list[Zone], glossary: dict[str, str],
+                           path: str = 'output/new_zones_dictionary.csv'):
+    # New location terms for Crowdin's glossary import, in the shape existing terms have: "локація", then the kind
+    # of an instance, then the parent's Ukrainian name
+    new_translations = read_new_translations()
+    new_glossary = build_addon_glossary({name: name_ua for name, name_ua, _ in new_translations})
+    by_name = dict()
+    for zone in zones:
+        by_name.setdefault(__group_key(zone.name), []).append(zone)
+
+    lines = ['"Term [uk]","Term [en]","Description [en]"']
+    for name, name_ua, given_parent in new_translations:
+        if translate(glossary, name) is not None:
+            log.note('already-translated', 'zone', f'"{name}" -> "{translate(glossary, name)}" is in the glossary '
+                                                   f'already, "{name_ua}" is left out', id=name)
+            continue
+        name_zones = by_name.get(__group_key(name)) or by_name.get(__group_key(name[4:] if name.startswith('The ')
+                                                                               else 'The ' + name))
+        first = __first(__listed(name_zones) or name_zones) if name_zones else None
+        parent = given_parent or (first.parent if first else None)
+        description = ['локація']
+        if first and first.category:
+            description.append(CATEGORIES[first.category])
+        if parent:
+            parent_ua = translate(glossary, parent) or translate(new_glossary, parent)
+            if not parent_ua and given_parent:
+                parent_ua = given_parent  # taken as the Ukrainian text itself
+            if not parent_ua:
+                log.warning('parent-untranslated', 'zone', f'the parent "{parent}" of "{name}" has no translation',
+                            id=name)
+            elif parent_ua not in description:
+                description.append(parent_ua)
+        # The addon puts "the " back in front of a key itself, so the term goes without it
+        name_en = name[4:] if name.startswith('The ') else name
+        lines.append('"{}","{}","{}"'.format(name_ua.replace('"', '""'), name_en.replace('"', '""'),
+                                             ', '.join(description).replace('"', '""')))
+
+    with open(path, 'w', encoding='utf-8') as out_file:
+        out_file.writelines('\n'.join(lines))
+    print(f'Wrote {len(lines) - 1} new glossary term(s) to {path}')
 
 
 if __name__ == '__main__':
-    # save_warcraftdb_zone_page(5502)
-    # test_zone = parse_warcraftdb_zone_page('5502.html')
+    glossary = Glossary.load()
 
-    # save_wowdb_zones_htmls()
-    # save_classicdb_zones_htmls()
-    # save_evowow_zones_htmls()
-    # # save_twinhead_zones_htmls() # protected by CloudFlare
-    # save_warcraftdb_zones_htmls()
+    all_zones = retrieve_zone_data()  # Downloads cache/wago/<table>_<build>.csv once per build
+    translations = read_classicua_translations(glossary)  # What ClassicUA's entries/zone.lua holds
+    addon_glossary = build_addon_glossary(translations)
+    apply_translations_to_data(all_zones, addon_glossary)
+    save_zones_to_db(all_zones)  # Generate cache/zones.db
 
-    wowhead_zones = get_wowhead_zones()
-    wowdb_zones = parse_wowdb_zone_pages()
-    classicdb_zones = parse_classicdb_zone_pages()
-    evowow_zones = parse_evowow_zone_pages()
-    # twinhead_zones = parse_twinhead_zone_pages()
-    warcraftdb_zones = parse_warcraftdb_zone_pages()
-    translated_zones = read_new_translations()  # To generate glossary import rows for Crowdin
-    # glossary_zones = read_zones_from_glossary()  # To generate DB with up-to-date translations
-    classicua_zones = read_zones_from_lua()  # To generate DB with up-to-date translations
+    check_glossary_locations(translations, all_zones)
+    feedback = read_zone_feedback()
+    check_zone_feedback(all_zones, feedback, addon_glossary)
 
-    for key in (translated_zones.keys() & classicua_zones.keys()):
-        print(f'Warning: clashing translations for {key}: "{translated_zones[key]}" and "{classicua_zones[key]}"')
-    merged_translations = {**translated_zones, **classicua_zones}
+    create_translation_sheet(all_zones, feedback, addon_glossary)  # Generate output/translate_this.tsv
+    create_glossary_import(all_zones, addon_glossary)  # input/new_translations.tsv -> output/new_zones_dictionary.csv
 
-    save_temp_zones_to_cache_db(wowhead_zones, wowdb_zones, classicdb_zones, evowow_zones, warcraftdb_zones)
-
-    merged_zones = merge_zones(wowhead_zones, wowdb_zones, classicdb_zones, evowow_zones, warcraftdb_zones, merged_translations)
-    save_zones_to_db(merged_zones)
-
-    save_translations_to_glossary(translated_zones, classicua_zones, merged_zones)
-
-    generate_translation_csv(merged_zones, merged_translations)
+    check_newer_builds()
+    sys.exit(log.finish())

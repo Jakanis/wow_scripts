@@ -550,8 +550,8 @@ def apply_translations_to_data(all_npcs: dict[int, dict[str, NPC_MD]], translati
 def populate_npc_locations(all_npcs: dict[int, dict[str, NPC_MD]]):
     # Just for handier translation
     from generation.zones import zones
-    wowhead_zones = zones.get_wowhead_zones()
-    npc_ids_to_zone_ids = get_wowhead_zones_npc_ids(wowhead_zones.keys())
+    zone_ids = zones.get_zone_ids(zones.SOD)  # the era client: classic's zones and SoD's
+    npc_ids_to_zone_ids = get_wowhead_zones_npc_ids(zone_ids)
 
     # The search metadata already carries a per-expansion location, and the zone pages are scraped from
     # the classic client only - so the two complement each other rather than replace one another.
