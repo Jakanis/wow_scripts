@@ -310,7 +310,7 @@ def save_htmls_from_wowhead(expansion, ids: set[int]):
     # for id in save_ids:
     #     save_page(expansion, id)
     save_func = partial(save_page, expansion)
-    # the workers share one pause, so a refusal from Wowhead holds all of them
+    # the workers share one schedule, so the delay paces them together and a refusal holds all of them
     with multiprocessing.Pool(SCRAPE_THREADS, initializer=init_wowhead_worker,
                               initargs=(wowhead_pool_state(),)) as p:
         p.map(save_func, save_ids)

@@ -11,7 +11,8 @@ from generation.utils.text_checks import report_mixed_script
 from generation.utils.glossary import Glossary, GlossaryTerm, NPC_TAG, glossary_path
 from generation.utils.utils import (ValidationError, check_feedback, classicua_root, copy_classicua_entries,
                                     download_crowdin_glossary, download_csv_from_google_sheet,
-                                    run_classicua_generator, update_glossary_on_crowdin, wowhead_get)
+                                    init_wowhead_worker, run_classicua_generator, update_glossary_on_crowdin,
+                                    wowhead_get, wowhead_pool_state)
 
 log = IssueLog('npc')
 
@@ -421,7 +422,8 @@ def get_wowhead_zones_npc_ids(zone_ids) -> dict[int, list[int]]:
     else:
         print(f'Retrieving npc_ids_to_zone_ids data')
         npc_ids_to_zone_ids = dict()
-        with multiprocessing.Pool(SCRAPE_THREADS) as p:
+        with multiprocessing.Pool(SCRAPE_THREADS, initializer=init_wowhead_worker,
+                                  initargs=(wowhead_pool_state(),)) as p:
             npcs_by_zone = filter(lambda x: x is not None, p.map(get_zone_page, zone_ids))
         for zone_id, npcs in sorted(npcs_by_zone):
             for npc in npcs:
@@ -740,7 +742,8 @@ def save_htmls_from_wowhead(expansion, ids: set[int]):
     #     print(f"Saving NPC #{id}")
     #     save_page(expansion, id)
     save_func = partial(save_page, expansion)
-    with multiprocessing.Pool(SCRAPE_THREADS) as p:
+    with multiprocessing.Pool(SCRAPE_THREADS, initializer=init_wowhead_worker,
+                              initargs=(wowhead_pool_state(),)) as p:
         p.map(save_func, save_ids)
 
 

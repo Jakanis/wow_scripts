@@ -10,8 +10,8 @@ from generation.utils.issues import WARNING, Issue, IssueLog
 from generation.utils.text_checks import report_mixed_script
 from generation.utils.utils import (NOTE_NOT_TRANSLATED, NOTE_PRETRANSLATED, check_feedback,
                                     compare_directories, download_csv_from_google_sheet, format_notes,
-                                    notes_hold_back_row, parse_notes, update_on_crowdin, wowhead_get,
-                                    __to_tsv_val)
+                                    init_wowhead_worker, notes_hold_back_row, parse_notes, update_on_crowdin,
+                                    wowhead_get, wowhead_pool_state, __to_tsv_val)
 
 log = IssueLog('items')
 
@@ -349,7 +349,8 @@ def save_xmls_from_wowhead(expansion, ids: set[int]):
     #     print("Saving XML for item #" + str(id))
     #     save_page(expansion, id)
     save_func = partial(save_xml_page, expansion)
-    with multiprocessing.Pool(SCRAPE_THREADS) as p:
+    with multiprocessing.Pool(SCRAPE_THREADS, initializer=init_wowhead_worker,
+                              initargs=(wowhead_pool_state(),)) as p:
         p.map(save_func, save_ids)
 
 
@@ -377,7 +378,8 @@ def save_htmls_from_wowhead(expansion, ids: set[int]):
     #     print("Saving XML for item #" + str(id))
     #     save_page(expansion, id)
     save_func = partial(save_html_page, expansion)
-    with multiprocessing.Pool(SCRAPE_THREADS) as p:
+    with multiprocessing.Pool(SCRAPE_THREADS, initializer=init_wowhead_worker,
+                              initargs=(wowhead_pool_state(),)) as p:
         p.map(save_func, save_ids)
 
 
