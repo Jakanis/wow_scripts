@@ -26,8 +26,10 @@ __TALENT_BLOCK = re.compile(r'(<!--sp(\d+):\d+-->)(.*?)(<!--sp\2-->)', re.S)
 __NUMERIC = re.compile(r'[\d\s.+\-*/()]*\d[\d\s.+\-*/()]*')
 # a real tag, as against the < of a comparison such as "85 <= 70"
 __TAG = re.compile(r'</?[a-zA-Z]')
-# a div the page leaves without any text of its own, which the browser drops
-__EMPTY_QUALITY = re.compile(r'<div class="q">(?:\s|<!--.*?-->)*</div>', re.S)
+# A div the page leaves without any text of its own, which the browser drops. [!] A comment here must not
+# run past its own "-->": allowed to, it reaches from the comment a talent's block opens with to the one
+# it closes with, and a whole description wrapped in a block reads as empty and is thrown away.
+__EMPTY_QUALITY = re.compile(r'<div class="q">(?:\s|<!--(?:(?!-->).)*-->)*</div>', re.S)
 
 __OPERATORS = {
     ast.Add: operator.add, ast.Sub: operator.sub, ast.Mult: operator.mul, ast.Div: operator.truediv,
