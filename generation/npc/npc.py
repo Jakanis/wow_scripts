@@ -426,6 +426,9 @@ def fix_npc_data(all_npcs: dict[int, dict[str, NPC_MD]]):
     del all_npcs[185332][SOD]
     all_npcs[185336][CLASSIC] = all_npcs[185336][SOD]
     del all_npcs[185336][SOD]
+    # An invisible helper Wowhead lists under SoD, but TBC has it just the same: every client shares it, so classic's
+    all_npcs[173338][CLASSIC] = all_npcs[173338][SOD]
+    del all_npcs[173338][SOD]
 
 
 def apply_page_data_to_metadata(expansion, metadata: dict[int, dict[str, NPC_MD]], page_data: dict[int, NPC_Data]):

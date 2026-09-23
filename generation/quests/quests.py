@@ -1613,6 +1613,12 @@ def fix_expansion(classic_quests: dict[int, dict[str, QuestEntity]], sod_quests:
     classic_quests[66294][CLASSIC] = sod_quests[66294][SOD]
     classic_quests[66294][CLASSIC].expansion = CLASSIC
     del sod_quests[66294]
+
+    # A system quest Wowhead lists under SoD, but TBC has it just the same: every client shares it, so classic's
+    classic_quests[91889] = dict()
+    classic_quests[91889][CLASSIC] = sod_quests[91889][SOD]
+    classic_quests[91889][CLASSIC].expansion = CLASSIC
+    del sod_quests[91889]
     pass
 
 
