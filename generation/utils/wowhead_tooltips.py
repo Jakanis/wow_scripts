@@ -16,7 +16,11 @@ __COMMENT = re.compile(r'<!--.*?-->', re.S)
 # A number the script can work out again - points, a talent, a character level - carries one of these
 # markers. Parentheses are worked out only where one appears, so that prose in brackets is left alone.
 __MARKER = re.compile(r'<!--(?:pts|sp|ppl|pl|lvl)')
-__EXPRESSION = re.compile(r'[\d\s.+\-*/()^,<>=!?:a-z]*')
+# Letters in either case, for the functions: the TBC and Mists pages write Max and Min where the Wrath and
+# Cata pages write max and min, the same formula on the same level marker. A letter lets a formula through
+# to the evaluator, not into the result - a name it does not know, a Spell Power say, still leaves the
+# formula as the page wrote it.
+__EXPRESSION = re.compile(r'[\d\s.+\-*/()^,<>=!?:a-zA-Z]*')
 __TALENT_BLOCK = re.compile(r'(<!--sp(\d+):\d+-->)(.*?)(<!--sp\2-->)', re.S)
 # nothing but a number, or arithmetic on numbers
 __NUMERIC = re.compile(r'[\d\s.+\-*/()]*\d[\d\s.+\-*/()]*')
