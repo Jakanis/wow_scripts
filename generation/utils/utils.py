@@ -22,8 +22,8 @@ _WOWHEAD_HEADERS = {
 
 def wowhead_delay() -> float:
     # WOWHEAD_DELAY: seconds from the start of one request to the start of the next, "1" or a range "1:5";
-    # default is 1.5 s. A page that takes longer than that to load is followed by the next one straight away.
-    setting = os.getenv('WOWHEAD_DELAY', '1.5')
+    # default is 3 s. A page that takes longer than that to load is followed by the next one straight away.
+    setting = os.getenv('WOWHEAD_DELAY', '3')
     low, _, high = setting.partition(':')
     return random.uniform(float(low), float(high or low))
 
