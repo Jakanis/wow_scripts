@@ -1453,12 +1453,6 @@ def generate_book_sources(readable_items: dict[str, dict[int, ReadableItem]]):
 
     for expansion, items in readable_items.items():
         for item in items.values():
-            if item.expansion == FOREVER:
-                # Forever is still in beta and takes its books from classic and SoD, which are
-                # translated already; nothing to put in front of a translator until its place in the
-                # merge order is settled
-                continue
-
             if item.expansion == CLASSIC:
                 suffix = ''
             else:
