@@ -760,35 +760,6 @@ def merge_expansions(old_expansion: dict[int, dict[str, SpellData]], new_expansi
     return result
 
 
-def compare_stored_spells(expansion, fresh_spells: dict[int, SpellData]) -> set[int]:
-    import pickle
-    diffed_spells = set()
-    print(f'Comparing spells for {expansion}')
-    cache_path = f'cache/tmp/wowhead_{expansion}_spell_cache_stored.pkl'
-    if os.path.exists(cache_path):
-        print(f'Loading stored Wowhead({expansion}) spells')
-        with open(cache_path, 'rb') as f:
-            stored_spells = pickle.load(f)
-        absent_keys = stored_spells.keys() ^ fresh_spells.keys()
-        if absent_keys:
-            print(f'These keys absent in one of sets: {absent_keys}')
-        for spell_id in stored_spells.keys() & fresh_spells.keys():
-            if (stored_spells[spell_id].name != fresh_spells[spell_id].name or
-                    stored_spells[spell_id].description != fresh_spells[spell_id].description or
-                    stored_spells[spell_id].aura != fresh_spells[spell_id].aura):
-                diffed_spells.add(spell_id)
-        print(f'Wowhead changed {len(diffed_spells)} of {len(fresh_spells)} spells since the last run')
-    return diffed_spells
-
-
-def store_spells(expansion, fresh_spells: dict[int, SpellData]):
-    import pickle
-    cache_path = f'cache/tmp/wowhead_{expansion}_spell_cache_stored.pkl'
-    os.makedirs('cache/tmp', exist_ok=True)
-    with open(cache_path, 'wb') as f:
-        pickle.dump(fresh_spells, f)
-
-
 def populate_similarities(spells: dict[int, SpellData]):
     import re
     name_to_spell_id: dict[str, int] = dict()
@@ -828,9 +799,6 @@ def retrieve_spell_data() -> tuple[dict[int, dict[str, SpellData]], dict[int, di
 
         save_htmls_from_wowhead(expansion, set(wowhead_md.keys()))
         wowhead_spells = parse_wowhead_pages(expansion, wowhead_md) # Delete 'tmp/<spell_cache>.pkl' to parse the pages again
-
-        compare_stored_spells(expansion, wowhead_spells) # What Wowhead changed since 'tmp/wowhead_<expansion>_spell_cache_stored'
-        store_spells(expansion, wowhead_spells)
 
         raw_spells[expansion] = wowhead_spells.copy()
 
