@@ -12,27 +12,14 @@ from generation.utils.text_checks import mixed_script_words
 from generation.utils.utils import (NOTE_ALREADY_TRANSLATED, NOTE_NOT_TRANSLATED, NOTE_PRETRANSLATED,
                                     check_feedback, download_csv_from_google_sheet,
                                     format_notes, init_wowhead_worker, notes_hold_back_row, parse_notes,
-                                    __to_tsv_val, wowhead_get, wowhead_pool_state, wowhead_render)
+                                    __to_tsv_val, wowhead_get, wowhead_pool_state)
 from generation.utils.wowhead_tooltips import render_tooltips
 
 # THREADS = os.cpu_count()
 log = IssueLog('spells')
 
 SCRAPE_THREADS = 2
-# Each is a headless Chromium of a few hundred MB. Every page load still goes through Wowhead's pacing
-# (wowhead_delay, then a growing wait on any refusal), so more of them is more pages in flight, not
-# more pressure than the pacing allows.
-RENDER_THREADS = 4
 PARSE_THREADS = os.cpu_count()
-
-# Where a page's tooltips come from. The raw page holds everything: its own script carries the tooltip
-# markup and fills the empty divs in. TOOLTIPS does that here (see utils/wowhead_tooltips.py), so no page
-# has to go through a browser. RENDERED reads the pages a browser did leave, which are kept as they were
-# so that the interpreter can be held against them.
-RAW = 'raw'
-RENDERED = 'rendered'
-TOOLTIPS = 'tooltips'
-
 CLASSIC = 'classic'
 SOD = 'sod'
 TBC = 'tbc'
@@ -275,10 +262,10 @@ def get_wowhead_spell_metadata(expansion) -> dict[int, SpellMD]:
     return wowhead_metadata
 
 
-def save_page_raw(expansion, id):
+def save_page(expansion, id):
     url = expansion_data[expansion][WOWHEAD_URL] + f'/spell={id}'
-    xml_file_path = f'cache/{expansion_data[expansion][HTML_CACHE]}_raw/{id}.html'
-    if os.path.exists(xml_file_path):
+    html_file_path = f'cache/{expansion_data[expansion][HTML_CACHE]}/{id}.html'
+    if os.path.exists(html_file_path):
         print(f'Warning! Trying to download existing HTML for #{id}')
         return
     # r = requests.get(url)
@@ -287,7 +274,7 @@ def save_page_raw(expansion, id):
         # raise Exception(f'Wowhead({expansion}) returned {r.status_code} for spell #{id}')
         print(f'Error! Wowhead({expansion}) returned {r.status_code} for spell #{id}:{expansion}')
     else:
-        __write_atomically(xml_file_path, r.text)
+        __write_atomically(html_file_path, r.text)
 
 
 def __write_atomically(path: str, text: str) -> None:
@@ -301,113 +288,47 @@ def __write_atomically(path: str, text: str) -> None:
     os.replace(tmp_path, path)
 
 
-def __render_url(expansion, id) -> str:
-    # The raw page, already on disk, knows the page's canonical address. Asking for that directly saves
-    # the redirect from /spell=<id>/ to /spell=<id>/<name> - a second request to Wowhead for every page.
-    import html
-    raw_path = f'cache/{expansion_data[expansion][HTML_CACHE]}_raw/{id}.html'
-    if os.path.exists(raw_path):
-        with open(raw_path, 'r', encoding='utf-8') as raw_file:
-            match = re.search(r'<link rel="canonical" href="([^"]+)"', raw_file.read())
-        if match:
-            return html.unescape(match.group(1))
-    return expansion_data[expansion][WOWHEAD_URL] + f'/spell={id}/'
-
-
-def save_page_calc(expansion, id):
-    url = __render_url(expansion, id)
-    html_file_path = f'cache/{expansion_data[expansion][HTML_CACHE]}_rendered/{id}.html'
-    if os.path.exists(html_file_path):
-        print(f'Warning! Trying to download existing HTML for #{id}')
-    try:
-        status, html = wowhead_render(url)
-    except Exception as e:
-        # left out of the cache, so the next run asks for it again
-        print(f'Error! Could not render spell #{id}:{expansion} ({e}). Skipping it for this run.')
-        return
-    if status == 404:
-        print(f'Error! Wowhead({expansion}) returned 404 for spell #{id}:{expansion}')
-        return
-    __write_atomically(html_file_path, html)
-
-
-def save_pages_async(expansion, ids):
-    from requests_html import AsyncHTMLSession
-    asession = AsyncHTMLSession(workers=4)
-    urls = list([expansion_data[expansion][WOWHEAD_URL] + f'/spell={id}' for id in ids])
-
-    async def fetch(url):
-        r = await asession.get(url)
-        await r.html.arender()
-        return r
-
-    all_responses = asession.run(*[lambda url=url: fetch(url) for url in urls])
-
-    for response in all_responses:
-        spell_id = response.html.base_url[response.html.base_url.find('spell=')+6:-1]
-        xml_file_path = f'cache/{expansion_data[expansion][HTML_CACHE]}/{spell_id}.html'
-        with open(xml_file_path, 'w', encoding="utf-8") as output_file:
-            output_file.write(response.html.html)
-
-
-def save_htmls_from_wowhead(expansion, ids: set[int], source: str, force: set[int] = None):
+def save_htmls_from_wowhead(expansion, ids: set[int]):
     from functools import partial
     import multiprocessing
-    cache_dir = f'cache/{expansion_data[expansion][HTML_CACHE]}_{source}'
+    cache_dir = f'cache/{expansion_data[expansion][HTML_CACHE]}'
     os.makedirs(cache_dir, exist_ok=True)
     existing_files = os.listdir(cache_dir)
     existing_ids = set(int(file_name.split('.')[0]) for file_name in existing_files)
 
-    if os.path.exists(cache_dir) and existing_ids == ids and not force:
-        print(f'HTML({source}) cache for all Wowhead({expansion}) spells ({len(ids)}) exists and seems legit. Skipping.')
+    if os.path.exists(cache_dir) and existing_ids == ids:
+        print(f'HTML cache for all Wowhead({expansion}) spells ({len(ids)}) exists and seems legit. Skipping.')
         return
 
     save_ids = ids - existing_ids
-    if force:
-        print(f'Force saving HTMLs({source}) for {len(force)} spells from Wowhead({expansion}): {force}.')
-        save_ids = save_ids | force
-    print(f'Saving HTMLs({source}) for {len(save_ids)} of {len(ids)} spells from Wowhead({expansion}).')
+    print(f'Saving HTMLs for {len(save_ids)} of {len(ids)} spells from Wowhead({expansion}).')
 
     redundant_ids = existing_ids - ids
     if len(redundant_ids) > 0:
         print(f"There's some redundant IDs: {redundant_ids}")
 
-    save_page_func = save_page_calc if source == RENDERED else save_page_raw
     # for id in save_ids:
-    #     save_page_func(expansion, id)
-    save_func = partial(save_page_func, expansion)
-    # The workers share one pause, so a refusal from Wowhead holds all of them. A rendering worker also
-    # keeps one browser for all its pages, and only a worker that exits on its own takes that browser with
-    # it - so the pool is closed and joined, and terminated only on the way out of an error.
-    pool = multiprocessing.Pool(RENDER_THREADS if source == RENDERED else SCRAPE_THREADS,
-                                initializer=init_wowhead_worker,
-                                initargs=(wowhead_pool_state(), source == RENDERED))
-    try:
-        pool.map(save_func, save_ids)
-        pool.close()
-    except BaseException:
-        pool.terminate()
-        raise
-    finally:
-        pool.join()
-    # save_pages_async(expansion, list(save_ids)[:100])
+    #     save_page(expansion, id)
+    save_func = partial(save_page, expansion)
+    # the workers share one pause, so a refusal from Wowhead holds all of them
+    with multiprocessing.Pool(SCRAPE_THREADS, initializer=init_wowhead_worker,
+                              initargs=(wowhead_pool_state(),)) as p:
+        p.map(save_func, save_ids)
 
 
-def parse_wowhead_spell_page(expansion, source, id) -> SpellData:
+def parse_wowhead_spell_page(expansion, id) -> SpellData:
     import re
-    page_type = RAW if source == TOOLTIPS else source
-    html_path = f'cache/{expansion_data[expansion][HTML_CACHE]}_{page_type}/{id}.html'
+    html_path = f'cache/{expansion_data[expansion][HTML_CACHE]}/{id}.html'
     with open(html_path, 'r', encoding="utf-8") as file:
         html = file.read()
 
-    if source == TOOLTIPS:
-        html = render_tooltips(html, 'spells', id)
+    # The page arrives with its tooltips still in a script, and fills them in only in a browser; the
+    # interpreter does that work here (see utils/wowhead_tooltips.py).
+    html = render_tooltips(html, 'spells', id)
 
     # [!] html.parser makes a container out of a <br> that Wowhead leaves unclosed and swallows every
-    # line after it, which costs a tooltip all but its first line. lxml reads it as a browser does, so
-    # the raw page is only right when read with lxml; the browser's own pages are left on html.parser,
-    # which is what the stored parses of them were made with.
-    soup = BeautifulSoup(html, 'lxml' if source == TOOLTIPS else 'html.parser')
+    # line after it, which costs a tooltip all but its first line. lxml reads it as a browser does.
+    soup = BeautifulSoup(html, 'lxml')
     name = soup.find('h1').text
 
     tooltip_div = soup.find('div', {'id': f'tt{id}'})
@@ -452,20 +373,20 @@ def parse_wowhead_spell_page(expansion, source, id) -> SpellData:
     return SpellData(id, expansion, name, description, aura)
 
 
-def parse_wowhead_pages(expansion, metadata: dict[int, SpellMD], source: str) -> dict[int, SpellData]:
+def parse_wowhead_pages(expansion, metadata: dict[int, SpellMD]) -> dict[int, SpellData]:
     import pickle
     import multiprocessing
     from functools import partial
-    cache_path = f'cache/tmp/{expansion_data[expansion][SPELL_CACHE]}_{source}.pkl'
+    cache_path = f'cache/tmp/{expansion_data[expansion][SPELL_CACHE]}.pkl'
 
     if os.path.exists(cache_path):
         print(f'Loading cached Wowhead({expansion}) spells')
         with open(cache_path, 'rb') as f:
             wowhead_spells = pickle.load(f)
     else:
-        print(f'Parsing {source} Wowhead({expansion}) spell pages')
-        # wowhead_spells = {id: parse_wowhead_spell_page(expansion, source, id) for id in metadata.keys()}
-        parse_func = partial(parse_wowhead_spell_page, expansion, source)
+        print(f'Parsing Wowhead({expansion}) spell pages')
+        # wowhead_spells = {id: parse_wowhead_spell_page(expansion, id) for id in metadata.keys()}
+        parse_func = partial(parse_wowhead_spell_page, expansion)
         with multiprocessing.Pool(PARSE_THREADS) as p:
             wowhead_spells = p.map(parse_func, metadata.keys())
         wowhead_spells = {spell.id: spell for spell in wowhead_spells}
@@ -905,8 +826,8 @@ def retrieve_spell_data() -> tuple[dict[int, dict[str, SpellData]], dict[int, di
         for force_id in expansion_properties.get(FORCE_DOWNLOAD, []):
             wowhead_md[force_id] = SpellMD(force_id, "FORCE LOAD", expansion)
 
-        save_htmls_from_wowhead(expansion, set(wowhead_md.keys()), RAW) # Only the raw page is downloaded: its tooltips are filled in below
-        wowhead_spells = parse_wowhead_pages(expansion, wowhead_md, TOOLTIPS) # Delete 'tmp/<spell_cache>_tooltips.pkl' to parse the pages again
+        save_htmls_from_wowhead(expansion, set(wowhead_md.keys()))
+        wowhead_spells = parse_wowhead_pages(expansion, wowhead_md) # Delete 'tmp/<spell_cache>.pkl' to parse the pages again
 
         compare_stored_spells(expansion, wowhead_spells) # What Wowhead changed since 'tmp/wowhead_<expansion>_spell_cache_stored'
         store_spells(expansion, wowhead_spells)
