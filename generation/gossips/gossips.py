@@ -19,9 +19,9 @@ expansion_data = {
         INDEX: 0,
     },
     # WoW: Forever, in beta since 2026-09-17. Shares data with classic and SoD; its place in the merge order is not settled.
-    # FOREVER: {
-    #     INDEX: 0,
-    # },
+    FOREVER: {
+        INDEX: 0,
+    },
     TBC: {
         INDEX: 1,
     },

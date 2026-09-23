@@ -56,14 +56,14 @@ expansion_data = {
         ]
     },
     # WoW: Forever, in beta since 2026-09-17. Shares data with classic and SoD; its place in the merge order is not settled.
-    # FOREVER: {
-    #     WOWHEAD_URL: 'https://www.wowhead.com/forever',
-    #     METADATA_CACHE: 'wowhead_forever_metadata_cache',
-    #     HTML_CACHE: 'wowhead_forever_quests_html',
-    #     QUESTS_CACHE: 'wowhead_forever_quest_cache',
-    #     METADATA_FILTERS: ('', '', ''),
-    #     IGNORES: []
-    # },
+    FOREVER: {
+        WOWHEAD_URL: 'https://www.wowhead.com/forever',
+        METADATA_CACHE: 'wowhead_forever_metadata_cache',
+        HTML_CACHE: 'wowhead_forever_quests_html',
+        QUESTS_CACHE: 'wowhead_forever_quest_cache',
+        METADATA_FILTERS: ('', '', ''),
+        IGNORES: []
+    },
     TBC: {
         WOWHEAD_URL: 'https://www.wowhead.com/tbc',
         METADATA_CACHE: 'wowhead_tbc_metadata_cache',
@@ -1609,6 +1609,7 @@ def fix_expansion(classic_quests: dict[int, dict[str, QuestEntity]], sod_quests:
 def populate_cache_db_with_quest_data() -> dict[int, dict[str, QuestEntity]]:
     wowhead_metadata = get_wowhead_quests_metadata(CLASSIC)
     wowhead_metadata_sod = get_wowhead_quests_metadata(SOD)
+    wowhead_metadata_forever = get_wowhead_quests_metadata(FOREVER)
     wowhead_metadata_tbc = get_wowhead_quests_metadata(TBC)
     wowhead_metadata_wrath = get_wowhead_quests_metadata(WRATH)
     wowhead_metadata_cata = get_wowhead_quests_metadata(CATA)
@@ -1617,6 +1618,7 @@ def populate_cache_db_with_quest_data() -> dict[int, dict[str, QuestEntity]]:
 
     save_htmls_from_wowhead(CLASSIC, set(wowhead_metadata.keys()))
     save_htmls_from_wowhead(SOD, set(wowhead_metadata_sod.keys()))
+    save_htmls_from_wowhead(FOREVER, set(wowhead_metadata_forever.keys()))
     save_htmls_from_wowhead(TBC, set(wowhead_metadata_tbc.keys()))
     save_htmls_from_wowhead(WRATH, set(wowhead_metadata_wrath.keys()))
     save_htmls_from_wowhead(CATA, set(wowhead_metadata_cata.keys()))
