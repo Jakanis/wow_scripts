@@ -8,8 +8,8 @@ from generation.spells.spells import SpellData, load_spells_from_db, is_spell_tr
 from generation.utils.books import parse_book_pages
 from generation.utils.issues import WARNING, Issue, IssueLog
 from generation.utils.text_checks import report_mixed_script
-from generation.utils.utils import (NOTE_NOT_TRANSLATED, NOTE_PRETRANSLATED, check_feedback,
-                                    compare_directories, download_csv_from_google_sheet, format_notes,
+from generation.utils.utils import (NOTE_NOT_TRANSLATED, NOTE_PRETRANSLATED, attach_branch, check_feedback,
+                                    compare_directories, download_csv_from_google_sheet, format_notes, merge_branch,
                                     init_wowhead_worker, notes_hold_back_row, parse_notes, update_on_crowdin,
                                     wowhead_get, wowhead_pool_state, __to_tsv_val)
 
@@ -67,7 +67,7 @@ expansion_data = {
         IGNORES: [759, 9232, 202256, 202316, 215235, 215394, 215405, 215406, 215410, 215412, 215450, 231752, 235583, 239061],
         FORCE_DOWNLOAD: []
     },
-    # WoW: Forever, in beta since 2026-09-17. Shares data with classic and SoD; its place in the merge order is not settled.
+    # WoW: Forever, in beta since 2026-09-17: a branch of classic and SoD, merged against them and kept out of the mainline.
     FOREVER: {
         INDEX: 0.2,
         WOWHEAD_URL: 'https://www.wowhead.com/forever',
@@ -849,6 +849,8 @@ def retrieve_item_data() -> tuple[dict[int, dict[str, ItemData]], dict[str, dict
     readable_items = dict()
     all_items = dict()
     all_readable_items = dict()
+    branch_items = dict()
+    branch_readable_items = dict()
     raw_spells = load_spells_from_db('../spells/cache/raw_spells.db')
 
     for expansion, expansion_properties in expansion_data.items():
@@ -864,9 +866,20 @@ def retrieve_item_data() -> tuple[dict[int, dict[str, ItemData]], dict[str, dict
         readable_items[expansion] = parse_wowhead_html_pages(expansion, readable_items_ids)
         fix_readables(expansion, readable_items[expansion])
         # populate_book_text(wowhead_items[expansion], readable_items[expansion])
+        if expansion == FOREVER:
+            # A branch: compared with its parents as they stand now, and kept out of the mainline until it is merged
+            print(f'Merging with {expansion}, a branch')
+            parents = expansion_properties[PARENT_EXPANSIONS]
+            branch_items = merge_branch(all_items, wowhead_items[expansion], expansion, parents,
+                                        lambda id, old, new: merge_item(id, old, new, raw_spells))
+            books = {id: item for id, item in readable_items[expansion].items() if item.pages}
+            branch_readable_items = merge_branch(all_readable_items, books, expansion, parents, merge_readable_item)
+            continue
         print(f'Merging with {expansion}')
         all_items = merge_expansions(all_items, wowhead_items[expansion], raw_spells)
         all_readable_items = merge_readable_items(all_readable_items, readable_items[expansion])
+    attach_branch(all_items, branch_items, FOREVER)
+    attach_branch(all_readable_items, branch_readable_items, FOREVER)
 
     # translations = load_item_lua_names('input/entries/item.lua')
     # translations_sod = load_item_lua_names('input/entries/item_sod.lua')

@@ -37,7 +37,7 @@ expansion_data = {
         WAGO_PRODUCT: 'wow_classic_era',
         WAGO_BUILD: '1.15.9.69722'  # shared with classic, so what it has beyond 1.14.4 is SoD's
     },
-    # WoW: Forever, in beta since 2026-09-17. Shares data with classic and SoD; its place in the merge order is not settled.
+    # WoW: Forever, in beta since 2026-09-17: a branch of classic and SoD.
     FOREVER: {
         INDEX: 0.2,
         WAGO_PRODUCT: 'wow_classic_beta',

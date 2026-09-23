@@ -1,3 +1,4 @@
+import copy
 import json
 import os
 
@@ -6,8 +7,8 @@ from bs4 import BeautifulSoup
 import sqlite3
 import difflib
 from generation.database.build_classicua_db import update_table
-from generation.utils.utils import (check_feedback, compare_directories, init_wowhead_worker,
-                                    write_crowdin_xml_file, update_on_crowdin, wowhead_get,
+from generation.utils.utils import (attach_branch, check_feedback, compare_directories, init_wowhead_worker,
+                                    merge_branch, write_crowdin_xml_file, update_on_crowdin, wowhead_get,
                                     wowhead_pool_state)
 
 SCRAPE_THREADS = 1
@@ -28,6 +29,7 @@ QUESTS_CACHE = 'quests_cache'
 IGNORES = 'ignores'
 INDEX = 'index'
 METADATA_FILTERS = 'metadata_filters'
+PARENT_EXPANSIONS = 'parent_expansions'
 
 expansion_data = {
     CLASSIC: {
@@ -55,14 +57,15 @@ expansion_data = {
             2358,  # Horns of Nez'ra (added in Wrath)
         ]
     },
-    # WoW: Forever, in beta since 2026-09-17. Shares data with classic and SoD; its place in the merge order is not settled.
+    # WoW: Forever, in beta since 2026-09-17: a branch of classic and SoD, merged against them and kept out of the mainline.
     FOREVER: {
         WOWHEAD_URL: 'https://www.wowhead.com/forever',
         METADATA_CACHE: 'wowhead_forever_metadata_cache',
         HTML_CACHE: 'wowhead_forever_quests_html',
         QUESTS_CACHE: 'wowhead_forever_quest_cache',
         METADATA_FILTERS: ('', '', ''),
-        IGNORES: []
+        IGNORES: [],
+        PARENT_EXPANSIONS: [CLASSIC, SOD]
     },
     TBC: {
         WOWHEAD_URL: 'https://www.wowhead.com/tbc',
@@ -1627,6 +1630,7 @@ def populate_cache_db_with_quest_data() -> dict[int, dict[str, QuestEntity]]:
 
     wowhead_quests = parse_wowhead_pages(CLASSIC, wowhead_metadata)
     wowhead_quests_sod = parse_wowhead_pages(SOD, wowhead_metadata_sod)
+    wowhead_quests_forever = parse_wowhead_pages(FOREVER, wowhead_metadata_forever)
     wowhead_quests_tbc = parse_wowhead_pages(TBC, wowhead_metadata_tbc)
     wowhead_quests_wrath = parse_wowhead_pages(WRATH, wowhead_metadata_wrath)
     wowhead_quests_cata = parse_wowhead_pages(CATA, wowhead_metadata_cata)
@@ -1636,10 +1640,20 @@ def populate_cache_db_with_quest_data() -> dict[int, dict[str, QuestEntity]]:
     fix_expansion(wowhead_quests, wowhead_quests_sod, wowhead_quests_tbc, wowhead_quests_wrath)
 
     fix_classic_quests(wowhead_quests)
+    # Forever carries classic's texts as they were, so its quests take classic's corrections too
+    fix_classic_quests({id: {CLASSIC: quests[FOREVER]} for id, quests in wowhead_quests_forever.items()})
     fix_classic_sod_quests(wowhead_quests, wowhead_quests_sod)
     fix_tbc_quests(wowhead_quests_tbc)
     fix_wrath_quests(wowhead_quests_wrath)
     fix_cata_quests(wowhead_quests_cata)
+
+    # Forever is a branch: compared with classic and SoD before the later expansions add to them, and kept out of
+    # the mainline until that is merged. The copy keeps merge_quest's changes to its old quest off the parents.
+    print('Merging with Forever, a branch')
+    forever_quests = merge_branch({**wowhead_quests, **wowhead_quests_sod},
+                                  {id: quests[FOREVER] for id, quests in wowhead_quests_forever.items()}, FOREVER,
+                                  expansion_data[FOREVER][PARENT_EXPANSIONS],
+                                  lambda id, old, new: merge_quest(id, copy.deepcopy(old), {FOREVER: new}))
 
     print('Merging with TBC')
     classic_and_tbc_quests = merge_expansions({**wowhead_quests, **wowhead_quests_sod}, wowhead_quests_tbc)
@@ -1652,6 +1666,7 @@ def populate_cache_db_with_quest_data() -> dict[int, dict[str, QuestEntity]]:
     # all_quests = merge_expansions(classic_tbc_wrath_cata_quests, wowhead_quests_mists)
     print('Merging with Retail')
     # all_quests = merge_expansions(classic_tbc_wrath_cata_quests, wowhead_quests_retail)
+    attach_branch(all_quests, forever_quests, FOREVER)
 
     classicua_data = get_all_quests_from_db('classicua.db')
     print('Merging with ClassicUA')

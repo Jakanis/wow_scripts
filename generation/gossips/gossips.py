@@ -18,7 +18,7 @@ expansion_data = {
     SOD: {
         INDEX: 0.1,
     },
-    # WoW: Forever, in beta since 2026-09-17. Shares data with classic and SoD; its place in the merge order is not settled.
+    # WoW: Forever, in beta since 2026-09-17: a branch of classic and SoD.
     FOREVER: {
         INDEX: 0.2,
     },

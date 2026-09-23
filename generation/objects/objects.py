@@ -4,8 +4,8 @@ from bs4 import BeautifulSoup
 
 from generation.database.build_classicua_db import update_table
 from generation.utils.books import parse_book_pages
-from generation.utils.utils import (compare_directories, init_wowhead_worker, update_on_crowdin, wowhead_get,
-                                    wowhead_pool_state)
+from generation.utils.utils import (attach_branch, compare_directories, init_wowhead_worker, merge_branch,
+                                    update_on_crowdin, wowhead_get, wowhead_pool_state)
 
 SCRAPE_THREADS = 1
 PARSE_THREADS = os.cpu_count()
@@ -23,6 +23,7 @@ IGNORES = 'ignores'
 FORCE_DOWNLOAD = 'force_download'
 INDEX = 'index'
 METADATA_FILTERS = 'metadata_filters'
+PARENT_EXPANSIONS = 'parent_expansions'
 
 expansion_data = {
     CLASSIC: {
@@ -45,7 +46,7 @@ expansion_data = {
         IGNORES: [],
         FORCE_DOWNLOAD: []
     },
-    # WoW: Forever, in beta since 2026-09-17. Shares data with classic and SoD; its place in the merge order is not settled.
+    # WoW: Forever, in beta since 2026-09-17: a branch of classic and SoD, merged against them and kept out of the mainline.
     FOREVER: {
         INDEX: 0.2,
         WOWHEAD_URL: 'https://www.wowhead.com/forever',
@@ -54,7 +55,8 @@ expansion_data = {
         OBJECT_CACHE: 'wowhead_forever_object_cache',
         METADATA_FILTERS: ('', '', ''),
         IGNORES: [],
-        FORCE_DOWNLOAD: []
+        FORCE_DOWNLOAD: [],
+        PARENT_EXPANSIONS: [CLASSIC, SOD]
     },
     TBC: {
         INDEX: 1,
@@ -309,7 +311,8 @@ def fix_expansion_objects(expansion, objects: dict[int, ObjectData]):
     # Texts differ for object #25329
     # Texts differ for object #177199
 
-    if expansion == CLASSIC:
+    # Forever carries classic's texts as they were, so it takes classic's corrections too
+    if expansion in [CLASSIC, FOREVER]:
         objects[25330].text[0] = objects[25330].text[0].replace("By Blood and Honor We Serve. ", "By Blood and Honor We Serve.")
         objects[25331].text[0] = objects[25331].text[0].replace("most beloved of our kin. ", "most beloved of our kin.")
         objects[25332].text[0] = objects[25332].text[0].replace("drenched with the blood of heroes. ", "drenched with the blood of heroes.")
@@ -323,7 +326,7 @@ def fix_expansion_objects(expansion, objects: dict[int, ObjectData]):
         objects[175748].text[2] = objects[175748].text[2].replace("of the Azeroth", "of Azeroth").replace("to sew chaos", "to sow chaos")
         objects[191663].text[3] = objects[191663].text[3].replace(" \n\n\n\n", "\n\n\n")
 
-    if expansion in [CLASSIC, TBC, WRATH, CATA]:
+    if expansion in [CLASSIC, FOREVER, TBC, WRATH, CATA]:
         objects[179706].text[0] = objects[179706].text[0].replace(
             'with the ranks of each listed in descending order from highest to lowest. Long live the Alliance!',
             'with the ranks\nof each listed in descending order from highest to lowest.\nLong live the Alliance!')
@@ -351,14 +354,22 @@ def merge_metadata(expansion, wowhead_objects, wowhead_md):
 
 def retrieve_object_data() -> dict[int, dict[str, ObjectData]]:
     all_objects = dict()
+    branch_objects = dict()
     for expansion, expansion_properties in expansion_data.items():
         wowhead_md = get_wowhead_object_metadata(expansion)
         save_htmls_from_wowhead(expansion, set(wowhead_md.keys()))
         wowhead_objects = parse_wowhead_pages(expansion, wowhead_md)
         merge_metadata(expansion, wowhead_objects, wowhead_md)
-        print(f'Merging with {expansion}')
         fix_expansion_objects(expansion, wowhead_objects)
+        if expansion == FOREVER:
+            # A branch: compared with its parents, and kept out of the mainline until it is merged
+            print(f'Merging with {expansion}, a branch')
+            branch_objects = merge_branch(all_objects, wowhead_objects, expansion,
+                                          expansion_properties[PARENT_EXPANSIONS], merge_object)
+            continue
+        print(f'Merging with {expansion}')
         all_objects = merge_expansions(all_objects, wowhead_objects)
+    attach_branch(all_objects, branch_objects, FOREVER)
 
     return all_objects
 

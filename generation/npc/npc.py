@@ -9,10 +9,10 @@ from generation.database.build_classicua_db import update_table
 from generation.utils.issues import IssueLog
 from generation.utils.text_checks import report_mixed_script
 from generation.utils.glossary import Glossary, GlossaryTerm, NPC_TAG, glossary_path
-from generation.utils.utils import (ValidationError, check_feedback, classicua_root, copy_classicua_entries,
-                                    download_crowdin_glossary, download_csv_from_google_sheet,
-                                    init_wowhead_worker, run_classicua_generator, update_glossary_on_crowdin,
-                                    wowhead_get, wowhead_pool_state)
+from generation.utils.utils import (ValidationError, attach_branch, check_feedback, classicua_root,
+                                    copy_classicua_entries, download_crowdin_glossary, download_csv_from_google_sheet,
+                                    init_wowhead_worker, merge_branch, run_classicua_generator,
+                                    update_glossary_on_crowdin, wowhead_get, wowhead_pool_state)
 
 log = IssueLog('npc')
 
@@ -34,6 +34,7 @@ METADATA_FILTERS = 'metadata_filters'
 SOD = 'sod'
 FORCE_DOWNLOAD = 'force_download'
 RETRIEVE_QUOTES = 'retrieve_quotes'
+PARENT_EXPANSIONS = 'parent_expansions'
 FORCE_LOAD_NAME = 'FORCE LOAD'  # placeholder until the real name is read off the NPC page
 
 # Wowhead's NPC search leaves the totem creature type out entirely, in every expansion, although
@@ -81,7 +82,7 @@ expansion_data = {
         FORCE_DOWNLOAD: [207795, 209889, 212157, 222231, 222240, 223739, 242756],
         RETRIEVE_QUOTES: True
     },
-    # WoW: Forever, in beta since 2026-09-17. Shares data with classic and SoD; its place in the merge order is not settled.
+    # WoW: Forever, in beta since 2026-09-17: a branch of classic and SoD, merged against them and kept out of the mainline.
     FOREVER: {
         WOWHEAD_URL: 'https://www.wowhead.com/forever',
         METADATA_CACHE: 'wowhead_forever_metadata_cache',
@@ -90,7 +91,8 @@ expansion_data = {
         METADATA_FILTERS: ('', '', ''),
         IGNORES: [],
         FORCE_DOWNLOAD: [],
-        RETRIEVE_QUOTES: True
+        RETRIEVE_QUOTES: False,  # the names and tags come with the search; the quotes can wait
+        PARENT_EXPANSIONS: [CLASSIC, SOD]
     },
     TBC: {
         WOWHEAD_URL: 'https://www.wowhead.com/tbc',
@@ -467,6 +469,7 @@ def retrieve_forced_npc_pages(expansion, force_ids: list[int]) -> dict[int, NPC_
 def retrieve_npc_data() -> tuple[dict[int, dict[str, NPC_MD]], dict[str, dict[int, NPC_Data]]]:
     all_npcs = dict()
     npc_quotes = dict()
+    branch_npcs = dict()
 
     for expansion, expansion_properties in expansion_data.items():
         wowhead_md = get_wowhead_npc_metadata(expansion)
@@ -479,8 +482,16 @@ def retrieve_npc_data() -> tuple[dict[int, dict[str, NPC_MD]], dict[str, dict[in
             forced_pages = retrieve_forced_npc_pages(expansion, expansion_properties[FORCE_DOWNLOAD])
             apply_page_data_to_metadata(expansion, wowhead_md, forced_pages)
 
+        if expansion == FOREVER:
+            # A branch: compared with its parents, and kept out of the mainline until it is merged
+            print(f'Merging with {expansion}, a branch')
+            branch_npcs = merge_branch(all_npcs, {id: npcs[expansion] for id, npcs in wowhead_md.items()}, expansion,
+                                       expansion_properties[PARENT_EXPANSIONS],
+                                       lambda id, old, new: merge_npc(id, old, {new.expansion: new}))
+            continue
         print(f'Merging with {expansion}')
         all_npcs = merge_expansions(all_npcs, wowhead_md)
+    attach_branch(all_npcs, branch_npcs, FOREVER)
 
     fix_npc_data(all_npcs)
 
