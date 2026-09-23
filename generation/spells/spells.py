@@ -723,15 +723,18 @@ def create_translation_sheet(spells: dict[int, dict[str, SpellData]], path: str 
             print(f"Added {count} spells for translation to {path}")
 
 
+def __parent_variant(variants: dict, expansion: str):
+    # the nearest ancestor with a variant (the parent lists run oldest to newest), or the last one
+    # merged when none of them has one
+    for parent in reversed(expansion_data[expansion][PARENT_EXPANSIONS]):
+        if parent in variants:
+            return variants[parent]
+    return variants[list(variants.keys())[-1]]
+
+
 def merge_spell(id: int, old_spells: dict[str, SpellData], new_spell: SpellData) -> dict[str, SpellData]:
-    import re
-    if len(old_spells) > 1:
-        last_old_spell_key = list(old_spells.keys())[-1]
-        result = merge_spell(id, {last_old_spell_key: old_spells[last_old_spell_key]}, new_spell)
-        del old_spells[last_old_spell_key]
-        return {**old_spells, **result}
-    if len(old_spells) == 1:
-        old_spell = next(iter(old_spells.values()))
+    if old_spells:
+        old_spell = __parent_variant(old_spells, new_spell.expansion)
 
         if (not old_spell.is_equal_ignoring_values_to(new_spell)
                 or old_spell.name_ref != new_spell.name_ref
