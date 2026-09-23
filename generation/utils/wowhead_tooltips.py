@@ -208,11 +208,14 @@ def __work_out(markup: str) -> str:
 def __as_talent_values(markup: str) -> str:
     # A talent's block holds what the tooltip says with no points in the talent, and the page writes it
     # back without the &nbsp; of a sentence break. A number it writes back as it writes any value:
-    # trimmed, and one that stands in parentheses inside a second pair - " (1)" comes out as "((1))".
-    # Text keeps its spaces, or "sec. &nbsp;Cannot" would lose the one it needs. A block may hold another.
+    # trimmed, and one that stands in parentheses inside a second pair - " (1)" comes out as "((1))". A
+    # block with nothing in it but a space comes out empty, or a row of empty blocks turns "* 1" into
+    # "*     1". Text keeps its spaces, or "sec. &nbsp;Cannot" would lose the one it needs. A block may
+    # hold another.
     def written_back(match):
         value = __as_talent_values(match.group(3)).replace('&nbsp;', '').replace(' ', '')
-        if __NUMERIC.fullmatch(__COMMENT.sub('', value)):
+        shown = __COMMENT.sub('', value)
+        if not shown.strip() or __NUMERIC.fullmatch(shown):
             value = value.strip()
             if value.startswith('(') and value.endswith(')'):
                 value = '(%s)' % value
