@@ -8,9 +8,10 @@ from generation.spells.spells import SpellData, load_spells_from_db, is_spell_tr
 from generation.utils.books import parse_book_pages
 from generation.utils.issues import WARNING, Issue, IssueLog
 from generation.utils.text_checks import report_mixed_script
-from generation.utils.utils import (NOTE_NOT_TRANSLATED, NOTE_PRETRANSLATED, attach_branch, check_feedback,
-                                    compare_directories, download_csv_from_google_sheet, format_notes, merge_branch,
-                                    init_wowhead_worker, notes_hold_back_row, parse_notes, update_on_crowdin,
+from generation.utils.utils import (NOTE_NOT_TRANSLATED, NOTE_PRETRANSLATED, check_feedback,
+                                    compare_directories, download_csv_from_google_sheet, format_notes,
+                                    init_wowhead_worker, notes_hold_back_row, parent_variant, parse_notes,
+                                    update_on_crowdin,
                                     wowhead_get, wowhead_pool_state, __to_tsv_val)
 
 log = IssueLog('items')
@@ -43,6 +44,7 @@ METADATA_FILTERS = 'metadata_filters'
 expansion_data = {
     CLASSIC: {
         INDEX: 0,
+        PARENT_EXPANSIONS: [],
         WOWHEAD_URL: 'https://www.wowhead.com/classic',
         METADATA_CACHE: 'wowhead_classic_metadata_cache',
         XML_CACHE: 'wowhead_classic_item_xml',
@@ -97,7 +99,7 @@ expansion_data = {
     },
     WRATH: {
         INDEX: 2,
-        PARENT_EXPANSIONS: [TBC],
+        PARENT_EXPANSIONS: [CLASSIC, TBC],
         WOWHEAD_URL: 'https://www.wowhead.com/wotlk',
         METADATA_CACHE: 'wowhead_wrath_metadata_cache',
         XML_CACHE: 'wowhead_wrath_item_xml',
@@ -110,7 +112,7 @@ expansion_data = {
     },
     CATA: {
         INDEX: 3,
-        PARENT_EXPANSIONS: [WRATH],
+        PARENT_EXPANSIONS: [CLASSIC, TBC, WRATH],
         WOWHEAD_URL: 'https://www.wowhead.com/cata',
         METADATA_CACHE: 'wowhead_cata_metadata_cache',
         XML_CACHE: 'wowhead_cata_item_xml',
@@ -123,7 +125,7 @@ expansion_data = {
     },
     MISTS: {
         INDEX: 4,
-        PARENT_EXPANSIONS: [CATA],
+        PARENT_EXPANSIONS: [CLASSIC, TBC, WRATH, CATA],
         WOWHEAD_URL: 'https://www.wowhead.com/mop-classic',
         METADATA_CACHE: 'wowhead_mists_metadata_cache',
         XML_CACHE: 'wowhead_mists_item_xml',
@@ -604,23 +606,6 @@ def is_equal_ignoring_symbols(s1: str, s2: str) -> bool:
     return s1.translate(mapping) == s2.translate(mapping)
 
 
-def __ancestor_variant(variants: dict, expansion: str):
-    # a parent identical to its own parent is folded into it and leaves no variant, so keep walking up
-    for parent in expansion_data[expansion].get(PARENT_EXPANSIONS, []):
-        if parent in variants:
-            return variants[parent]
-        found = __ancestor_variant(variants, parent)
-        if found is not None:
-            return found
-    return None
-
-
-def __parent_variant(variants: dict, expansion: str):
-    # the nearest ancestor with a variant, or the last one merged when the ancestry has none
-    found = __ancestor_variant(variants, expansion)
-    return found if found is not None else variants[list(variants.keys())[-1]]
-
-
 def __merge_item_effects(old_item: ItemData, new_item: ItemData, spells: dict[int, dict[str, SpellData]]):
     from collections import defaultdict
     from functools import cmp_to_key
@@ -673,7 +658,9 @@ def __merge_item_effects(old_item: ItemData, new_item: ItemData, spells: dict[in
 
 def merge_item(id: int, old_items: dict[str, ItemData], new_item: ItemData, spells: dict[int, dict[str, SpellData]]) -> dict[str, ItemData]:
     # test data: item#833classic/wrath (different order), item#728(classic/tbc) (same text, different spell), item#159/862/867/868/875/943 (same spell, different text)
-    old_item = __parent_variant(old_items, new_item.expansion)
+    old_item = parent_variant(old_items, expansion_data[new_item.expansion][PARENT_EXPANSIONS])
+    if old_item is None:
+        return {**old_items, **{new_item.expansion: new_item}}
     __merge_item_effects(old_item, new_item, spells)
     if old_item.name.lower() != new_item.name.lower():
         return {**old_items, **{new_item.expansion: new_item}}
@@ -700,9 +687,9 @@ def merge_expansions(old_expansion: dict[int, dict[str, ItemData]], new_expansio
 
 def merge_readable_item(id: int, old_items: dict[str, ReadableItem], new_item: ReadableItem) -> dict[str, ReadableItem]:
     if old_items:
-        old_item = __parent_variant(old_items, new_item.expansion)
+        old_item = parent_variant(old_items, expansion_data[new_item.expansion][PARENT_EXPANSIONS])
 
-        if len(old_item.pages) != len(new_item.pages):
+        if old_item is None or len(old_item.pages) != len(new_item.pages):
             # print(f'Warning! Readable item #{id} changed between {old_item.expansion} and {new_item.expansion}!')
             return {**old_items, **{new_item.expansion: new_item}}
 
@@ -849,8 +836,6 @@ def retrieve_item_data() -> tuple[dict[int, dict[str, ItemData]], dict[str, dict
     readable_items = dict()
     all_items = dict()
     all_readable_items = dict()
-    branch_items = dict()
-    branch_readable_items = dict()
     raw_spells = load_spells_from_db('../spells/cache/raw_spells.db')
 
     for expansion, expansion_properties in expansion_data.items():
@@ -866,20 +851,9 @@ def retrieve_item_data() -> tuple[dict[int, dict[str, ItemData]], dict[str, dict
         readable_items[expansion] = parse_wowhead_html_pages(expansion, readable_items_ids)
         fix_readables(expansion, readable_items[expansion])
         # populate_book_text(wowhead_items[expansion], readable_items[expansion])
-        if expansion == FOREVER:
-            # A branch: compared with its parents as they stand now, and kept out of the mainline until it is merged
-            print(f'Merging with {expansion}, a branch')
-            parents = expansion_properties[PARENT_EXPANSIONS]
-            branch_items = merge_branch(all_items, wowhead_items[expansion], expansion, parents,
-                                        lambda id, old, new: merge_item(id, old, new, raw_spells))
-            books = {id: item for id, item in readable_items[expansion].items() if item.pages}
-            branch_readable_items = merge_branch(all_readable_items, books, expansion, parents, merge_readable_item)
-            continue
         print(f'Merging with {expansion}')
         all_items = merge_expansions(all_items, wowhead_items[expansion], raw_spells)
         all_readable_items = merge_readable_items(all_readable_items, readable_items[expansion])
-    attach_branch(all_items, branch_items, FOREVER)
-    attach_branch(all_readable_items, branch_readable_items, FOREVER)
 
     # translations = load_item_lua_names('input/entries/item.lua')
     # translations_sod = load_item_lua_names('input/entries/item_sod.lua')

@@ -106,24 +106,13 @@ class ValidationError:
         return f'[{self.severity}] {self.entry_type}#{self.id}:{self.expansion} - {self.field}: {self.error_message}'
 
 
-def merge_branch(mainline: dict, branch: dict, expansion: str, parents: list[str], merge) -> dict:
-    # A branch expansion (Forever) is compared with the nearest of its parents that has a variant, and nothing else.
-    # Parents run oldest to newest, the order the game loads their entries in, where a later one's entry replaces an
-    # earlier one's. merge(id, variants, entity) is the module's own merge of an entity into its variants. Returns
-    # the variants the branch needs of its own, which stay out of the mainline until attach_branch, so no mainline
-    # expansion is ever compared with them.
-    result = dict()
-    for id, entity in branch.items():
-        variants = mainline.get(id, {})
-        parent = next((parent for parent in reversed(parents) if parent in variants), None)
-        if parent is None or expansion in merge(id, {parent: variants[parent]}, entity):
-            result[id] = entity
-    return result
-
-
-def attach_branch(mainline: dict, variants: dict, expansion: str):
-    for id, variant in variants.items():
-        mainline.setdefault(id, dict())[expansion] = variant
+def parent_variant(variants: dict, parents: list[str]):
+    # The variant a new expansion's entity is compared with: that of its nearest parent that has one. Parents run
+    # oldest to newest, the order the game loads their entries in, where a later one's entry replaces an earlier
+    # one's. None when no parent has one: the entity needs a variant of its own then, whatever other expansions
+    # hold, as its client never loads their entries - so side branches like SoD and Forever stay out of the
+    # expansions that do not name them.
+    return next((variants[parent] for parent in reversed(parents) if parent in variants), None)
 
 
 def gather_files_in_subfolders(parent_dir: str) -> list[str]:

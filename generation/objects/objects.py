@@ -4,8 +4,8 @@ from bs4 import BeautifulSoup
 
 from generation.database.build_classicua_db import update_table
 from generation.utils.books import parse_book_pages
-from generation.utils.utils import (attach_branch, compare_directories, init_wowhead_worker, merge_branch,
-                                    update_on_crowdin, wowhead_get, wowhead_pool_state)
+from generation.utils.utils import (compare_directories, init_wowhead_worker, parent_variant, update_on_crowdin,
+                                    wowhead_get, wowhead_pool_state)
 
 SCRAPE_THREADS = 1
 PARSE_THREADS = os.cpu_count()
@@ -34,7 +34,8 @@ expansion_data = {
         OBJECT_CACHE: 'wowhead_classic_object_cache',
         METADATA_FILTERS: ('6:', '5:', '11500:'),
         IGNORES: [],
-        FORCE_DOWNLOAD: []
+        FORCE_DOWNLOAD: [],
+        PARENT_EXPANSIONS: []
     },
     SOD: {
         INDEX: 0.1,
@@ -44,7 +45,8 @@ expansion_data = {
         OBJECT_CACHE: 'wowhead_sod_object_cache',
         METADATA_FILTERS: ('6:', '2:', '11500:'),
         IGNORES: [],
-        FORCE_DOWNLOAD: []
+        FORCE_DOWNLOAD: [],
+        PARENT_EXPANSIONS: [CLASSIC]
     },
     # WoW: Forever, in beta since 2026-09-17: a branch of classic and SoD, merged against them and kept out of the mainline.
     FOREVER: {
@@ -66,7 +68,8 @@ expansion_data = {
         OBJECT_CACHE: 'wowhead_tbc_object_cache',
         METADATA_FILTERS: ('', '', ''),
         IGNORES: [],
-        FORCE_DOWNLOAD: []
+        FORCE_DOWNLOAD: [],
+        PARENT_EXPANSIONS: [CLASSIC]
     },
     WRATH: {
         INDEX: 2,
@@ -76,7 +79,8 @@ expansion_data = {
         OBJECT_CACHE: 'wowhead_wrath_object_cache',
         METADATA_FILTERS: ('', '', ''),
         IGNORES: [],
-        FORCE_DOWNLOAD: []
+        FORCE_DOWNLOAD: [],
+        PARENT_EXPANSIONS: [CLASSIC, TBC]
     },
     CATA: {
         INDEX: 3,
@@ -86,7 +90,8 @@ expansion_data = {
         OBJECT_CACHE: 'wowhead_cata_object_cache',
         METADATA_FILTERS: ('', '', ''),
         IGNORES: [],
-        FORCE_DOWNLOAD: [ ]
+        FORCE_DOWNLOAD: [ ],
+        PARENT_EXPANSIONS: [CLASSIC, TBC, WRATH]
     }
 }
 
@@ -270,25 +275,16 @@ def parse_wowhead_pages(expansion, metadata: dict[int, ObjectData]) -> dict[int,
 
 
 def merge_object(id: int, old_objects: dict[str, ObjectData], new_object: ObjectData) -> dict[str, ObjectData]:
-    if len(old_objects) > 1:
-        last_old_object_key = list(old_objects.keys())[-1]
-        result = merge_object(id, {last_old_object_key: old_objects[last_old_object_key]}, new_object)
-        del old_objects[last_old_object_key]
-        return {**old_objects, **result}
-    if len(old_objects) == 1:
-        old_object = next(iter(old_objects.values()))
+    old_object = parent_variant(old_objects, expansion_data[new_object.expansion][PARENT_EXPANSIONS])
+    if old_object is None or old_object.name.lower() != new_object.name.lower():
+        return {**old_objects, **{new_object.expansion: new_object}}
 
-        if old_object.name.lower() != new_object.name.lower():
-            return {**old_objects, **{new_object.expansion: new_object}}
+    if old_object.text != new_object.text:
+        if old_object.text and new_object.text:
+            print(f'Texts differ for object #{id}')
+        return {**old_objects, **{new_object.expansion: new_object}}
 
-        if old_object.text != new_object.text:
-            if old_object.text and new_object.text:
-                print(f'Texts differ for object #{id}')
-            return {**old_objects, **{new_object.expansion: new_object}}
-
-        return old_objects
-    else:
-        print(f'Skip: Object #{id} instance number unexpected')
+    return old_objects
 
 
 def merge_expansions(old_expansion: dict[int, dict[str, ObjectData]], new_expansion: dict[int, ObjectData]) -> dict[int, dict[str, ObjectData]]:
@@ -354,22 +350,14 @@ def merge_metadata(expansion, wowhead_objects, wowhead_md):
 
 def retrieve_object_data() -> dict[int, dict[str, ObjectData]]:
     all_objects = dict()
-    branch_objects = dict()
     for expansion, expansion_properties in expansion_data.items():
         wowhead_md = get_wowhead_object_metadata(expansion)
         save_htmls_from_wowhead(expansion, set(wowhead_md.keys()))
         wowhead_objects = parse_wowhead_pages(expansion, wowhead_md)
         merge_metadata(expansion, wowhead_objects, wowhead_md)
         fix_expansion_objects(expansion, wowhead_objects)
-        if expansion == FOREVER:
-            # A branch: compared with its parents, and kept out of the mainline until it is merged
-            print(f'Merging with {expansion}, a branch')
-            branch_objects = merge_branch(all_objects, wowhead_objects, expansion,
-                                          expansion_properties[PARENT_EXPANSIONS], merge_object)
-            continue
         print(f'Merging with {expansion}')
         all_objects = merge_expansions(all_objects, wowhead_objects)
-    attach_branch(all_objects, branch_objects, FOREVER)
 
     return all_objects
 

@@ -7,9 +7,8 @@ from bs4 import BeautifulSoup
 import sqlite3
 import difflib
 from generation.database.build_classicua_db import update_table
-from generation.utils.utils import (attach_branch, check_feedback, compare_directories, init_wowhead_worker,
-                                    merge_branch, write_crowdin_xml_file, update_on_crowdin, wowhead_get,
-                                    wowhead_pool_state)
+from generation.utils.utils import (check_feedback, compare_directories, init_wowhead_worker, parent_variant,
+                                    write_crowdin_xml_file, update_on_crowdin, wowhead_get, wowhead_pool_state)
 
 SCRAPE_THREADS = 1
 PARSE_THREADS = os.cpu_count()
@@ -30,6 +29,7 @@ IGNORES = 'ignores'
 INDEX = 'index'
 METADATA_FILTERS = 'metadata_filters'
 PARENT_EXPANSIONS = 'parent_expansions'
+RECONCILE_PARENTS = 'reconcile_parents'  # False when merging must leave the parents' quests as they are
 
 expansion_data = {
     CLASSIC: {
@@ -38,6 +38,7 @@ expansion_data = {
         HTML_CACHE: 'wowhead_classic_quests_html',
         QUESTS_CACHE: 'wowhead_classic_quest_cache',
         METADATA_FILTERS: ('8:', '5:', '11500:'),
+        PARENT_EXPANSIONS: [],
         IGNORES: [
             1, 785, 912, 999, 1005, 1006, 1099, 1174, 1272, 1500, 2000, 5383, 6843, 7522, 7561, 7797, 7906, 7961, 7962, 8226, 8259, 8289, 8296, 8478, 8489, 8618, 8896, 9065,  # Not used in all expansions
             # 8617, 8618, 8530, 8531 # '<faction_name> needs singed corestones' quests actually not used.
@@ -52,6 +53,7 @@ expansion_data = {
         HTML_CACHE: 'wowhead_sod_quests_html',
         QUESTS_CACHE: 'wowhead_sod_quest_cache',
         METADATA_FILTERS: ('8:', '2:', '11500:'),
+        PARENT_EXPANSIONS: [CLASSIC],
         IGNORES: [
             2000, 7797, 63769, 81977, 81979, 81980, 81982, 81983,
             2358,  # Horns of Nez'ra (added in Wrath)
@@ -64,8 +66,9 @@ expansion_data = {
         HTML_CACHE: 'wowhead_forever_quests_html',
         QUESTS_CACHE: 'wowhead_forever_quest_cache',
         METADATA_FILTERS: ('', '', ''),
-        IGNORES: [],
-        PARENT_EXPANSIONS: [CLASSIC, SOD]
+        PARENT_EXPANSIONS: [CLASSIC, SOD],
+        RECONCILE_PARENTS: False,
+        IGNORES: []
     },
     TBC: {
         WOWHEAD_URL: 'https://www.wowhead.com/tbc',
@@ -73,6 +76,7 @@ expansion_data = {
         HTML_CACHE: 'wowhead_tbc_quests_html',
         QUESTS_CACHE: 'wowhead_tbc_quest_cache',
         METADATA_FILTERS: ('', '', ''),
+        PARENT_EXPANSIONS: [CLASSIC],
         IGNORES: [
             1, 785, 912, 999, 1005, 1006, 1099, 1174, 1272, 1500, 2000, 5383, 6843, 7522, 7561, 7797, 7906, 7961, 7962, 8226, 8259, 8289, 8296, 8478, 8489, 8618, 8896, 9065,  # Not used in all expansions
             2358,  # Horns of Nez'ra (added in Wrath)
@@ -87,6 +91,7 @@ expansion_data = {
         HTML_CACHE: 'wowhead_wrath_quests_html',
         QUESTS_CACHE: 'wowhead_wrath_quest_cache',
         METADATA_FILTERS: ('', '', ''),
+        PARENT_EXPANSIONS: [CLASSIC, TBC],
         IGNORES: [
             1, 785, 912, 999, 1005, 1006, 1099, 1174, 1272, 1500, 2000, 5383, 6843, 7522, 7561, 7797, 7906, 7961, 7962, 8226, 8259, 8289, 8296, 8478, 8489, 8618, 8896, 9065,  # Not used in all expansions
             9511, 9880, 9881, 10375, 10376, 10377, 10378, 10379, 10383, 10386, 10387, 10558, 10559, 10560, 10561, 10638, 10716, 10779, 10844, 10999, 11027, 11196, 11334, 11345, 11551, 11976, 24508, 24509, 65221, 65222, 65223, 65224,  # Appeared in TBC, not used
@@ -99,6 +104,7 @@ expansion_data = {
         HTML_CACHE: 'wowhead_cata_quests_html',
         QUESTS_CACHE: 'wowhead_cata_quest_cache',
         METADATA_FILTERS: ('', '', ''),
+        PARENT_EXPANSIONS: [CLASSIC, TBC, WRATH],
         IGNORES: [
             1, 785, 912, 999, 1005, 1006, 1099, 1174, 1272, 1500, 2000, 5383, 6843, 7522, 7561, 7797, 7906, 7961, 7962, 8226, 8259, 8289, 8296, 8478, 8489, 8618, 8896, 9065,  # Not used in all expansions
             9511, 9880, 9881, 10375, 10376, 10377, 10378, 10379, 10383, 10386, 10387, 10558, 10559, 10560, 10561, 10638, 10716, 10779, 10844, 10999, 11027, 11196, 11334, 11345, 11551, 11976, 24508, 24509, 65221, 65222, 65223, 65224,  # Appeared in TBC, not used
@@ -112,6 +118,7 @@ expansion_data = {
         HTML_CACHE: 'wowhead_mists_quests_html',
         QUESTS_CACHE: 'wowhead_mists_quests_cache',
         METADATA_FILTERS: ('', '', ''),
+        PARENT_EXPANSIONS: [CLASSIC, TBC, WRATH, CATA],
         IGNORES: [
             1, 785, 912, 999, 1005, 1006, 1099, 1174, 1272, 1500, 2000, 5383, 6843, 7522, 7561, 7797, 7906, 7961, 7962, 8226, 8259, 8289, 8296, 8478, 8489, 8618, 8896, 9065,  # Not used in all expansions
             9511, 9880, 9881, 10375, 10376, 10377, 10378, 10379, 10383, 10386, 10387, 10558, 10559, 10560, 10561, 10638, 10716, 10779, 10844, 10999, 11027, 11196, 11334, 11345, 11551, 11976, 24508, 24509, 65221, 65222, 65223, 65224,  # Appeared in TBC, not used
@@ -125,6 +132,7 @@ expansion_data = {
         HTML_CACHE: 'wowhead_retail_quests_html',
         QUESTS_CACHE: 'wowhead_retail_quest_cache',
         METADATA_FILTERS: ('8:', '5:', '50001:'),
+        PARENT_EXPANSIONS: [CLASSIC, TBC, WRATH, CATA, MISTS],
         IGNORES: [
             1, 785, 912, 999, 1005, 1006, 1099, 1174, 1272, 1500, 2000, 5383, 6843, 7522, 7561, 7797, 7906, 7961, 7962, 8226, 8259, 8289, 8296, 8478, 8489, 8618, 8896, 9065,  # Not used in all expansions
             9511, 9880, 9881, 10375, 10376, 10377, 10378, 10379, 10383, 10386, 10387, 10558, 10559, 10560, 10561, 10638, 10716, 10779, 10844, 10999, 11027, 11196, 11334, 11345, 11551, 11976, 24508, 24509, 65221, 65222, 65223, 65224,  # Appeared in TBC, not used
@@ -956,90 +964,83 @@ def merge_with_db(wowhead_quests: dict[int, dict[str, QuestEntity]], classicua_q
 
 def merge_quest(id: int, old_quests: dict[str, QuestEntity], new_quests: dict[str, QuestEntity]) -> dict[str, QuestEntity]:
     # Check "Warning"s manually, you may need to add fixes to fix_<expansion>_quests method. "WARNING!"s are especially dangerous
-    if len(old_quests) > 1 and len(new_quests) == 1:
-        # print(f'Merging more than one instance from previous expansion for Quest #{id}')
-        last_old_quest_key = list(old_quests.keys())[-1]
-        result = merge_quest(id, {last_old_quest_key: old_quests[last_old_quest_key]}, new_quests)
-        del old_quests[last_old_quest_key]
-        return {**old_quests, **result}
-    if len(old_quests) == 1 and len(new_quests) == 1:
-        old_quest = next(iter(old_quests.values()))
-        new_quest = next(iter(new_quests.values()))
-        old_expansion = old_quest.expansion
-        new_expansion = new_quest.expansion
+    new_quest = next(iter(new_quests.values()))
+    old_quest = parent_variant(old_quests, expansion_data[new_quest.expansion][PARENT_EXPANSIONS])
+    if old_quest is None:
+        return {**old_quests, **new_quests}
+    if not expansion_data[new_quest.expansion].get(RECONCILE_PARENTS, True):
+        old_quest = copy.deepcopy(old_quest)  # the changes below then stay off the parent's quest
+    old_expansion = old_quest.expansion
+    new_expansion = new_quest.expansion
 
-        old_quest.merge_metadata(new_quest)
+    old_quest.merge_metadata(new_quest)
 
-        if old_quest.name != new_quest.name:
-            # print('-' * 100)
-            # print(f'Warning0: Quest #{id}:{old_expansion}/{new_expansion} name was changed: "{old_quest.name}" -> "{new_quest.name}"')
-            # print('\n'.join(old_quest.diff(new_quest)))
-            return {**old_quests, **new_quests}
+    if old_quest.name != new_quest.name:
+        # print('-' * 100)
+        # print(f'Warning0: Quest #{id}:{old_expansion}/{new_expansion} name was changed: "{old_quest.name}" -> "{new_quest.name}"')
+        # print('\n'.join(old_quest.diff(new_quest)))
+        return {**old_quests, **new_quests}
 
-        changes = old_quest.diff_updates(new_quest)
-        additions = old_quest.diff_deletes(new_quest)
-        deletions = new_quest.diff_deletes(old_quest)
+    changes = old_quest.diff_updates(new_quest)
+    additions = old_quest.diff_deletes(new_quest)
+    deletions = new_quest.diff_deletes(old_quest)
 
-        if len(changes) > 0 and len(additions) > 0 and len(deletions) > 0:
-            print('-' * 100)
-            print(f'WARNING1!: Quest #{old_quest.id}:{old_expansion}/{new_expansion} "{old_quest.name}" text is a mess:')
-            print('\n'.join(old_quest.diff(new_quest)))
-            return {**old_quests, **new_quests}
-
-        if len(changes) > 0 and len(additions) > 0:
-            # print('-' * 100)
-            # print(f'Warning2: Quest #{old_quest.id}:{old_expansion}/{new_expansion} "{old_quest.name}" text has changes and additions:')
-            # print('\n'.join(old_quest.diff(new_quest)))
-            old_quest.accept_text_additions(new_quest)
-            return {**old_quests, **new_quests}
-
-        if len(changes) > 0 and len(deletions) > 0:
-            print('-' * 100)
-            print(f'WARNING3!: Quest #{old_quest.id}:{old_expansion}/{new_expansion} "{old_quest.name}" text has changes and deletions:')
-            print('\n'.join(old_quest.diff(new_quest)))
-            return {**old_quests, **new_quests}
-
-        if len(additions) > 0 and len(deletions) > 0:
-            print('-' * 100)
-            print(f'WARNING4!: Quest #{old_quest.id}:{old_expansion}/{new_expansion} "{old_quest.name}" text has additions and deletions:')
-            print('\n'.join(old_quest.diff(new_quest)))
-            return {**old_quests, **new_quests}
-
-        if len(changes) > 0:  # Check (546)
-            # print('-' * 100)
-            # print(f'Warning5: Quest #{old_quest.id}:{old_expansion}/{new_expansion} "{old_quest.name}" text was changed:')
-            # print('\n'.join(changes))
-            return {**old_quests, **new_quests}
-
-        if len(additions) > 0:  # Usually no problems (55)
-            # print('-' * 100)
-            # print(f'Warning6: Quest #{old_quest.id}:{old_expansion}/{new_expansion} "{old_quest.name}" text has additions:')
-            # print('\n'.join(additions))
-            old_quest.accept_text_additions(new_quest)
-            return old_quests
-
-        if len(deletions) > 0:  # Maybe Wowhead haven't parsed some strings (usually PROGRESS) for next expansions
-            # print('-' * 100)
-            # print(f'Warning7: Quest #{old_quest.id}:{old_expansion}/{new_expansion} "{old_quest.name}" text has deletions:')
-            # print('\n'.join(deletions))
-            return old_quests
-
-        old_quest.cat = new_quest.cat  # Just to have quests in the same folder for all expansions
-
-        diff = old_quest.diff(new_quest)
-        if old_quest != new_quest or len(diff) > 0:
-            print('-' * 100)
-            print(f'WARNING8!: Quest #{old_quest.id}:{old_expansion}/{new_expansion} "{old_quest.name}" still has diffs:')
-            print('\n'.join(diff))
-            return {**old_quests, **new_quests}
-
-        if old_quest == new_quest:
-            return old_quests
-    else:
+    if len(changes) > 0 and len(additions) > 0 and len(deletions) > 0:
         print('-' * 100)
-        print(f'Skip: Quest #{id} instance number unexpected')
+        print(f'WARNING1!: Quest #{old_quest.id}:{old_expansion}/{new_expansion} "{old_quest.name}" text is a mess:')
+        print('\n'.join(old_quest.diff(new_quest)))
+        return {**old_quests, **new_quests}
 
-    pass
+    if len(changes) > 0 and len(additions) > 0:
+        # print('-' * 100)
+        # print(f'Warning2: Quest #{old_quest.id}:{old_expansion}/{new_expansion} "{old_quest.name}" text has changes and additions:')
+        # print('\n'.join(old_quest.diff(new_quest)))
+        old_quest.accept_text_additions(new_quest)
+        return {**old_quests, **new_quests}
+
+    if len(changes) > 0 and len(deletions) > 0:
+        print('-' * 100)
+        print(f'WARNING3!: Quest #{old_quest.id}:{old_expansion}/{new_expansion} "{old_quest.name}" text has changes and deletions:')
+        print('\n'.join(old_quest.diff(new_quest)))
+        return {**old_quests, **new_quests}
+
+    if len(additions) > 0 and len(deletions) > 0:
+        print('-' * 100)
+        print(f'WARNING4!: Quest #{old_quest.id}:{old_expansion}/{new_expansion} "{old_quest.name}" text has additions and deletions:')
+        print('\n'.join(old_quest.diff(new_quest)))
+        return {**old_quests, **new_quests}
+
+    if len(changes) > 0:  # Check (546)
+        # print('-' * 100)
+        # print(f'Warning5: Quest #{old_quest.id}:{old_expansion}/{new_expansion} "{old_quest.name}" text was changed:')
+        # print('\n'.join(changes))
+        return {**old_quests, **new_quests}
+
+    if len(additions) > 0:  # Usually no problems (55)
+        # print('-' * 100)
+        # print(f'Warning6: Quest #{old_quest.id}:{old_expansion}/{new_expansion} "{old_quest.name}" text has additions:')
+        # print('\n'.join(additions))
+        old_quest.accept_text_additions(new_quest)
+        return old_quests
+
+    if len(deletions) > 0:  # Maybe Wowhead haven't parsed some strings (usually PROGRESS) for next expansions
+        # print('-' * 100)
+        # print(f'Warning7: Quest #{old_quest.id}:{old_expansion}/{new_expansion} "{old_quest.name}" text has deletions:')
+        # print('\n'.join(deletions))
+        return old_quests
+
+    old_quest.cat = new_quest.cat  # Just to have quests in the same folder for all expansions
+
+    diff = old_quest.diff(new_quest)
+    if old_quest != new_quest or len(diff) > 0:
+        print('-' * 100)
+        print(f'WARNING8!: Quest #{old_quest.id}:{old_expansion}/{new_expansion} "{old_quest.name}" still has diffs:')
+        print('\n'.join(diff))
+        return {**old_quests, **new_quests}
+
+    if old_quest == new_quest:
+        return old_quests
+
 
 def merge_expansions(old_expansion: dict[int, dict[str, QuestEntity]], new_expansion: dict[int, dict[str, QuestEntity]]) -> dict[int, dict[str, QuestEntity]]:
     result = dict()
@@ -1647,16 +1648,10 @@ def populate_cache_db_with_quest_data() -> dict[int, dict[str, QuestEntity]]:
     fix_wrath_quests(wowhead_quests_wrath)
     fix_cata_quests(wowhead_quests_cata)
 
-    # Forever is a branch: compared with classic and SoD before the later expansions add to them, and kept out of
-    # the mainline until that is merged. The copy keeps merge_quest's changes to its old quest off the parents.
-    print('Merging with Forever, a branch')
-    forever_quests = merge_branch({**wowhead_quests, **wowhead_quests_sod},
-                                  {id: quests[FOREVER] for id, quests in wowhead_quests_forever.items()}, FOREVER,
-                                  expansion_data[FOREVER][PARENT_EXPANSIONS],
-                                  lambda id, old, new: merge_quest(id, copy.deepcopy(old), {FOREVER: new}))
-
+    print('Merging with Forever')
+    classic_sod_forever_quests = merge_expansions({**wowhead_quests, **wowhead_quests_sod}, wowhead_quests_forever)
     print('Merging with TBC')
-    classic_and_tbc_quests = merge_expansions({**wowhead_quests, **wowhead_quests_sod}, wowhead_quests_tbc)
+    classic_and_tbc_quests = merge_expansions(classic_sod_forever_quests, wowhead_quests_tbc)
     print('Merging with WotLK')
     classic_tbc_wrath_quests = merge_expansions(classic_and_tbc_quests, wowhead_quests_wrath)
     print('Merging with Cata')
@@ -1666,7 +1661,6 @@ def populate_cache_db_with_quest_data() -> dict[int, dict[str, QuestEntity]]:
     # all_quests = merge_expansions(classic_tbc_wrath_cata_quests, wowhead_quests_mists)
     print('Merging with Retail')
     # all_quests = merge_expansions(classic_tbc_wrath_cata_quests, wowhead_quests_retail)
-    attach_branch(all_quests, forever_quests, FOREVER)
 
     classicua_data = get_all_quests_from_db('classicua.db')
     print('Merging with ClassicUA')

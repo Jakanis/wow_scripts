@@ -10,8 +10,8 @@ from bs4 import BeautifulSoup, CData
 from generation.utils.issues import ERROR, WARNING, Issue, IssueLog
 from generation.utils.text_checks import mixed_script_words
 from generation.utils.utils import (NOTE_ALREADY_TRANSLATED, NOTE_NOT_TRANSLATED, NOTE_PRETRANSLATED,
-                                    attach_branch, check_feedback, download_csv_from_google_sheet, merge_branch,
-                                    format_notes, init_wowhead_worker, notes_hold_back_row, parse_notes,
+                                    check_feedback, download_csv_from_google_sheet,
+                                    format_notes, init_wowhead_worker, notes_hold_back_row, parent_variant, parse_notes,
                                     __to_tsv_val, wowhead_get, wowhead_pool_state)
 from generation.utils.wowhead_tooltips import render_tooltips
 
@@ -723,24 +723,15 @@ def create_translation_sheet(spells: dict[int, dict[str, SpellData]], path: str 
             print(f"Added {count} spells for translation to {path}")
 
 
-def __parent_variant(variants: dict, expansion: str):
-    # the nearest ancestor with a variant (the parent lists run oldest to newest), or the last one
-    # merged when none of them has one
-    for parent in reversed(expansion_data[expansion][PARENT_EXPANSIONS]):
-        if parent in variants:
-            return variants[parent]
-    return variants[list(variants.keys())[-1]]
-
-
 def merge_spell(id: int, old_spells: dict[str, SpellData], new_spell: SpellData) -> dict[str, SpellData]:
     if old_spells:
-        old_spell = __parent_variant(old_spells, new_spell.expansion)
+        old_spell = parent_variant(old_spells, expansion_data[new_spell.expansion][PARENT_EXPANSIONS])
 
-        if (not old_spell.is_equal_ignoring_values_to(new_spell)
+        if (old_spell is None
+                or not old_spell.is_equal_ignoring_values_to(new_spell)
                 or old_spell.name_ref != new_spell.name_ref
                 or old_spell.description_ref != new_spell.description_ref
-                or old_spell.aura_ref != new_spell.aura_ref
-                or old_spell.expansion not in expansion_data[new_spell.expansion][PARENT_EXPANSIONS]):
+                or old_spell.aura_ref != new_spell.aura_ref):
             return {**old_spells, **{new_spell.expansion: new_spell}}
         else:
             return old_spells
@@ -793,7 +784,6 @@ def populate_similarities(spells: dict[int, SpellData]):
 def retrieve_spell_data() -> tuple[dict[int, dict[str, SpellData]], dict[int, dict[str, SpellData]]]:
     merged_spells = dict()
     raw_spells = dict()
-    branch_spells = dict()
 
     stored_classic_spells = None
     for expansion, expansion_properties in expansion_data.items():
@@ -813,15 +803,8 @@ def retrieve_spell_data() -> tuple[dict[int, dict[str, SpellData]], dict[int, di
             populate_similarities({**stored_classic_spells, **wowhead_spells})
         else:
             populate_similarities(wowhead_spells)
-        if expansion == FOREVER:
-            # A branch: compared with its parents, and kept out of the mainline until it is merged
-            print(f'Merging with {expansion}, a branch')
-            branch_spells = merge_branch(merged_spells, wowhead_spells, expansion,
-                                         expansion_properties[PARENT_EXPANSIONS], merge_spell)
-            continue
         print(f'Merging with {expansion}')
         merged_spells = merge_expansions(merged_spells, wowhead_spells)
-    attach_branch(merged_spells, branch_spells, FOREVER)
 
     return merged_spells, raw_spells
 
