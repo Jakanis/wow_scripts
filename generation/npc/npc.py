@@ -389,53 +389,6 @@ def load_npcs_from_db(db_path = 'cache/npcs.db') -> dict[int, dict[str, NPC_MD]]
 
     return npcs
 
-def get_zone_page(zone_id):
-    import json
-    url = f'https://www.wowhead.com/classic/zone={zone_id}'
-    r = wowhead_get(url)
-    if not r.ok:  # no such zone in the classic client
-        return None
-
-    # Every real zone page renders at least one listview, with or without NPCs. Without one we got an
-    # error/interstitial page instead, and returning None would silently drop that zone's NPCs.
-    if 'new Listview(' not in r.text:
-        raise Exception(f'Wowhead returned an unexpected page for zone {zone_id}')
-
-    start = r.text.find("template: 'npc'")
-    if start == -1:  # No NPCs on page
-        return None
-    start = r.text.find('data: [', start)
-    end = r.text.find('});', start)
-    if start == -1 or end == -1:
-        raise Exception(f'Could not read the NPC listview of zone {zone_id}')
-    json_data = r.text[start + len('data: '):end]
-    return (zone_id, json.loads(json_data))
-
-
-def get_wowhead_zones_npc_ids(zone_ids) -> dict[int, list[int]]:
-    import multiprocessing
-    import pickle
-    if os.path.exists(f'cache/tmp/npc_ids_to_zone_ids_cache.pkl'):
-        print(f'Loading cached npc_ids_to_zone_ids')
-        with open(f'cache/tmp/npc_ids_to_zone_ids_cache.pkl', 'rb') as f:
-            npc_ids_to_zone_ids = pickle.load(f)
-    else:
-        print(f'Retrieving npc_ids_to_zone_ids data')
-        npc_ids_to_zone_ids = dict()
-        with multiprocessing.Pool(SCRAPE_THREADS, initializer=init_wowhead_worker,
-                                  initargs=(wowhead_pool_state(),)) as p:
-            npcs_by_zone = filter(lambda x: x is not None, p.map(get_zone_page, zone_ids))
-        for zone_id, npcs in sorted(npcs_by_zone):
-            for npc in npcs:
-                if not npc['id'] in npc_ids_to_zone_ids:
-                    npc_ids_to_zone_ids[npc['id']] = list()
-                npc_ids_to_zone_ids[npc['id']].append(zone_id)
-        os.makedirs('cache/tmp', exist_ok=True)
-        with open(f'cache/tmp/npc_ids_to_zone_ids_cache.pkl', 'wb') as f:
-            pickle.dump(npc_ids_to_zone_ids, f)
-    return npc_ids_to_zone_ids
-
-
 def merge_npc(id: int, old_npcs: dict[str, NPC_MD], new_npcs: dict[str, NPC_MD]) -> dict[str, NPC_MD]:
     if len(old_npcs) > 1 and len(new_npcs) == 1:
         # print(f'Merging more than one instance from previous expansion for NPC #{id}')
@@ -545,21 +498,6 @@ def apply_translations_to_data(all_npcs: dict[int, dict[str, NPC_MD]], translati
             if key in translations[expansion]:
                 all_npcs[key][expansion].name_ua = translations[expansion][key].name
                 all_npcs[key][expansion].tag_ua = translations[expansion][key].tag
-
-
-def populate_npc_locations(all_npcs: dict[int, dict[str, NPC_MD]]):
-    # Just for handier translation
-    from generation.zones import zones
-    zone_ids = zones.get_zone_ids(zones.SOD)  # the era client: classic's zones and SoD's
-    npc_ids_to_zone_ids = get_wowhead_zones_npc_ids(zone_ids)
-
-    # The search metadata already carries a per-expansion location, and the zone pages are scraped from
-    # the classic client only - so the two complement each other rather than replace one another.
-    for key in all_npcs.keys():
-        for expansion in all_npcs[key].keys():
-            npc_md = all_npcs[key][expansion]
-            zone_ids = set(npc_md.location or []) | set(npc_ids_to_zone_ids.get(key, []))
-            npc_md.location = sorted(zone_ids)
 
 
 def update_questie_translation(all_npcs: dict[int, dict[str, NPC_MD]]):
@@ -677,7 +615,7 @@ def filter_untranslated(npcs: dict[int, dict[str, NPC_MD]], missed_npcs: set[int
         for expansion, npc in npcs[key].items():
             if npc.name_ua is not None or npc.expansion not in expansions:
                 continue
-            if (npc.react != [None, None] or npc.location != []
+            if (npc.react != [None, None] or npc.location
                     or key in missed_npcs or npc.name in name_pretranslation_map):
                 result.setdefault(key, {})[expansion] = npc
     return result
@@ -1169,7 +1107,6 @@ if __name__ == '__main__':
     sheet_translations = load_merged_translations()
 
     all_npcs_md, npc_quotes = retrieve_npc_data()
-    populate_npc_locations(all_npcs_md)
 
     # Regenerate ClassicUA's npc.lua directly from Crowdin glossary and update input of this script with fresh entries
     glossary = generate_entries_with_classicua(glossary)

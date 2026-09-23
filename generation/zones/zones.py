@@ -69,8 +69,7 @@ expansion_data = {
 RETAIL_BUILD = '12.1.0.69933'
 
 WAGO_URL = 'https://wago.tools'
-# Absolute, because npc.py reads the zone ids from here with generation/npc as its working directory
-WAGO_CACHE = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'cache', 'wago')
+WAGO_CACHE = 'cache/wago'
 
 AREA = 'AreaTable'
 MAP = 'Map'
@@ -118,7 +117,7 @@ UNUSED = re.compile(
     r'\btest(?:ing)?\b|test\d*$|^test|smoketest|'
     r'programmer isle|designer island|development land|dev only|\bdev\b|'
     r'\bjeff [ns][ew] quadrant|\(old\b|\bOLD\)|\bOLD$|^\d+\.\d+[\d.]* ?(?:-|\w)|hackathon|\bcopy$|\w_\w|'
-    r'wowedit|spooky area|happy fun land|nothing to see here|^zz|�',
+    r'wowedit|spooky area|happy fun land|nothing to see here|^zz|\ufffd',
     re.I)
 DEVELOPMENT_MAP_NAME = re.compile(r'\btest\b|test$|unused|development land|dev only|nothing to see here', re.I)
 # Flight paths of quests, vehicles and lifts that still show on the flight map
@@ -328,13 +327,6 @@ def retrieve_zone_data() -> list[Zone]:
               f'{len({zone.name.lower() for zone in expansion_zones})} names')
         all_zones.extend(expansion_zones)
     return all_zones
-
-
-def get_zone_ids(expansion: str) -> set[int]:
-    # For npc.py, which reads the NPCs of a zone off its Wowhead page. Top-level areas only, as those are the
-    # ones with a page: zones and instances.
-    rows = read_wago_table(AREA, expansion_data[expansion][WAGO_BUILD])
-    return {int(row['ID']) for row in rows if row['ParentAreaID'] == '0'}
 
 
 def check_newer_builds():
