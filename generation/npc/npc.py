@@ -120,7 +120,7 @@ expansion_data = {
         METADATA_FILTERS: ('', '', ''),
         IGNORES: [],
         FORCE_DOWNLOAD: CURRENT_TOTEMS + [CRAFTICUS],
-        RETRIEVE_QUOTES: False
+        RETRIEVE_QUOTES: True
     },
     MISTS: {
         WOWHEAD_URL: 'https://www.wowhead.com/mop-classic',
@@ -130,7 +130,7 @@ expansion_data = {
         METADATA_FILTERS: ('', '', ''),
         IGNORES: [],
         FORCE_DOWNLOAD: CURRENT_TOTEMS + [CRAFTICUS],
-        RETRIEVE_QUOTES: False
+        RETRIEVE_QUOTES: True,
     }
 }
 
