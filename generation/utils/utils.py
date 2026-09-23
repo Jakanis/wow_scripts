@@ -20,51 +20,54 @@ _WOWHEAD_HEADERS = {
 
 
 def wowhead_delay() -> float:
-    # WOWHEAD_DELAY: seconds before each request, "1" or a range "1:5"; default is 1.5 s
+    # WOWHEAD_DELAY: seconds from the start of one request to the start of the next, "1" or a range "1:5";
+    # default is 1.5 s. A page that takes longer than that to load is followed by the next one straight away.
     setting = os.getenv('WOWHEAD_DELAY', '1.5')
     low, _, high = setting.partition(':')
     return random.uniform(float(low), float(high or low))
 
 
-# A pool's workers share one of these (made by wowhead_pool_state, handed over by init_wowhead_worker),
-# so a refusal from Wowhead holds every worker rather than each finding the limit on its own and all of
-# them coming back in the same second. Without a pool it stays None and each call waits for itself.
-_wowhead_resume_at = None
+# When the next request may start. A pool's workers share one with the process that made the pool
+# (handed over by init_wowhead_worker), so the delay paces them all together and a refusal from Wowhead
+# holds every worker rather than each finding the limit on its own.
+_wowhead_next_start = None
 
 
 def wowhead_pool_state():
-    import multiprocessing
-    return multiprocessing.Value('d', 0.0)
+    # This process's schedule, made on first use; pass it to a pool's init_wowhead_worker to share it.
+    global _wowhead_next_start
+    if _wowhead_next_start is None:
+        import multiprocessing
+        _wowhead_next_start = multiprocessing.Value('d', 0.0)
+    return _wowhead_next_start
 
 
-def init_wowhead_worker(resume_at) -> None:
-    # Pool initializer: hands the worker the pause its pool shares.
-    global _wowhead_resume_at
-    _wowhead_resume_at = resume_at
+def init_wowhead_worker(next_start) -> None:
+    # Pool initializer: hands the worker the schedule its pool shares.
+    global _wowhead_next_start
+    _wowhead_next_start = next_start
 
 
 def __wait_for_wowhead() -> None:
-    if _wowhead_resume_at is None:
-        return
-    pause = _wowhead_resume_at.value - time.time()
-    if pause > 0:
-        # spread out again, or every worker comes back in the same second
-        time.sleep(pause + random.uniform(0, 5))
+    # Takes the next free start and books the one after it a delay later, so it is start to start
+    # however long each page takes to load.
+    schedule = wowhead_pool_state()
+    with schedule.get_lock():
+        start = max(time.time(), schedule.value)
+        schedule.value = start + wowhead_delay()
+    time.sleep(max(0.0, start - time.time()))
 
 
 def __hold_wowhead(seconds: float) -> None:
-    if _wowhead_resume_at is None:
-        time.sleep(seconds)
-        return
-    with _wowhead_resume_at.get_lock():
-        _wowhead_resume_at.value = max(_wowhead_resume_at.value, time.time() + seconds)
-    __wait_for_wowhead()
+    # Nothing starts before the hold is over; the requests waiting for it come back a delay apart.
+    schedule = wowhead_pool_state()
+    with schedule.get_lock():
+        schedule.value = max(schedule.value, time.time() + seconds)
 
 
 def wowhead_get(url: str) -> requests.Response:
-    # The delay before the request, and for anything but a page or a 404 a wait that grows until the
-    # server lets us back in.
-    time.sleep(wowhead_delay())
+    # Every attempt waits for its turn, and anything but a page or a 404 holds the next one for a wait
+    # that grows until the server lets us back in.
     wait = 60
     attempt = 0
     while True:
