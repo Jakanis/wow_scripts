@@ -758,7 +758,8 @@ def fix_readables(expansion, items):
     # Readable item #16307 changed between classic and cata at page #1
     # Readable item #16310 changed between classic and cata at page #1
 
-    if expansion == CLASSIC:
+    # Forever carries classic's texts as they were, so it takes classic's corrections too
+    if expansion in [CLASSIC, FOREVER]:
         items[2007].pages[1] = items[2007].pages[1].replace("I'lalia", "I'lalai")
         items[2154].pages[2] = items[2154].pages[2].replace("cemetary near Raven's Hill", "cemetery near Raven Hill")
         items[2154].pages[3] = items[2154].pages[3].replace("cemetary", "cemetery")
