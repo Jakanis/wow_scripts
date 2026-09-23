@@ -29,7 +29,7 @@ IGNORES = 'ignores'
 INDEX = 'index'
 METADATA_FILTERS = 'metadata_filters'
 PARENT_EXPANSIONS = 'parent_expansions'
-RECONCILE_PARENTS = 'reconcile_parents'  # False when merging must leave the parents' quests as they are
+RECONCILE_PARENTS = 'reconcile_parents'  # False: a branch's metadata and folder stay off its parents' quests
 
 expansion_data = {
     CLASSIC: {
@@ -224,6 +224,7 @@ class QuestEntity:
         self.lvl = lvl
         self.rlvl = rlvl
         self.expansion = expansion
+        self.added_from = dict()  # text field -> the expansion whose page supplied it
 
     def __str__(self):
         return f'#{self.id}:{self.expansion}, "{self.name}"'
@@ -324,14 +325,10 @@ class QuestEntity:
         return diffs
 
     def accept_text_additions(self, other):
-        if self.objective is None and self.objective != other.objective:
-             self.objective = other.objective
-        if self.description is None and self.description != other.description:
-             self.description = other.description
-        if self.progress is None and self.progress != other.progress:
-             self.progress = other.progress
-        if self.completion is None and self.completion != other.completion:
-             self.completion = other.completion
+        for field in ('objective', 'description', 'progress', 'completion'):
+            if getattr(self, field) is None and getattr(other, field) is not None:
+                setattr(self, field, getattr(other, field))
+                self.added_from[field] = other.expansion
         return self
 
     def merge_metadata(self, other):
@@ -965,11 +962,12 @@ def merge_with_db(wowhead_quests: dict[int, dict[str, QuestEntity]], classicua_q
 def merge_quest(id: int, old_quests: dict[str, QuestEntity], new_quests: dict[str, QuestEntity]) -> dict[str, QuestEntity]:
     # Check "Warning"s manually, you may need to add fixes to fix_<expansion>_quests method. "WARNING!"s are especially dangerous
     new_quest = next(iter(new_quests.values()))
-    old_quest = parent_variant(old_quests, expansion_data[new_quest.expansion][PARENT_EXPANSIONS])
-    if old_quest is None:
+    parent = parent_variant(old_quests, expansion_data[new_quest.expansion][PARENT_EXPANSIONS])
+    if parent is None:
         return {**old_quests, **new_quests}
-    if not expansion_data[new_quest.expansion].get(RECONCILE_PARENTS, True):
-        old_quest = copy.deepcopy(old_quest)  # the changes below then stay off the parent's quest
+    # A branch is compared with a copy, so its metadata and folder stay off its parent's quest. The text its page
+    # adds is the parent's text too, and goes to the parent like any other expansion's.
+    old_quest = parent if expansion_data[new_quest.expansion].get(RECONCILE_PARENTS, True) else copy.deepcopy(parent)
     old_expansion = old_quest.expansion
     new_expansion = new_quest.expansion
 
@@ -985,6 +983,14 @@ def merge_quest(id: int, old_quests: dict[str, QuestEntity], new_quests: dict[st
     additions = old_quest.diff_deletes(new_quest)
     deletions = new_quest.diff_deletes(old_quest)
 
+    # Text another expansion's page supplied that this one's contradicts: the pages disagree on the parent's text
+    contradicted = [field for field, expansion in old_quest.added_from.items()
+                    if expansion != new_expansion and getattr(new_quest, field) not in (None, getattr(old_quest, field))]
+    if contradicted:
+        print('-' * 100)
+        print(f'WARNING9!: Quest #{old_quest.id}:{old_expansion}/{new_expansion} "{old_quest.name}" text differs from '
+              f'what another expansion supplied: ' + ', '.join(f'{field} ({old_quest.added_from[field]})' for field in contradicted))
+
     if len(changes) > 0 and len(additions) > 0 and len(deletions) > 0:
         print('-' * 100)
         print(f'WARNING1!: Quest #{old_quest.id}:{old_expansion}/{new_expansion} "{old_quest.name}" text is a mess:')
@@ -995,7 +1001,7 @@ def merge_quest(id: int, old_quests: dict[str, QuestEntity], new_quests: dict[st
         # print('-' * 100)
         # print(f'Warning2: Quest #{old_quest.id}:{old_expansion}/{new_expansion} "{old_quest.name}" text has changes and additions:')
         # print('\n'.join(old_quest.diff(new_quest)))
-        old_quest.accept_text_additions(new_quest)
+        parent.accept_text_additions(new_quest)
         return {**old_quests, **new_quests}
 
     if len(changes) > 0 and len(deletions) > 0:
@@ -1020,7 +1026,7 @@ def merge_quest(id: int, old_quests: dict[str, QuestEntity], new_quests: dict[st
         # print('-' * 100)
         # print(f'Warning6: Quest #{old_quest.id}:{old_expansion}/{new_expansion} "{old_quest.name}" text has additions:')
         # print('\n'.join(additions))
-        old_quest.accept_text_additions(new_quest)
+        parent.accept_text_additions(new_quest)
         return old_quests
 
     if len(deletions) > 0:  # Maybe Wowhead haven't parsed some strings (usually PROGRESS) for next expansions
@@ -1641,9 +1647,11 @@ def populate_cache_db_with_quest_data() -> dict[int, dict[str, QuestEntity]]:
     fix_expansion(wowhead_quests, wowhead_quests_sod, wowhead_quests_tbc, wowhead_quests_wrath)
 
     fix_classic_quests(wowhead_quests)
-    # Forever carries classic's texts as they were, so its quests take classic's corrections too
-    fix_classic_quests({id: {CLASSIC: quests[FOREVER]} for id, quests in wowhead_quests_forever.items()})
     fix_classic_sod_quests(wowhead_quests, wowhead_quests_sod)
+    # Forever carries classic's and SoD's texts as they were, so its quests take their corrections too
+    forever_quests = {id: quests[FOREVER] for id, quests in wowhead_quests_forever.items()}
+    fix_classic_quests({id: {CLASSIC: quest} for id, quest in forever_quests.items()})
+    fix_classic_sod_quests(wowhead_quests, {id: {SOD: quest} for id, quest in forever_quests.items()})
     fix_tbc_quests(wowhead_quests_tbc)
     fix_wrath_quests(wowhead_quests_wrath)
     fix_cata_quests(wowhead_quests_cata)
