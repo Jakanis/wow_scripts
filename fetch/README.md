@@ -16,7 +16,6 @@ On the fetch machine, with the repository and `fetch/inventory.json` in place:
     python fetch/fetch.py                             # everything
     python fetch/fetch.py --module items spells       # some modules
     python fetch/fetch.py --expansion forever         # one expansion of each
-    python fetch/fetch.py --module spells --render    # plus rendered spell pages
     python fetch/pack.py                              # -> fetch/fetched_<date>.tar.gz
 
 Back home, extract over the repository root and run the generators as usual:
@@ -41,10 +40,7 @@ the new pages.
     tmux new -s fetch
     venv/bin/python fetch/fetch.py --module items spells --expansion forever
 
-`--render` needs Chromium: `requests_html` downloads its own on first use and
-needs `apt install -y libnss3 libatk-bridge2.0-0 libgbm1 libasound2t64
-libxkbcommon0 libgtk-3-0`. A CX32 (8 GB) is comfortable for rendering; a CX22
-is enough without it.
+A CX22 is enough: nothing here renders a page, every file is a plain download.
 
 `requirements.txt` pulls in `crowdin_api_client` because `generation/utils`
 imports it at module level; no token is needed, nothing in fetch talks to

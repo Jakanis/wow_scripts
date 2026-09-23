@@ -5,7 +5,6 @@ rate-limited part can run on another machine.
     python fetch/fetch.py                              # every module, every expansion
     python fetch/fetch.py --module items spells        # some modules
     python fetch/fetch.py --expansion forever          # one expansion of each
-    python fetch/fetch.py --module spells --render     # also the rendered spell pages
 
 Ids listed in fetch/inventory.json (written by inventory.py on the machine
 that holds the caches) count as present and are skipped. Every file this run
@@ -13,8 +12,7 @@ writes is appended to fetch/manifest.txt, which pack.py turns into an archive.
 
 Per module this is the download half of retrieve_*_data():
   items    search metadata, an XML per item, an HTML page for readable items
-  spells   search metadata, a raw page per spell, and with --render the
-           Chromium-rendered page for spells that have none yet
+  spells   search metadata, a page per spell
   npc      search metadata, a page per NPC where RETRIEVE_QUOTES is on, and
            the forced ids everywhere
   quests   search metadata, a page per quest
@@ -87,7 +85,7 @@ class Run:
             f.write(f'generation/{self.module}/cache/tmp/{folder}.pkl\n')
 
 
-def fetch_items(m, run: Run, expansion: str, args):
+def fetch_items(m, run: Run, expansion: str):
     props = m.expansion_data[expansion]
     md = m.get_wowhead_items_metadata(expansion)
     run.note_metadata(props[m.METADATA_CACHE])
@@ -101,19 +99,16 @@ def fetch_items(m, run: Run, expansion: str, args):
             run.fetch(props[m.HTML_CACHE], id, 'html', lambda: m.save_html_page(expansion, id))
 
 
-def fetch_spells(m, run: Run, expansion: str, args):
+def fetch_spells(m, run: Run, expansion: str):
     props = m.expansion_data[expansion]
     md = m.get_wowhead_spell_metadata(expansion)
     run.note_metadata(props[m.METADATA_CACHE])
     ids = set(md) | set(props.get(m.FORCE_DOWNLOAD, []))
     for id in sorted(ids):
-        run.fetch(props[m.HTML_CACHE] + '_raw', id, 'html', lambda: m.save_page_raw(expansion, id))
-    if args.render:
-        for id in sorted(ids):
-            run.fetch(props[m.HTML_CACHE] + '_rendered', id, 'html', lambda: m.save_page_calc(expansion, id))
+        run.fetch(props[m.HTML_CACHE], id, 'html', lambda: m.save_page(expansion, id))
 
 
-def fetch_npc(m, run: Run, expansion: str, args):
+def fetch_npc(m, run: Run, expansion: str):
     props = m.expansion_data[expansion]
     md = m.get_wowhead_npc_metadata(expansion)  # applies IGNORES and adds FORCE_DOWNLOAD
     run.note_metadata(props[m.METADATA_CACHE])
@@ -122,7 +117,7 @@ def fetch_npc(m, run: Run, expansion: str, args):
         run.fetch(props[m.HTML_CACHE], id, 'html', lambda: m.save_page(expansion, id))
 
 
-def fetch_quests(m, run: Run, expansion: str, args):
+def fetch_quests(m, run: Run, expansion: str):
     props = m.expansion_data[expansion]
     md = m.get_wowhead_quests_metadata(expansion)
     run.note_metadata(props[m.METADATA_CACHE])
@@ -130,7 +125,7 @@ def fetch_quests(m, run: Run, expansion: str, args):
         run.fetch(props[m.HTML_CACHE], id, 'html', lambda: m.save_page(expansion, id))
 
 
-def fetch_objects(m, run: Run, expansion: str, args):
+def fetch_objects(m, run: Run, expansion: str):
     props = m.expansion_data[expansion]
     md = m.get_wowhead_object_metadata(expansion)
     run.note_metadata(props[m.METADATA_CACHE])
@@ -152,7 +147,6 @@ def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument('--module', nargs='+', choices=MODULES, default=list(MODULES))
     ap.add_argument('--expansion', nargs='+', help='limit to these expansions (default: all in the module)')
-    ap.add_argument('--render', action='store_true', help='spells: also fetch the Chromium-rendered pages')
     ap.add_argument('--inventory', type=pathlib.Path, default=INVENTORY)
     args = ap.parse_args()
 
@@ -172,7 +166,7 @@ def main() -> int:
                 print(f'{name}: no {expansion} block, skipping')
                 continue
             print(f'== {name} {expansion}')
-            FETCHERS[name](m, run, expansion, args)
+            FETCHERS[name](m, run, expansion)
         print(f'{name}: {run.written} file(s) written, {run.skipped} already held')
     return 0
 
