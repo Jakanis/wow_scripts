@@ -51,7 +51,7 @@ expansion_data = {
         IGNORES: []
     },
     SOD: {
-        INDEX: 0,
+        INDEX: 0.1,
         WOWHEAD_URL: 'https://www.wowhead.com/classic',
         METADATA_CACHE: 'wowhead_sod_metadata_cache',
         HTML_CACHE: 'wowhead_sod_spell_html',
@@ -70,7 +70,7 @@ expansion_data = {
     },
     # WoW: Forever, in beta since 2026-09-17. Shares data with classic and SoD; its place in the merge order is not settled.
     FOREVER: {
-        INDEX: 0,
+        INDEX: 0.2,
         WOWHEAD_URL: 'https://www.wowhead.com/forever',
         METADATA_CACHE: 'wowhead_forever_metadata_cache',
         HTML_CACHE: 'wowhead_forever_spell_html',

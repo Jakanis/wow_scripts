@@ -55,7 +55,7 @@ expansion_data = {
         FORCE_DOWNLOAD: [13503, 16785, 17782]
     },
     SOD: {
-        INDEX: 0,
+        INDEX: 0.1,
         PARENT_EXPANSIONS: [CLASSIC],
         WOWHEAD_URL: 'https://www.wowhead.com/classic',
         METADATA_CACHE: 'wowhead_sod_metadata_cache',
@@ -80,7 +80,7 @@ expansion_data = {
     # },
     # WoW: Forever, in beta since 2026-09-17. Shares data with classic and SoD; its place in the merge order is not settled.
     FOREVER: {
-        INDEX: 0,
+        INDEX: 0.2,
         WOWHEAD_URL: 'https://www.wowhead.com/forever',
         METADATA_CACHE: 'wowhead_forever_metadata_cache',
         XML_CACHE: 'wowhead_forever_item_xml',
