@@ -9,7 +9,8 @@ from generation.database.build_classicua_db import update_table
 from generation.utils.utils import (check_feedback, compare_directories, write_crowdin_xml_file,
                                     update_on_crowdin, wowhead_get)
 
-THREADS = 2
+SCRAPE_THREADS = 1
+PARSE_THREADS = os.cpu_count()
 
 CLASSIC = 'classic'
 SOD = 'sod'
@@ -539,7 +540,7 @@ def save_htmls_from_wowhead(expansion, ids: set[int]):
     if len(redundant_ids) > 0:
         print(f"There's some redundant IDs: {redundant_ids}")
 
-    with multiprocessing.Pool(THREADS) as p:
+    with multiprocessing.Pool(SCRAPE_THREADS) as p:
         p.map(save_func, save_ids)
 
 
@@ -716,7 +717,7 @@ def parse_wowhead_pages(expansion, metadata: dict[int, QuestMD]) -> dict[int, di
     else:
         print(f'Parsing Wowhead({expansion}) quest pages')
         # wowhead_quests = {id: parse_wowhead_quest_page(expansion, id) for id in metadata.keys()}
-        with multiprocessing.Pool(THREADS) as p:
+        with multiprocessing.Pool(PARSE_THREADS) as p:
             quests = p.map(parse_func, metadata.keys())
         wowhead_quests = {quest.id: quest for quest in quests}
 

@@ -6,7 +6,8 @@ from generation.database.build_classicua_db import update_table
 from generation.utils.books import parse_book_pages
 from generation.utils.utils import compare_directories, update_on_crowdin, wowhead_get
 
-THREADS = os.cpu_count() // 2
+SCRAPE_THREADS = 1
+PARSE_THREADS = os.cpu_count()
 CLASSIC = 'classic'
 SOD = 'sod'
 SOD_PTR = 'sod_ptr'
@@ -225,7 +226,7 @@ def save_htmls_from_wowhead(expansion, ids: set[int]):
     #     print("Saving XML for item #" + str(id))
     #     save_page(expansion, id)
     save_func = partial(save_html_page, expansion)
-    with multiprocessing.Pool(THREADS) as p:
+    with multiprocessing.Pool(SCRAPE_THREADS) as p:
         p.map(save_func, save_ids)
 
 
@@ -254,7 +255,7 @@ def parse_wowhead_pages(expansion, metadata: dict[int, ObjectData]) -> dict[int,
         print(f'Parsing Wowhead({expansion}) objects')
         # wowhead_objects = {id: parse_wowhead_page(expansion, id) for id in metadata.keys()}
         parse_func = partial(parse_wowhead_page, expansion)
-        with multiprocessing.Pool(THREADS) as p:
+        with multiprocessing.Pool(PARSE_THREADS) as p:
             wowhead_objects = p.map(parse_func, metadata.keys())
         wowhead_objects = {spell.id: spell for spell in wowhead_objects}
 
