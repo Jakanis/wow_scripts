@@ -8,14 +8,15 @@ import time
 
 import requests
 from crowdin_api import CrowdinClient
+from curl_cffi import requests as curl_requests
 
 CROWDIN_PROJECT_ID = 393919
 TRANSLATIONS_SHEET_ID = '1xwoaO6U-jXQChHecEzzqG-leESTmRKm2WXHev4GOFho'
 
 _WOWHEAD_HEADERS = {
-    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/148.0.0.0 Safari/537.36 Edg/148.0.0.0',
+    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/153.0.0.0 Safari/537.36 Edg/153.0.0.0',
     'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7',
-    'Accept-Language': 'uk',
+    'Accept-Language': 'uk,en;q=0.9,en-GB;q=0.8,en-US;q=0.7',
 }
 
 
@@ -65,15 +66,25 @@ def __hold_wowhead(seconds: float) -> None:
         schedule.value = max(schedule.value, time.time() + seconds)
 
 
-def wowhead_get(url: str) -> requests.Response:
+def __wowhead_headers() -> dict:
+    # WOWHEAD_COOKIE: the Cookie header of a request your browser made to Wowhead (DevTools > Network), so
+    # pages come with your account's settings.
+    cookie = __getenv('WOWHEAD_COOKIE')
+    return {**_WOWHEAD_HEADERS, 'Cookie': cookie} if cookie else _WOWHEAD_HEADERS
+
+
+def wowhead_get(url: str) -> curl_requests.Response:
     # Every attempt waits for its turn, and anything but a page or a 404 holds the next one for a wait
     # that grows until the server lets us back in.
+    # Wowhead's firewall refuses anything that does not connect like a browser, whatever its headers or
+    # cookies, so the request copies Chrome's TLS and HTTP/2 handshake.
+    headers = __wowhead_headers()
     wait = 60
     attempt = 0
     while True:
         __wait_for_wowhead()
-        # r = requests.get(url, headers=_WOWHEAD_HEADERS)
-        r = requests.get(url)
+        r = curl_requests.get(url, headers=headers, impersonate='chrome')
+        # r = requests.get(url)
         if r.ok or r.status_code == 404:
             return r
         attempt += 1
