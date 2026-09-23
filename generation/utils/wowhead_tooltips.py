@@ -18,6 +18,8 @@ __COMMENT = re.compile(r'<!--.*?-->', re.S)
 __MARKER = re.compile(r'<!--(?:pts|sp|ppl|pl|lvl)')
 __EXPRESSION = re.compile(r'[\d\s.+\-*/()^,<>=!?:a-z]*')
 __TALENT_BLOCK = re.compile(r'(<!--sp(\d+):\d+-->)(.*?)(<!--sp\2-->)', re.S)
+# nothing but a number, or arithmetic on numbers
+__NUMERIC = re.compile(r'[\d\s.+\-*/()]*\d[\d\s.+\-*/()]*')
 # a real tag, as against the < of a comparison such as "85 <= 70"
 __TAG = re.compile(r'</?[a-zA-Z]')
 # a div the page leaves without any text of its own, which the browser drops
@@ -151,6 +153,24 @@ def __closing(markup: str, start: int, opening: str, closing: str) -> int:
     return -1
 
 
+def __closing_note(markup: str, start: int) -> int:
+    depth, i = 0, start
+    while i < len(markup):
+        if markup.startswith('<!--', i):
+            i = markup.find('-->', i) + 3
+            if i < 3:
+                return -1
+            continue
+        if markup[i] == '[':
+            depth += 1
+        elif markup[i] == ']':
+            depth -= 1
+            if depth == 0:
+                return i
+        i += 1
+    return -1
+
+
 def __work_out(markup: str) -> str:
     out, i = [], 0
     while i < len(markup):
@@ -169,8 +189,9 @@ def __work_out(markup: str) -> str:
         if character == '[':
             # a bracket that does not come to a number holds a note of its own, such as a glyph's
             # effect or a tuning note, and the page leaves all of it alone - the numbers within it
-            # included. Its end is looked for plainly, as a note may well have a tag in it.
-            end = markup.find(']', i)
+            # included. A note may have tags and brackets of its own in it, so only the brackets are
+            # counted to find where it ends.
+            end = __closing_note(markup, i)
             if end > 0:
                 out.append(markup[i:end + 1])
                 i = end + 1
@@ -180,10 +201,19 @@ def __work_out(markup: str) -> str:
     return ''.join(out)
 
 
-def __without_talent_spacing(markup: str) -> str:
-    # the page writes a sentence break as ". &nbsp;" but drops that space inside a talent's block
-    return __TALENT_BLOCK.sub(
-        lambda m: m.group(1) + m.group(3).replace('&nbsp;', '').replace(' ', '') + m.group(4), markup)
+def __as_talent_values(markup: str) -> str:
+    # A talent's block holds what the tooltip says with no points in the talent, and the page writes it
+    # back without the &nbsp; of a sentence break. A number it writes back as it writes any value:
+    # trimmed, and one that stands in parentheses inside a second pair - " (1)" comes out as "((1))".
+    # Text keeps its spaces, or "sec. &nbsp;Cannot" would lose the one it needs. A block may hold another.
+    def written_back(match):
+        value = __as_talent_values(match.group(3)).replace('&nbsp;', '').replace(' ', '')
+        if __NUMERIC.fullmatch(__COMMENT.sub('', value)):
+            value = value.strip()
+            if value.startswith('(') and value.endswith(')'):
+                value = '(%s)' % value
+        return match.group(1) + value + match.group(4)
+    return __TALENT_BLOCK.sub(written_back, markup)
 
 
 def render_tooltips(html: str, collection: str, id: int) -> str:
@@ -193,7 +223,7 @@ def render_tooltips(html: str, collection: str, id: int) -> str:
         markup = __script_string(html, collection, id, field)
         if not markup:
             continue
-        markup = __without_talent_spacing(markup)
+        markup = __as_talent_values(markup)
         markup = __work_out(markup)
         markup = __EMPTY_QUALITY.sub('', markup)
         html = re.sub(r'(<div[^>]*\bid="%s"[^>]*>)\s*(</div>)' % div_id,
