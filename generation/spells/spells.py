@@ -18,7 +18,7 @@ from generation.utils.wowhead_tooltips import render_tooltips
 # THREADS = os.cpu_count()
 log = IssueLog('spells')
 
-SCRAPE_THREADS = 2
+SCRAPE_THREADS = 1
 PARSE_THREADS = os.cpu_count()
 CLASSIC = 'classic'
 SOD = 'sod'
