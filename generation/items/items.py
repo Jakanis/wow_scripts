@@ -424,7 +424,7 @@ def parse_wowhead_item_xml_page(expansion, id) -> ItemData:
                 rune_spell_id = re.findall(r'spell=(\d+)', internal_a_tag.get('href'))[0]
                 # For runes
                 double_refered_items = [(20130, CLASSIC), (191280, CLASSIC)]  # Some items have double reference in effects. Don't want to spend time on that, so there's a hack
-                if expansion == SOD:
+                if expansion in [SOD, FOREVER]:  # Forever carries SoD's runes
                     effects.append(ItemEffect('Rune', effect_spell_id, None, rune_spell_id))
                 elif (id, expansion) in double_refered_items:
                     effects.append(ItemEffect(effect_type, rune_spell_id, a_tag.text))
