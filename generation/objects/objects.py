@@ -11,7 +11,6 @@ SCRAPE_THREADS = 1
 PARSE_THREADS = os.cpu_count()
 CLASSIC = 'classic'
 SOD = 'sod'
-SOD_PTR = 'sod_ptr'
 TBC = 'tbc'
 WRATH = 'wrath'
 CATA = 'cata'
