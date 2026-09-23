@@ -20,8 +20,8 @@ _WOWHEAD_HEADERS = {
 
 
 def wowhead_delay() -> float:
-    # WOWHEAD_DELAY: seconds before each request, "1" or a range "1:5"; default is the random 1-5 s
-    setting = os.getenv('WOWHEAD_DELAY', '1:5')
+    # WOWHEAD_DELAY: seconds before each request, "1" or a range "1:5"; default is 1.5 s
+    setting = os.getenv('WOWHEAD_DELAY', '1.5')
     low, _, high = setting.partition(':')
     return random.uniform(float(low), float(high or low))
 
