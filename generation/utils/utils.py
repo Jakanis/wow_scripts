@@ -83,12 +83,17 @@ def wowhead_get(url: str) -> curl_requests.Response:
     attempt = 0
     while True:
         __wait_for_wowhead()
-        r = curl_requests.get(url, headers=headers, impersonate='chrome')
-        # r = requests.get(url)
-        if r.ok or r.status_code == 404:
-            return r
+        try:
+            r = curl_requests.get(url, headers=headers, impersonate='chrome', timeout=30)
+        except curl_requests.exceptions.RequestException as e:
+            # a stalled or dropped connection is held and retried like a refused one
+            problem = f'{type(e).__name__}: {str(e)[:80]}'
+        else:
+            if r.ok or r.status_code == 404:
+                return r
+            problem = str(r.status_code)
         attempt += 1
-        print(f'[wowhead] {r.status_code} — waiting {wait}s (attempt {attempt})...')
+        print(f'[wowhead] {problem} — waiting {wait}s (attempt {attempt})...')
         __hold_wowhead(wait)
         wait = int(wait * 1.5)
 
