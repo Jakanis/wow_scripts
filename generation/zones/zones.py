@@ -2,10 +2,10 @@ import csv
 import os
 import re
 import sys
-import time
 
 import requests
 
+from generation.utils import wago
 from generation.utils.glossary import Glossary
 from generation.utils.issues import IssueLog
 from generation.utils.utils import feedback_path
@@ -68,7 +68,6 @@ expansion_data = {
 # A room this retail build has and the SoD client does not is taken for one of those.
 RETAIL_BUILD = '12.1.0.69933'
 
-WAGO_URL = 'https://wago.tools'
 WAGO_CACHE = 'cache/wago'
 
 AREA = 'AreaTable'
@@ -154,41 +153,8 @@ def __version_key(version: str) -> tuple[int, ...]:
     return tuple(int(part) for part in version.split('.'))
 
 
-def __wago_get(url: str) -> requests.Response:
-    time.sleep(1)  # wago.tools publishes no limits, so stay at a polite one request a second
-    return requests.get(url, headers={'User-Agent': 'ClassicUA wow_scripts'}, timeout=120)
-
-
-def download_wago_table(table: str, build: str) -> str:
-    path = os.path.join(WAGO_CACHE, f'{table}_{build}.csv')
-    if os.path.exists(path):  # a build never changes, so neither does its export
-        return path
-    print(f'Downloading {table} of {build} from wago.tools')
-    r = __wago_get(f'{WAGO_URL}/db2/{table}/csv?build={build}')
-    if r.status_code == 404 and 'Table not found' in r.text and table in OPTIONAL_TABLES:
-        text = ''  # not in this client; the empty file remembers that
-    elif r.ok:
-        text = r.text
-    else:
-        raise Exception(f'wago.tools returned {r.status_code} for {table} of {build}')
-    os.makedirs(WAGO_CACHE, exist_ok=True)
-    with open(path + '.tmp', 'w', encoding='utf-8', newline='') as f:
-        f.write(text)
-    os.replace(path + '.tmp', path)
-    return path
-
-
 def read_wago_table(table: str, build: str) -> list[dict[str, str]]:
-    # newline='' because quoted fields hold line breaks; columns go by name, since their order and the
-    # Field_* extras differ between builds
-    with open(download_wago_table(table, build), 'r', encoding='utf-8', newline='') as f:
-        rows = list(csv.DictReader(f))
-    if not rows and table not in OPTIONAL_TABLES:
-        raise Exception(f'{table} of {build} is empty')
-    missing = [column for column in TABLES[table] if rows and column not in rows[0]]
-    if missing:
-        raise Exception(f'{table} of {build} has no {", ".join(missing)} column')
-    return rows
+    return wago.read_table(table, build, WAGO_CACHE, TABLES[table], optional=table in OPTIONAL_TABLES)
 
 
 def __trim(text: str) -> str:
@@ -331,7 +297,7 @@ def retrieve_zone_data() -> list[Zone]:
 
 def check_newer_builds():
     try:
-        builds = __wago_get(f'{WAGO_URL}/api/builds').json()
+        builds = wago.wago_get(f'{wago.WAGO_URL}/api/builds').json()
     except (requests.RequestException, ValueError) as e:
         log.warning('newer-build-check-failed', 'zone', f'wago.tools builds are out of reach: {type(e).__name__}')
         return

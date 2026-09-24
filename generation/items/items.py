@@ -1,3 +1,4 @@
+import copy
 import json
 import os
 import re
@@ -5,6 +6,7 @@ import sys
 
 from bs4 import BeautifulSoup, CData
 from generation.spells.spells import SpellData, load_spells_from_db, is_spell_translated
+from generation.utils import wago
 from generation.utils.books import parse_book_pages
 from generation.utils.issues import WARNING, Issue, IssueLog
 from generation.utils.text_checks import report_mixed_script
@@ -35,17 +37,28 @@ IGNORES = 'ignores'
 FORCE_DOWNLOAD = 'force_download'
 # The expansion an item is reconciled against when it appears in both, first present one wins
 PARENT_EXPANSIONS = 'parent_expansions'
-# False: compare with the parents but never change their effects. Forever tooltips are still
-# obfuscated for undiscovered items, so what Wowhead holds for it cannot be trusted that far.
+# False: reconcile against a copy of the parent, so that the parent's effects stay as the mainline leaves them.
+# Forever is a beta whose Wowhead pages still change, and those changes are not to reach classic's and SoD's items.
 RECONCILE_PARENTS = 'reconcile_parents'
 INDEX = 'index'
 METADATA_FILTERS = 'metadata_filters'
+# The client build whose own tables tell what an item's spells are to it (see load_client_items)
+WAGO_BUILD = 'wago_build'
+WAGO_CACHE = 'cache/wago'
+# ItemEffect.TriggerType: when the item casts the spell. A "learn" one is a spell the item teaches, and a "carried" one
+# works while the item is in the bags, shown as a green line with no prefix ("+10 Mining; does not need to be equipped.")
+ON_USE, ON_EQUIP, CHANCE_ON_HIT, CARRIED, LEARN = '0', '1', '2', '5', '6'
+PREFIX_TRIGGERS = {'Use': ON_USE, 'Equip': ON_EQUIP, 'Chance on hit': CHANCE_ON_HIT}
+GLYPH = 16  # Item.ClassID
+GLYPH_USE = 'Permanently teaches you this glyph.'  # the game's own "Use:" line for a glyph it teaches; no table holds it
+CREATE_ITEM_EFFECTS = ('24', '157')  # SpellEffect.Effect: create item, and the one jewelcrafting cuts gems with
 
 expansion_data = {
     CLASSIC: {
         INDEX: 0,
         PARENT_EXPANSIONS: [],
         WOWHEAD_URL: 'https://www.wowhead.com/classic',
+        WAGO_BUILD: '1.15.9.69722',  # Wowhead's classic pages show today's era client, which SoD shares
         METADATA_CACHE: 'wowhead_classic_metadata_cache',
         XML_CACHE: 'wowhead_classic_item_xml',
         HTML_CACHE: 'wowhead_classic_item_html',
@@ -59,6 +72,7 @@ expansion_data = {
         INDEX: 0.1,
         PARENT_EXPANSIONS: [CLASSIC],
         WOWHEAD_URL: 'https://www.wowhead.com/classic',
+        WAGO_BUILD: '1.15.9.69722',
         METADATA_CACHE: 'wowhead_sod_metadata_cache',
         XML_CACHE: 'wowhead_sod_item_xml',
         HTML_CACHE: 'wowhead_sod_item_html',
@@ -73,6 +87,7 @@ expansion_data = {
     FOREVER: {
         INDEX: 0.2,
         WOWHEAD_URL: 'https://www.wowhead.com/forever',
+        WAGO_BUILD: '1.60.1.69977',
         METADATA_CACHE: 'wowhead_forever_metadata_cache',
         XML_CACHE: 'wowhead_forever_item_xml',
         HTML_CACHE: 'wowhead_forever_item_html',
@@ -88,6 +103,7 @@ expansion_data = {
         INDEX: 1,
         PARENT_EXPANSIONS: [CLASSIC],
         WOWHEAD_URL: 'https://www.wowhead.com/tbc',
+        WAGO_BUILD: '2.5.6.69795',
         METADATA_CACHE: 'wowhead_tbc_metadata_cache',
         XML_CACHE: 'wowhead_tbc_item_xml',
         HTML_CACHE: 'wowhead_tbc_item_html',
@@ -101,6 +117,7 @@ expansion_data = {
         INDEX: 2,
         PARENT_EXPANSIONS: [CLASSIC, TBC],
         WOWHEAD_URL: 'https://www.wowhead.com/wotlk',
+        WAGO_BUILD: '3.4.3.58936',
         METADATA_CACHE: 'wowhead_wrath_metadata_cache',
         XML_CACHE: 'wowhead_wrath_item_xml',
         HTML_CACHE: 'wowhead_wrath_item_html',
@@ -114,6 +131,7 @@ expansion_data = {
         INDEX: 3,
         PARENT_EXPANSIONS: [CLASSIC, TBC, WRATH],
         WOWHEAD_URL: 'https://www.wowhead.com/cata',
+        WAGO_BUILD: '4.4.2.60895',
         METADATA_CACHE: 'wowhead_cata_metadata_cache',
         XML_CACHE: 'wowhead_cata_item_xml',
         HTML_CACHE: 'wowhead_cata_item_html',
@@ -127,6 +145,7 @@ expansion_data = {
         INDEX: 4,
         PARENT_EXPANSIONS: [CLASSIC, TBC, WRATH, CATA],
         WOWHEAD_URL: 'https://www.wowhead.com/mop-classic',
+        WAGO_BUILD: '5.5.4.69934',
         METADATA_CACHE: 'wowhead_mists_metadata_cache',
         XML_CACHE: 'wowhead_mists_item_xml',
         HTML_CACHE: 'wowhead_mists_item_html',
@@ -149,7 +168,8 @@ class ItemMD:
         self.firstseenpatch = firstseenpatch
 
 
-EFFECT_TYPES = ('Desc', 'Equip', 'Hit', 'Use', 'Flavor', 'Item', 'Rune', 'Ref')
+# Carried: a green line with no prefix, of a spell that works while the item is carried (see apply_client_data)
+EFFECT_TYPES = ('Desc', 'Equip', 'Hit', 'Use', 'Carried', 'Flavor', 'Item', 'Rune', 'Ref')
 
 class ItemEffect:
     def __init__(self, effect_type, effect_id, effect_text, rune_spell_id=None):
@@ -205,6 +225,11 @@ class ItemData:
         self.raw_effects = raw_effects
         self.readable_pages = readable_pages if readable_pages is not None else []
         self.notes = notes if notes is not None else []
+        # What the tooltip holds besides the effects, for apply_client_data(): its green spell lines without a "Use:"
+        # kind of prefix, as (spell id, text), and the spells whose text an effect takes in, as (type, spell id,
+        # [(spell id, text)])
+        self.unprefixed_lines = []
+        self.embedded_spells = []
 
     def is_translated(self) -> bool:
         if self.name_ua or self.effects_ua:
@@ -399,6 +424,8 @@ def parse_wowhead_item_xml_page(expansion, id) -> ItemData:
         flavor = flavor_tag.text[1:-1]
 
     effects = list()
+    unprefixed_lines = list()
+    embedded_spells = list()
     effect_tags = xml_tooltip_soup.find_all('span')
     random_enchantment = True if "Random enchantment" in tooltip.text else False
     readable = True if "Right Click to Read" in tooltip.text else False
@@ -411,45 +438,49 @@ def parse_wowhead_item_xml_page(expansion, id) -> ItemData:
             continue
         if effect_tag.text == 'Right Click to Open':
             continue
+        if effect_tag.find_parent('a'):  # a span inside a spell's text is a part of that spell's line
+            continue
         for br in effect_tag.find_all('br'):
             br.replace_with('\n')
         full_effect_text = effect_tag.text
         effect_type = full_effect_text[:full_effect_text.find(': ')] if full_effect_text.startswith(('Use: ', 'Chance on hit: ', 'Equip: ')) else None
         a_tag = effect_tag.find('a')
         if a_tag:
-            internal_a_tag = a_tag.find('a')
-            if internal_a_tag:
-                effect_spell_id = re.findall(r'spell=(\d+)', a_tag.get('href'))[0]
-                effect_text = internal_a_tag.text
-                rune_spell_id = re.findall(r'spell=(\d+)', internal_a_tag.get('href'))[0]
-                # For runes
-                double_refered_items = [(20130, CLASSIC), (191280, CLASSIC)]  # Some items have double reference in effects. Don't want to spend time on that, so there's a hack
-                if expansion in [SOD, FOREVER]:  # Forever carries SoD's runes
-                    effects.append(ItemEffect('Rune', effect_spell_id, None, rune_spell_id))
-                elif (id, expansion) in double_refered_items:
-                    effects.append(ItemEffect(effect_type, rune_spell_id, a_tag.text))
-                else:
-                    log.warning('double-reference', 'item', 'an effect references two spells and the item is not listed as such',
-                                id=id, expansion=expansion)
-            else:
-                effect_text = a_tag.text
-                effect_text = effect_text[:effect_text.find(' (Proc chance')] if ' (Proc chance' in effect_text else effect_text # Remove (Proc chance: x%) text
-                effect_link = a_tag.get('href')
-                if '/item-set=' in effect_link:  # to prevent fetching next item links
-                    break
-                if '/item=' in effect_link:  # recipes
-                    item_ids = re.findall(r'/item=(\d+)', effect_link)
-                    if item_ids:
-                        effects.append(ItemEffect('Item', item_ids[0], effect_text))
-                        flavor = None
-                    break
-                effect_spell_ids = re.findall(r'/spell=(\d+)', effect_link)
-                if effect_spell_ids and effect_type:
-                    effects.append(ItemEffect(effect_type, effect_spell_ids[0], effect_text))
+            effect_text = a_tag.text
+            effect_text = effect_text[:effect_text.find(' (Proc chance')] if ' (Proc chance' in effect_text else effect_text # Remove (Proc chance: x%) text
+            effect_link = a_tag.get('href')
+            if '/item-set=' in effect_link:  # to prevent fetching next item links
+                break
+            if '/item=' in effect_link:  # recipes
+                item_ids = re.findall(r'/item=(\d+)', effect_link)
+                if item_ids:
+                    effects.append(ItemEffect('Item', item_ids[0], effect_text))
+                    flavor = None
+                break
+            effect_spell_ids = re.findall(r'/spell=(\d+)', effect_link)
+            if not effect_spell_ids:
+                continue
+            if not effect_type:
+                # Wowhead shows a spell the item teaches as a green line of its own, which the game does not show at
+                # all (apply_client_data() checks that it is one). A span that only holds other lines is not one.
+                if 'q2' in (effect_tag.get('class') or '').split() and a_tag.find_parent('span') is effect_tag:
+                    unprefixed_lines.append((effect_spell_ids[0], effect_text))
+                continue
+            # A spell's text can take in other spells' texts, and Wowhead links each of them inside the spell's own
+            # link. The game shows it all as the one line.
+            embedded = [((re.findall(r'/spell=(\d+)', inner.get('href', '')) or [None])[0], inner.text)
+                        for inner in a_tag.find_all('a')]
+            spell_id = effect_spell_ids[0]
+            if len(embedded) == 1 and embedded[0][0] and ' '.join(effect_text.split()) == ' '.join(embedded[0][1].split()):
+                spell_id = embedded[0][0]  # the spell only passes on another one's text, which is the one it shows
+            if effect_type == 'Use' and full_effect_text[len('Use: '):].startswith(GLYPH_USE) and not effect_text.startswith(GLYPH_USE):
+                # a glyph's line, drawn whole: the fixed sentence before the link, then the glyph's text in it
+                effect_text = f'{GLYPH_USE}\n\n{effect_text.strip()}' if effect_text.strip() else GLYPH_USE
+            effects.append(ItemEffect(effect_type, spell_id, effect_text))
+            if embedded:
+                embedded_spells.append((effect_type, effect_spell_ids[0], embedded))
         elif effect_type:
             effects.append(ItemEffect(effect_type, None, full_effect_text[full_effect_text.find(':')+2:]))
-        # if effect_type is None:
-        #     print(f'Warning! Empty effect type for item#{id}:{expansion}')
 
     item_class_id = soup.find('class').get('id')
     if readable and item_class_id == 12:
@@ -458,7 +489,10 @@ def parse_wowhead_item_xml_page(expansion, id) -> ItemData:
     if flavor:
         effects.append(ItemEffect('Flavor', None, flavor))
 
-    return ItemData(id, expansion, item_name, effects, readable, random_enchantment)
+    item = ItemData(id, expansion, item_name, effects, readable, random_enchantment)
+    item.unprefixed_lines = unprefixed_lines
+    item.embedded_spells = embedded_spells
+    return item
 
 
 def parse_wowhead_item_html_page(expansion, id) -> ReadableItem|None:
@@ -523,6 +557,157 @@ def parse_wowhead_html_pages(expansion: str, items_ids: set[int]) -> dict[int, R
             pickle.dump(wowhead_items, f)
 
     return wowhead_items
+
+
+class ClientItems:
+    # What a client's own tables hold for items: the spells each one casts, as (trigger, spell id), the items each
+    # spell makes, and each item's class
+    def __init__(self, spells: dict[int, list[tuple[str, int]]], makes: dict[int, list[int]], classes: dict[int, int]):
+        self.spells = spells
+        self.makes = makes
+        self.classes = classes
+
+
+__client_items: dict[str, ClientItems] = dict()
+
+
+def load_client_items(build: str) -> ClientItems:
+    from collections import defaultdict
+    if build not in __client_items:
+        effects = wago.read_table('ItemEffect', build, WAGO_CACHE, ('ID', 'TriggerType', 'SpellID'))
+        if 'ParentItemID' in effects[0]:
+            links = [(effect['ParentItemID'], effect) for effect in effects]
+        else:  # retail's layout, which Forever's client has: items share their effects through a table of links
+            by_id = {effect['ID']: effect for effect in effects}
+            links = [(link['ItemID'], by_id[link['ItemEffectID']])
+                     for link in wago.read_table('ItemXItemEffect', build, WAGO_CACHE, ('ItemID', 'ItemEffectID'))
+                     if link['ItemEffectID'] in by_id]
+        spells = defaultdict(list)
+        for item_id, effect in links:
+            if effect['SpellID'] != '0':
+                spells[int(item_id)].append((effect['TriggerType'], int(effect['SpellID'])))
+        makes = defaultdict(list)
+        for effect in wago.read_table('SpellEffect', build, WAGO_CACHE, ('SpellID', 'Effect', 'EffectItemType')):
+            if effect['Effect'] in CREATE_ITEM_EFFECTS and effect['EffectItemType'] != '0':
+                makes[int(effect['SpellID'])].append(int(effect['EffectItemType']))
+        classes = {int(row['ID']): int(row['ClassID']) for row in wago.read_table('Item', build, WAGO_CACHE, ('ID', 'ClassID'))}
+        __client_items[build] = ClientItems(spells, makes, classes)
+    return __client_items[build]
+
+
+def __describe_glyph(item: ItemData, taught: list[int], where: dict):
+    # The game shows a glyph as "Use: Permanently teaches you this glyph.", a blank line and the glyph's own text.
+    # Wowhead's Wrath and Mists pages mostly draw that line whole (the parser keeps it so), while its Cata pages leave
+    # the "Use:" line empty and show the glyph's text as the line of the spell the item teaches.
+    def own_text(text: str) -> str:
+        return (text[len(GLYPH_USE):] if text.startswith(GLYPH_USE) else text).strip()
+    uses = [effect for effect in item.effects if effect.get_type() == 'Use']
+    if taught and not any(effect.effect_text and effect.effect_text.startswith(GLYPH_USE) and own_text(effect.effect_text)
+                          for effect in uses):
+        lines = [line for line in item.unprefixed_lines if int(line[0]) == taught[0]]
+        glyph_text = (next((text.strip() for spell, text in lines if text.strip()), None)
+                      or next((own_text(effect.effect_text) for effect in uses
+                               if effect.effect_text and own_text(effect.effect_text)), None))
+        if not glyph_text:
+            # Checked in game: a glyph Wowhead has no text for shows no "Use:" line at all where it was removed (Mists'
+            # older mage glyphs), while others show the text Wowhead lacks (Mists' monk glyphs). Left as Wowhead has it.
+            log.warning('glyph-text-missing', 'item', f'Wowhead shows no text for the glyph, spell#{taught[0]}: left '
+                                                      f'as it is', **where)
+            return
+        described = ItemEffect('Use', str(taught[0]), f'{GLYPH_USE}\n\n{glyph_text}')
+        if uses:
+            item.effects[item.effects.index(uses[0])] = described
+        else:
+            item.effects.insert(0, described)
+        item.unprefixed_lines = [line for line in item.unprefixed_lines if line not in lines]
+    line = next((effect for effect in item.effects
+                 if effect.get_type() == 'Use' and effect.effect_text and effect.effect_text.startswith(GLYPH_USE)), None)
+    if line is None:
+        return
+    if own_text(line.effect_text):
+        # Off: every glyph's text is written out so far, where a translation could refer to the spell (spell#N) once
+        # item texts support that (see CLAUDE.md)
+        # log.warning('glyph-text', 'item', f"the glyph's text is written out, where a translation could refer to "
+        #                                   f"spell#{line.effect_id}", **where)
+        pass
+    else:
+        log.warning('glyph-text-missing', 'item', f'Wowhead shows no text for the glyph, spell#{line.effect_id}: only '
+                                                  f'the sentence', **where)
+
+
+def apply_client_data(expansion: str, items: dict[int, ItemData]):
+    # An item that teaches a spell shows its description in the game as its "Use:" line, followed by the item the
+    # spell makes. Wowhead's TBC and later sites show it so, while its classic sites show the description as a quote
+    # and leave the item out, and only the client's tables tell which items teach. The rest checks what the parser
+    # assumes about the lines it leaves out, and about the spells whose text an effect takes in.
+    build = expansion_data[expansion][WAGO_BUILD]
+    client = load_client_items(build)
+    described, made = 0, 0
+    for id, item in items.items():
+        cast = client.spells.get(id, [])
+        taught = [spell for trigger, spell in cast if trigger == LEARN]
+        where = dict(id=id, expansion=expansion)
+        if client.classes.get(id) == GLYPH:  # the client's class, as Wowhead gives Mists' older glyphs another one
+            __describe_glyph(item, taught, where)
+        for spell, text in getattr(item, 'unprefixed_lines', []):
+            triggers = {trigger for trigger, cast_spell in cast if cast_spell == int(spell)}
+            if LEARN in triggers:
+                # Off: checked in game, the line of a spell the item teaches is not shown (a glyph's is, see above)
+                # log.warning('taught-spell-line', 'item', f'a line for spell#{spell}, which the item teaches: left out', **where)
+                continue
+            elif CARRIED in triggers:
+                # Checked in game: shown as a green line with no prefix, as Wowhead has it. The entry holds it as
+                # carried=, which the addon does not draw yet (see convert_translations_to_lua)
+                item.effects.append(ItemEffect('Carried', spell, text.strip()))
+                item.effects.sort(key=lambda effect: EFFECT_TYPES.index(effect.get_type()))
+                log.warning('carried-spell-line', 'item',
+                            f'a line for spell#{spell}, which works while the item is carried: parsed as Carried, '
+                            f'which the addon does not draw yet', **where)
+            else:
+                log.warning('unprefixed-spell-line', 'item',
+                            f'a line for spell#{spell} with no "Use:" kind of prefix, which the item neither teaches '
+                            f'nor casts while carried: left out', **where)
+        for effect_type, spell, embedded in getattr(item, 'embedded_spells', []):
+            if (PREFIX_TRIGGERS[effect_type], int(spell)) not in cast:
+                log.warning('embedding-spell-not-cast', 'item',
+                            f'spell#{spell} of the "{effect_type}:" line is not one the item casts so', **where)
+            for inner, text in embedded:
+                if not text.strip():
+                    log.warning('embedded-text-missing', 'item',
+                                f'Wowhead leaves out the text spell#{spell} takes from spell#{inner}', **where)
+        if not taught:
+            continue
+        if len(taught) > 1:
+            log.warning('teaches-several', 'item', 'the item teaches ' + ', '.join(f'spell#{s}' for s in taught), **where)
+        uses = [effect for effect in item.effects if effect.get_type() == 'Use' and effect.effect_text]
+        quotes = [effect for effect in item.effects if effect.get_type() == 'Flavor']
+        if quotes:
+            # linked to the taught spell, as Wowhead's later sites link it; the text is the item's own all the same
+            described_line = ItemEffect('Use', str(taught[0]), quotes[0].effect_text)
+            if uses:
+                # it comes first, before the line of the item's own spell (checked in game: Prophecy of a Thousand Lights)
+                item.effects.remove(quotes[0])
+                item.effects.insert(item.effects.index(uses[0]), described_line)
+            else:
+                item.effects[item.effects.index(quotes[0])] = described_line
+            described += 1
+        # Off: such an item has no description in its client either, and the game shows no text for it
+        # elif not uses:
+        #     log.warning('teaching-item-silent', 'item', f'the item teaches spell#{taught[0]}, yet shows no text', **where)
+        makes = list(dict.fromkeys(made_id for spell in taught for made_id in client.makes.get(spell, []) if made_id != id))
+        if len(makes) > 1:
+            log.warning('makes-several', 'item', 'the spells the item teaches make ' + ', '.join(f'item#{i}' for i in makes), **where)
+        shown = [effect for effect in item.effects if effect.get_type() == 'Item']
+        if makes and not shown:
+            item.effects.append(ItemEffect('Item', str(makes[0]), None))
+            made += 1
+            if not quotes:  # a page that shows the description as a quote never shows the made item
+                log.warning('made-item-not-shown', 'item',
+                            f'Wowhead shows the "Use:" line, but not item#{makes[0]} that the taught spell makes: added', **where)
+        elif shown and int(shown[0].effect_id) not in makes:
+            log.warning('made-item-differs', 'item', f'Wowhead shows item#{shown[0].effect_id} made, the client '
+                        + (f'item#{makes[0]}' if makes else 'no item'), **where)
+    print(f'Client({expansion}) {build}: {described} descriptions read as "Use:" lines, {made} made items added')
 
 
 def load_object_lua() -> dict[str, str]:
@@ -606,14 +791,25 @@ def is_equal_ignoring_symbols(s1: str, s2: str) -> bool:
     return s1.translate(mapping) == s2.translate(mapping)
 
 
+def __spell_shows_text(spell: dict[str, SpellData], text: str) -> bool:
+    # A reference to a spell shows the spell's own text, which stands for the effect's only when it is the same. An
+    # item that teaches is linked to the taught spell, for one, while its text is the item's own description.
+    # Wowhead writes a value that scales with level as a [formula], where the game shows a number.
+    def bare(value: str) -> str:
+        return re.sub(r'\[[^\]]*\]', '', value)
+    return bool(spell) and bool(text) and any(is_equal_ignoring_symbols(bare(text), bare(variant.description))
+                                              for variant in spell.values() if variant.description)
+
+
+def __remember_raw_effects(item: ItemData):
+    from functools import cmp_to_key
+    item.raw_effects = '\n'.join(map(lambda x: str(x), sorted(item.effects, key=cmp_to_key(lambda x, y: EFFECT_TYPES.index(x.get_type()) - EFFECT_TYPES.index(y.get_type()))))) if item.raw_effects is None else item.raw_effects
+
+
 def __merge_item_effects(old_item: ItemData, new_item: ItemData, spells: dict[int, dict[str, SpellData]]):
     from collections import defaultdict
     from functools import cmp_to_key
-    old_item.raw_effects = '\n'.join(map(lambda x: str(x), sorted(old_item.effects, key=cmp_to_key(lambda x, y: EFFECT_TYPES.index(x.get_type()) - EFFECT_TYPES.index(y.get_type()))))) if old_item.raw_effects is None else old_item.raw_effects
-    new_item.raw_effects = '\n'.join(map(lambda x: str(x), sorted(new_item.effects, key=cmp_to_key(lambda x, y: EFFECT_TYPES.index(x.get_type()) - EFFECT_TYPES.index(y.get_type()))))) if new_item.raw_effects is None else new_item.raw_effects
     if len(old_item.effects) != len(new_item.effects):
-        return
-    if not expansion_data[new_item.expansion].get(RECONCILE_PARENTS, True):
         return
 
     old_item_effects_by_type = defaultdict(list)
@@ -658,9 +854,13 @@ def __merge_item_effects(old_item: ItemData, new_item: ItemData, spells: dict[in
 
 def merge_item(id: int, old_items: dict[str, ItemData], new_item: ItemData, spells: dict[int, dict[str, SpellData]]) -> dict[str, ItemData]:
     # test data: item#833classic/wrath (different order), item#728(classic/tbc) (same text, different spell), item#159/862/867/868/875/943 (same spell, different text)
-    old_item = parent_variant(old_items, expansion_data[new_item.expansion][PARENT_EXPANSIONS])
-    if old_item is None:
+    parent = parent_variant(old_items, expansion_data[new_item.expansion][PARENT_EXPANSIONS])
+    if parent is None:
         return {**old_items, **{new_item.expansion: new_item}}
+    __remember_raw_effects(parent)
+    __remember_raw_effects(new_item)
+    # A branch settles its own effects against a copy of its parent, which keeps the parent's as the mainline leaves them
+    old_item = parent if expansion_data[new_item.expansion].get(RECONCILE_PARENTS, True) else copy.deepcopy(parent)
     __merge_item_effects(old_item, new_item, spells)
     if old_item.name.lower() != new_item.name.lower():
         return {**old_items, **{new_item.expansion: new_item}}
@@ -847,6 +1047,7 @@ def retrieve_item_data() -> tuple[dict[int, dict[str, ItemData]], dict[str, dict
             wowhead_md[expansion][force_id] = ItemMD(force_id, "FORCE LOAD", expansion)
         save_xmls_from_wowhead(expansion, set(wowhead_md[expansion].keys()))
         wowhead_items[expansion] = parse_wowhead_xml_pages(expansion, set(wowhead_md[expansion].keys()))
+        apply_client_data(expansion, wowhead_items[expansion])
         readable_items_ids = {item_id for item_id, item in wowhead_items[expansion].items() if item.readable} # filter readable items
         save_htmls_from_wowhead(expansion, readable_items_ids)
         readable_items[expansion] = parse_wowhead_html_pages(expansion, readable_items_ids)
@@ -901,7 +1102,7 @@ def str_effects_to_effects(str_effects: str, ignore_desc=False) -> list[ItemEffe
     if not str_effects:
         return []
     effects = list()
-    for effect_row in re.split(r'\n(?=(?:Desc|Equip|Hit|Use|Flavor):|(?:Equip|Hit|Use|Rune|Ref|Item)#\d+)', str_effects):
+    for effect_row in re.split(r'\n(?=(?:Desc|Equip|Hit|Use|Carried|Flavor):|(?:Equip|Hit|Use|Carried|Rune|Ref|Item)#\d+)', str_effects):
         if effect_row.startswith(EFFECT_TYPES):
             effect = str_effect_to_effect(effect_row)
             if ignore_desc and effect.get_type() == "Desc":
@@ -959,7 +1160,7 @@ def lua_effect_to_effect(field: str, lua_effects) -> list[ItemEffect]:
 
 def decoded_lua_item_to_effects_list(decoded_item) -> list[ItemEffect]:
     effects = list()
-    fields = ['desc', 'equip', 'hit', 'use', 'flavor', 'recipe_result_item', 'ref']
+    fields = ['desc', 'equip', 'hit', 'use', 'carried', 'flavor', 'recipe_result_item', 'ref']
     for field in fields:
         effects.extend(lua_effect_to_effect(field, decoded_item.get(field)))
     return effects
@@ -1066,12 +1267,14 @@ def pretranslate_items(items: dict[int, dict[str, ItemData]], all_items: dict[in
             for original_effect in item.effects:
                 effect_text_ua = None
                 effect_id = int(original_effect.effect_id) if original_effect.effect_id and not original_effect.effect_type == "Item" else None
-                if original_effect.effect_text and not is_spell_translated(spells.get(effect_id)):
+                spell = spells.get(effect_id)
+                spell_shows_it = is_spell_translated(spell) and __spell_shows_text(spell, original_effect.effect_text)
+                if original_effect.effect_text and not spell_shows_it:
                     pretranslated_effect_text = pretranslate_effect_text(original_effect.effect_text)
                     if pretranslated_effect_text:
                         effect_text_ua = pretranslated_effect_text
                     else:
-                        if not original_effect.effect_id:
+                        if not original_effect.effect_id or is_spell_translated(spell):  # the text is the item's own
                             cleaned_effect_text = f"{original_effect.effect_type}: {re.sub(r'\d+', 'XXX', original_effect.effect_text)}"
                             missing_effect_texts_count[cleaned_effect_text] = missing_effect_texts_count.get(cleaned_effect_text, 0) + 1
                         elif effect_id:
@@ -1226,6 +1429,9 @@ def convert_translations_to_lua(translations: list[ItemData], expansion: str):
             -- }
                         
             """))
+            # not yet implemented in addon
+            # --     [carried] = text or number (spell id) for a line with no prefix, of a spell that works while
+            # --                the item is carried (green color) (optional; not drawn by the addon yet)
         else:
             output_file.write(textwrap.dedent("""\
             -- See /entries/classic/item.lua for data format details.
@@ -1238,6 +1444,7 @@ def convert_translations_to_lua(translations: list[ItemData], expansion: str):
             equips = list(filter(lambda x: x.get_type() == "Equip", item.effects_ua))
             hits = list(filter(lambda x: x.get_type() == "Hit", item.effects_ua))
             uses = list(filter(lambda x: x.get_type() == "Use", item.effects_ua))
+            carried = list(filter(lambda x: x.get_type() == "Carried", item.effects_ua))
             flavor = None
             item_result = None
             ref = None
@@ -1283,6 +1490,11 @@ def convert_translations_to_lua(translations: list[ItemData], expansion: str):
                 translation_strs.append(f'hit={__build_values(hits)}')
             if uses:
                 translation_strs.append(f'use={__build_values(uses)}')
+            if carried:
+                # [!] ClassicUA's addon does not draw carried= yet. It takes one more line in add_item_entry_to_tooltip
+                # (scripts/tooltips.lua), after the use one: green, with no prefix, and a number as a spell's text:
+                # add_line_to_tooltip(tooltip, entry.carried, "TEXT", 0, 1, 0, true, entry_id)
+                translation_strs.append(f'carried={__build_values(carried)}')
             if flavor:
                 translation_strs.append(f'flavor="{flavor}"')
             if item_result:
@@ -1349,8 +1561,8 @@ def __validate_item(item: ItemData):
             or item.effects_ua[0].get_type() == 'Ref'
             or item.effects[0].get_type() == 'Rune'):
         return
-    orig_effects = list(filter(lambda x: x.get_type() in ['Use', 'Equip', 'Hit', 'Flavor'], sorted(item.effects, key=cmp_to_key(lambda x, y: EFFECT_TYPES.index(x.get_type()) - EFFECT_TYPES.index(y.get_type())))))
-    ua_effects = list(filter(lambda x: x.get_type() in ['Use', 'Equip', 'Hit', 'Flavor'], sorted(item.effects_ua, key=cmp_to_key(lambda x, y: EFFECT_TYPES.index(x.get_type()) - EFFECT_TYPES.index(y.get_type())))))
+    orig_effects = list(filter(lambda x: x.get_type() in ['Use', 'Equip', 'Hit', 'Carried', 'Flavor'], sorted(item.effects, key=cmp_to_key(lambda x, y: EFFECT_TYPES.index(x.get_type()) - EFFECT_TYPES.index(y.get_type())))))
+    ua_effects = list(filter(lambda x: x.get_type() in ['Use', 'Equip', 'Hit', 'Carried', 'Flavor'], sorted(item.effects_ua, key=cmp_to_key(lambda x, y: EFFECT_TYPES.index(x.get_type()) - EFFECT_TYPES.index(y.get_type())))))
     if len(orig_effects) != len(ua_effects):
         log.warning('effects-count', 'item',
                     f'{len(orig_effects)} effect(s) in the original, {len(ua_effects)} in the translation',
@@ -1490,13 +1702,23 @@ def check_for_translation_redundancies(items: dict[int, dict[str, ItemData]], sp
             if item.effects_ua and not (item.effects_ua[0].get_type() == 'Ref'):
                 filtered_original_effects = list(filter(lambda x: x.get_type() not in ['Item', 'Ref', 'Rune', 'Flavor'], item.effects))
                 filtered_ua_effects = list(filter(lambda x: x.get_type() not in ['Item', 'Ref', 'Rune', 'Flavor'], item.effects_ua))
+                if len(filtered_original_effects) != len(filtered_ua_effects):
+                    continue  # the effects do not pair up; validate_translations() reports how they differ
                 for i in range(len(filtered_original_effects)):
                     orig_effect = filtered_original_effects[i]
                     ua_effect = filtered_ua_effects[i]
                     if orig_effect.effect_id and not ua_effect.effect_id and ua_effect.effect_text:
-                        if is_spell_translated(spells.get(int(orig_effect.effect_id))):
+                        spell = spells.get(int(orig_effect.effect_id))
+                        if is_spell_translated(spell) and (not orig_effect.effect_text or __spell_shows_text(spell, orig_effect.effect_text)):
                             log.warning('redundant-translation', 'item',
                                         f'spell#{orig_effect.effect_id} is already translated',
+                                        id=item.id, expansion=item.expansion, field=f'effect#{i}')
+                    if orig_effect.effect_text and ua_effect.effect_id and not ua_effect.effect_text:
+                        spell = spells.get(int(ua_effect.effect_id))
+                        if spell and any(variant.description for variant in spell.values()) \
+                                and not __spell_shows_text(spell, orig_effect.effect_text):
+                            log.warning('reference-shows-other-text', 'item',
+                                        f'the translation refers to spell#{ua_effect.effect_id}, whose text is not the original\'s',
                                         id=item.id, expansion=item.expansion, field=f'effect#{i}')
                     if orig_effect.effect_id and not orig_effect.effect_text and ua_effect.effect_text:
                         log.warning('redundant-translation', 'item',
