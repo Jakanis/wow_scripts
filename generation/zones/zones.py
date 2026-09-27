@@ -89,12 +89,15 @@ TABLES = {
     POI: ('Name_lang', 'ID', 'ContinentID'),
     LFG: ('Name_lang', 'ID')
 }
-OPTIONAL_TABLES = (UI_MAP_FLOOR,)  # only the Cata and Mists clients have it
-# The names that reach ClassicUA as zone text and so go on the translation sheet: zone and room text, map titles,
-# instance names, flight points and the pins of a battleground's map. Nothing hooks the dungeon floor menu, and
-# dungeon finder names never arrive as zone text; those rows only tell a location term the glossary keeps for
-# them apart from a stale one.
-LISTED_SOURCES = (AREA, MAP, UI_MAP, WMO_AREA, TAXI, POI)
+# Only the Cata and Mists clients have the floor table. Classic and TBC show no dungeon maps in game, though TBC's
+# client holds them, and SoD's and Forever's hold none. Wrath's client holds its dungeon maps under Cata's ids but no
+# floor names (unchecked in game); as ClassicUA keeps every zone in one file, Cata's floors would serve it anyway.
+OPTIONAL_TABLES = (UI_MAP_FLOOR,)
+# The names that go on the translation sheet: zone and room text, map titles, instance names, flight points and the
+# pins of a battleground's map, which reach ClassicUA as zone text, and the floors of a dungeon's map, with the map
+# as their parent, whose menu ClassicUA does not translate yet. Dungeon finder names never arrive as zone text;
+# those rows only tell a location term the glossary keeps for them apart from a stale one.
+LISTED_SOURCES = (AREA, MAP, UI_MAP, WMO_AREA, UI_MAP_FLOOR, TAXI, POI)
 
 INSTANCE_TYPES = {1: 'dungeon', 2: 'raid', 3: 'battleground', 4: 'arena', 5: 'scenario'}  # Map.InstanceType
 CATEGORIES = {
