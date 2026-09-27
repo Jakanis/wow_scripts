@@ -8,7 +8,7 @@ import requests
 from generation.utils import wago
 from generation.utils.glossary import Glossary
 from generation.utils.issues import IssueLog
-from generation.utils.utils import feedback_path
+from generation.utils.utils import feedback_path, parent_variant
 
 log = IssueLog('zones')
 
@@ -22,6 +22,7 @@ MISTS = 'mists'
 INDEX = 'index'
 WAGO_PRODUCT = 'wago_product'
 WAGO_BUILD = 'wago_build'
+PARENT_EXPANSIONS = 'parent_expansions'
 
 # Zone names come from the clients' own tables, as wago.tools exports them per build. The builds are pinned like
 # the other modules pin their Wowhead URLs: check_newer_builds() only reports a newer one, because the names it
@@ -29,37 +30,44 @@ WAGO_BUILD = 'wago_build'
 expansion_data = {
     CLASSIC: {
         INDEX: 0,
+        PARENT_EXPANSIONS: [],
         WAGO_PRODUCT: 'wow_classic_era',
         WAGO_BUILD: '1.14.4.51829'  # the era client just before SoD arrived with 1.15.0
     },
     SOD: {
         INDEX: 0.1,
+        PARENT_EXPANSIONS: [CLASSIC],
         WAGO_PRODUCT: 'wow_classic_era',
         WAGO_BUILD: '1.15.9.69722'  # shared with classic, so what it has beyond 1.14.4 is SoD's
     },
     # WoW: Forever, in beta since 2026-09-17: a branch of classic and SoD.
     FOREVER: {
         INDEX: 0.2,
+        PARENT_EXPANSIONS: [CLASSIC, SOD],
         WAGO_PRODUCT: 'wow_classic_beta',
         WAGO_BUILD: '1.60.1.70009'
     },
     TBC: {
         INDEX: 1,
+        PARENT_EXPANSIONS: [CLASSIC],
         WAGO_PRODUCT: 'wow_anniversary',
         WAGO_BUILD: '2.5.6.69795'
     },
     WRATH: {
         INDEX: 2,
+        PARENT_EXPANSIONS: [CLASSIC, TBC],
         WAGO_PRODUCT: 'wow_classic',
         WAGO_BUILD: '3.4.5.63697'
     },
     CATA: {
         INDEX: 3,
+        PARENT_EXPANSIONS: [CLASSIC, TBC, WRATH],
         WAGO_PRODUCT: 'wow_classic',
         WAGO_BUILD: '4.4.2.60895'
     },
     MISTS: {
         INDEX: 4,
+        PARENT_EXPANSIONS: [CLASSIC, TBC, WRATH, CATA],
         WAGO_PRODUCT: 'wow_classic',
         WAGO_BUILD: '5.5.4.69934'
     }
@@ -290,12 +298,29 @@ def retrieve_zone_data() -> list[Zone]:
         if not zone.unused and zone.name.lower() not in era_names:
             zone.unused = 'gone from the era client'
 
-    all_zones = []
+    # As the other modules merge their entities: a table row gets a version in the expansion that brings it, and
+    # again only in one whose client changes it, against the version of its nearest parent. A flight point is two
+    # rows, its node and its zone, which go together.
+    versions = dict()  # (source, id) -> expansion -> rows
     for expansion, expansion_zones in zones.items():
+        rows = dict()
+        for zone in expansion_zones:
+            rows.setdefault((zone.source, zone.id), []).append(zone)
+        own = 0
+        for key, key_rows in rows.items():
+            variants = versions.setdefault(key, dict())
+            parent = parent_variant(variants, expansion_data[expansion][PARENT_EXPANSIONS])
+            if parent is None or __signature(parent) != __signature(key_rows):
+                variants[expansion] = key_rows
+                own += len(key_rows)
         print(f'Wago({expansion}) {expansion_data[expansion][WAGO_BUILD]}: {len(expansion_zones)} named rows, '
-              f'{len({zone.name.lower() for zone in expansion_zones})} names')
-        all_zones.extend(expansion_zones)
-    return all_zones
+              f'{len({zone.name.lower() for zone in expansion_zones})} names; {own} rows new or changed')
+    return [zone for variants in versions.values() for rows in variants.values() for zone in rows]
+
+
+def __signature(zones: list[Zone]) -> list[tuple]:
+    # What makes a row's version: its names and where they sit, and whether the sheet shows it, whatever the reason
+    return [(zone.name, zone.parent, zone.category, bool(zone.unused)) for zone in zones]
 
 
 def check_newer_builds():
@@ -481,6 +506,14 @@ def __first(zones: list[Zone]) -> Zone:
     return min(zones, key=lambda zone: (expansion_data[zone.expansion][INDEX], sources.index(zone.source), zone.id))
 
 
+def __first_expansions(expansions: set[str]) -> list[str]:
+    # Where a name first appears: the expansions with a version of it none of whose parents has one too - a later
+    # client's new row of an older name is not a new name. A side branch (SoD, Forever) brings its own.
+    return sorted((expansion for expansion in expansions
+                   if not expansions & set(expansion_data[expansion][PARENT_EXPANSIONS])),
+                  key=lambda expansion: expansion_data[expansion][INDEX])
+
+
 def __listed(zones: list[Zone]) -> list[Zone]:
     return [zone for zone in zones if zone.source in LISTED_SOURCES and not zone.unused]
 
@@ -500,7 +533,7 @@ def create_translation_sheet(zones: list[Zone], feedback: set[str], glossary: di
         if not shown:
             continue
         first = __first(shown)
-        expansions = sorted({zone.expansion for zone in shown}, key=lambda exp: expansion_data[exp][INDEX])
+        expansions = __first_expansions({zone.expansion for zone in shown})
         sources = [source for source in TABLES if any(zone.source == source for zone in shown)]
         rows.append([first.name, '', ', '.join(expansions), ', '.join(sources), first.parent or '',
                      translate(glossary, first.parent) or '' if first.parent else '', first.category or '',
