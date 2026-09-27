@@ -23,7 +23,9 @@ def download_table(table: str, build: str, cache_dir: str, optional: bool = Fals
         return path
     print(f'Downloading {table} of {build} from wago.tools')
     r = wago_get(f'{WAGO_URL}/db2/{table}/csv?build={build}')
-    if r.status_code == 404 and 'Table not found' in r.text and optional:
+    # A table the build lacks comes back as "Table not found" with a 404, or a 400 since September 2026. A build
+    # wago.tools does not know is a 400 too, but an HTML page without those words, so it still fails.
+    if r.status_code in (400, 404) and 'Table not found' in r.text and optional:
         text = ''  # not in this client; the empty file remembers that
     elif r.ok:
         text = r.text
