@@ -623,8 +623,8 @@ def kind_for(path: Path) -> str:
         return "gossip"
     if n.startswith("quest"):
         return "quest"
-    if n.startswith("book"):
-        return "book"
+    if n.startswith(("book", "item_text", "object_text")):
+        return "book"  # readable texts: item_text.lua and object_text.lua since ClassicUA 6.8
     return "other"
 
 
@@ -723,7 +723,7 @@ class EnglishSource:
     against. Two local sources fill that gap:
 
       * quests: ClassicUA/dev/database/classicua.db, table `quests`
-      * books:  ClassicUA/dev/translation_from_crowdin/en/books*/**/*_<id>.xml
+      * texts:  ClassicUA/dev/translation_from_crowdin/en/{item,object}_texts*/**/<name>_<id>.xml
 
     Both are optional. When a unit's English is unknown the comparative rules
     stay quiet instead of reporting something they cannot verify.
@@ -755,8 +755,9 @@ class EnglishSource:
 
     def _load_books(self, en_root: "Path") -> None:
         from xml.etree import ElementTree
-        for xml in en_root.glob("books*/**/*.xml"):
-            m = re.search(r"_(\d+)\.xml$", xml.name)
+        # item texts are keyed by id in entries, object texts by name; the export names files <name>_<id>.xml
+        for xml in list(en_root.glob("item_texts*/**/*.xml")) + list(en_root.glob("object_texts*/**/*.xml")):
+            m = re.search(r"^(.*)_(\d+)\.xml$", xml.name)
             if not m:
                 continue
             try:
@@ -766,6 +767,7 @@ class EnglishSource:
             pages = {n.get("name"): n.text
                      for n in tree.iter("string") if n.get("name") and n.text}
             if pages:
+                self.books.setdefault(m.group(2), pages)
                 self.books.setdefault(m.group(1), pages)
 
     def lookup(self, kind: str, expansion: str, entry_id: str, field: str) -> "str | None":
