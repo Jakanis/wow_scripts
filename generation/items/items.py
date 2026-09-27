@@ -87,7 +87,7 @@ expansion_data = {
     FOREVER: {
         INDEX: 0.2,
         WOWHEAD_URL: 'https://www.wowhead.com/forever',
-        WAGO_BUILD: '1.60.1.69977',
+        WAGO_BUILD: '1.60.1.70009',
         METADATA_CACHE: 'wowhead_forever_metadata_cache',
         XML_CACHE: 'wowhead_forever_item_xml',
         HTML_CACHE: 'wowhead_forever_item_html',
@@ -117,7 +117,7 @@ expansion_data = {
         INDEX: 2,
         PARENT_EXPANSIONS: [CLASSIC, TBC],
         WOWHEAD_URL: 'https://www.wowhead.com/wotlk',
-        WAGO_BUILD: '3.4.3.58936',
+        WAGO_BUILD: '3.4.5.63697',
         METADATA_CACHE: 'wowhead_wrath_metadata_cache',
         XML_CACHE: 'wowhead_wrath_item_xml',
         HTML_CACHE: 'wowhead_wrath_item_html',

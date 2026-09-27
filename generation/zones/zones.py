@@ -41,7 +41,7 @@ expansion_data = {
     FOREVER: {
         INDEX: 0.2,
         WAGO_PRODUCT: 'wow_classic_beta',
-        WAGO_BUILD: '1.60.1.69977'
+        WAGO_BUILD: '1.60.1.70009'
     },
     TBC: {
         INDEX: 1,
@@ -51,7 +51,7 @@ expansion_data = {
     WRATH: {
         INDEX: 2,
         WAGO_PRODUCT: 'wow_classic',
-        WAGO_BUILD: '3.4.3.58936'  # ClassicUA_Wrath.toc is 30403, not the later 3.4.4 and 3.4.5 clients
+        WAGO_BUILD: '3.4.5.63697'
     },
     CATA: {
         INDEX: 3,
