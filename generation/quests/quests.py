@@ -68,7 +68,11 @@ expansion_data = {
         METADATA_FILTERS: ('', '', ''),
         PARENT_EXPANSIONS: [CLASSIC, SOD],
         RECONCILE_PARENTS: False,
-        IGNORES: []
+        IGNORES: [
+            1, 785, 912, 999, 1005, 1006, 1099, 1174, 1272, 1500, 6843, 7906, 7961, 7962, 8259, 9065,  # Not used in all expansions
+            9249,  # TBC
+            63769,  # [DNT] Holiday Quests Tracker
+        ]
     },
     TBC: {
         WOWHEAD_URL: 'https://www.wowhead.com/tbc',
