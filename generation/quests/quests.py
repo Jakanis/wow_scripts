@@ -1072,6 +1072,7 @@ def fix_classic_quests(classic_quests: dict[int, dict[str, QuestEntity]]):
     # Fixes from TBC
     classic_quests[123][CLASSIC].objective += '.'
     classic_quests[279][CLASSIC].description = classic_quests[279][CLASSIC].description.replace(' Murloc', ' murloc').replace(' Bluegill', ' bluegill')
+    classic_quests[310][CLASSIC].description = classic_quests[310][CLASSIC].description.replace('distract the guard ...', 'distract the guard...')
     classic_quests[345][CLASSIC].description = classic_quests[345][CLASSIC].description.replace('very quickly Unfortunately', 'very quickly. Unfortunately')
     classic_quests[353][CLASSIC].progress = classic_quests[353][CLASSIC].progress.replace('to prove their worth', 'to prove his worth')
     classic_quests[607][CLASSIC].objective += '.'
@@ -1107,6 +1108,8 @@ def fix_classic_quests(classic_quests: dict[int, dict[str, QuestEntity]]):
     classic_quests[4822][CLASSIC].description = classic_quests[4822][CLASSIC].description.replace("Tigule and Foror's", "Tigule's")
     classic_quests[4822][CLASSIC].completion = classic_quests[4822][CLASSIC].completion.replace("Tigule and Foror know to", "Tigule knows how to")
     classic_quests[5064][CLASSIC].objective += '.'
+    classic_quests[5634][CLASSIC].objective = "Speak to High Priestess Laurena in Stormwind."
+    classic_quests[5634][CLASSIC].description = "You're needed in Stormwind, <name>. The High Priestess there, Laurena, says it's time for you to prove you're worthy of the next level of your training. Don't waste too much time finding your way there. You can find her in the Cathedral of Light in the center of the city. Give her my regards, and prove how worthy you are of such a calling. The Light be with you, <name>. \n\n"
     classic_quests[5863][CLASSIC].description = classic_quests[5863][CLASSIC].description.replace("large bank of", "large band of")
     classic_quests[6482][CLASSIC].objective = classic_quests[6482][CLASSIC].objective.replace("Spintertree Post", "Splintertree Post")
     classic_quests[6805][CLASSIC].objective = classic_quests[6805][CLASSIC].objective.replace("Desert Rumbers", "Desert Rumblers")
@@ -1223,8 +1226,9 @@ def fix_classic_sod_quests(classic_quests: dict[int, dict[str, QuestEntity]], so
 
     sod_quests[78307][SOD].objective = None
     sod_quests[78307][SOD].description = None
-    sod_quests[78699][SOD].objective = None
-    sod_quests[78699][SOD].description = None
+    if 78699 in sod_quests:
+        sod_quests[78699][SOD].objective = None
+        sod_quests[78699][SOD].description = None
 
 
 def fix_tbc_quests(tbc_quests: dict[int, dict[str, QuestEntity]]):
@@ -1629,8 +1633,8 @@ def populate_cache_db_with_quest_data() -> dict[int, dict[str, QuestEntity]]:
     wowhead_metadata_tbc = get_wowhead_quests_metadata(TBC)
     wowhead_metadata_wrath = get_wowhead_quests_metadata(WRATH)
     wowhead_metadata_cata = get_wowhead_quests_metadata(CATA)
-    wowhead_metadata_mists = get_wowhead_quests_metadata(MISTS)
-    wowhead_metadata_retail = get_wowhead_quests_metadata(RETAIL)
+    # wowhead_metadata_mists = get_wowhead_quests_metadata(MISTS)
+    # wowhead_metadata_retail = get_wowhead_quests_metadata(RETAIL)
 
     save_htmls_from_wowhead(CLASSIC, set(wowhead_metadata.keys()))
     save_htmls_from_wowhead(SOD, set(wowhead_metadata_sod.keys()))
@@ -1638,8 +1642,8 @@ def populate_cache_db_with_quest_data() -> dict[int, dict[str, QuestEntity]]:
     save_htmls_from_wowhead(TBC, set(wowhead_metadata_tbc.keys()))
     save_htmls_from_wowhead(WRATH, set(wowhead_metadata_wrath.keys()))
     save_htmls_from_wowhead(CATA, set(wowhead_metadata_cata.keys()))
-    save_htmls_from_wowhead(MISTS, set(wowhead_metadata_mists.keys()))
-    save_htmls_from_wowhead(RETAIL, set(wowhead_metadata_retail.keys()))
+    # save_htmls_from_wowhead(MISTS, set(wowhead_metadata_mists.keys()))
+    # save_htmls_from_wowhead(RETAIL, set(wowhead_metadata_retail.keys()))
 
     wowhead_quests = parse_wowhead_pages(CLASSIC, wowhead_metadata)
     wowhead_quests_sod = parse_wowhead_pages(SOD, wowhead_metadata_sod)
@@ -1647,8 +1651,8 @@ def populate_cache_db_with_quest_data() -> dict[int, dict[str, QuestEntity]]:
     wowhead_quests_tbc = parse_wowhead_pages(TBC, wowhead_metadata_tbc)
     wowhead_quests_wrath = parse_wowhead_pages(WRATH, wowhead_metadata_wrath)
     wowhead_quests_cata = parse_wowhead_pages(CATA, wowhead_metadata_cata)
-    wowhead_quests_mists = parse_wowhead_pages(MISTS, wowhead_metadata_mists)
-    wowhead_quests_retail = parse_wowhead_pages(RETAIL, wowhead_metadata_retail)
+    # wowhead_quests_mists = parse_wowhead_pages(MISTS, wowhead_metadata_mists)
+    # wowhead_quests_retail = parse_wowhead_pages(RETAIL, wowhead_metadata_retail)
 
     fix_expansion(wowhead_quests, wowhead_quests_sod, wowhead_quests_tbc, wowhead_quests_wrath)
 
@@ -1673,7 +1677,7 @@ def populate_cache_db_with_quest_data() -> dict[int, dict[str, QuestEntity]]:
     # classic_tbc_wrath_cata_quests = merge_expansions(classic_tbc_wrath_quests, wowhead_quests_cata)
     # print('Merging with Mists')
     # all_quests = merge_expansions(classic_tbc_wrath_cata_quests, wowhead_quests_mists)
-    print('Merging with Retail')
+    # print('Merging with Retail')
     # all_quests = merge_expansions(classic_tbc_wrath_cata_quests, wowhead_quests_retail)
 
     classicua_data = get_all_quests_from_db('classicua.db')
