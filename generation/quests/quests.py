@@ -57,6 +57,7 @@ expansion_data = {
         IGNORES: [
             2000, 7797, 63769, 81977, 81979, 81980, 81982, 81983,
             2358,  # Horns of Nez'ra (added in Wrath)
+            91889,  # Your Reward has Arrived!: an empty system quest no one can take
         ]
     },
     # WoW: Forever, in beta since 2026-09-17: a branch of classic and SoD, merged against them and kept out of the mainline.
@@ -87,6 +88,7 @@ expansion_data = {
             # 236,  # Still Wintergrasp. Doesn't exist for TBC
             9511, 9880, 9881, 10375, 10376, 10377, 10378, 10379, 10383, 10386, 10387, 10558, 10559, 10560, 10561, 10638, 10716, 10779, 10844, 10999, 11027, 11196, 11334, 11345, 11551, 11976, 24508, 24509, 65221, 65222, 65223, 65224, # Appeared in TBC, not used
             24580, 24581, 24582, 24583, # from Wrath
+            91889,  # Your Reward has Arrived!: an empty system quest no one can take
         ]
     },
     WRATH: {
@@ -1621,12 +1623,6 @@ def fix_expansion(classic_quests: dict[int, dict[str, QuestEntity]], sod_quests:
     classic_quests[66294][CLASSIC] = sod_quests[66294][SOD]
     classic_quests[66294][CLASSIC].expansion = CLASSIC
     del sod_quests[66294]
-
-    # A system quest Wowhead lists under SoD, but TBC has it just the same: every client shares it, so classic's
-    classic_quests[91889] = dict()
-    classic_quests[91889][CLASSIC] = sod_quests[91889][SOD]
-    classic_quests[91889][CLASSIC].expansion = CLASSIC
-    del sod_quests[91889]
     pass
 
 
