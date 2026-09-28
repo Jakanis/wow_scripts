@@ -1078,7 +1078,6 @@ def fix_classic_quests(classic_quests: dict[int, dict[str, QuestEntity]]):
     # Fixes from TBC
     classic_quests[123][CLASSIC].objective += '.'
     classic_quests[279][CLASSIC].description = classic_quests[279][CLASSIC].description.replace(' Murloc', ' murloc').replace(' Bluegill', ' bluegill')
-    classic_quests[310][CLASSIC].description = classic_quests[310][CLASSIC].description.replace('distract the guard ...', 'distract the guard...')
     classic_quests[345][CLASSIC].description = classic_quests[345][CLASSIC].description.replace('very quickly Unfortunately', 'very quickly. Unfortunately')
     classic_quests[353][CLASSIC].progress = classic_quests[353][CLASSIC].progress.replace('to prove their worth', 'to prove his worth')
     classic_quests[607][CLASSIC].objective += '.'
@@ -1219,6 +1218,20 @@ def fix_classic_quests(classic_quests: dict[int, dict[str, QuestEntity]]):
     classic_quests[8827][CLASSIC].description = classic_quests[8827][CLASSIC].description.replace('Smokeywood', "Smokywood")
     classic_quests[8828][CLASSIC].description = classic_quests[8828][CLASSIC].description.replace('Smokeywood', "Smokywood")
 
+    # Fixes from Forever:
+    classic_quests[174][CLASSIC].name = classic_quests[174][CLASSIC].name.replace('Look To The Stars', 'Look to the Stars')
+    classic_quests[175][CLASSIC].name = classic_quests[175][CLASSIC].name.replace('Look To The Stars', 'Look to the Stars')
+    classic_quests[177][CLASSIC].name = classic_quests[177][CLASSIC].name.replace('Look To The Stars', 'Look to the Stars')
+    classic_quests[181][CLASSIC].name = classic_quests[181][CLASSIC].name.replace('Look To The Stars', 'Look to the Stars')
+    classic_quests[275][CLASSIC].name = classic_quests[275][CLASSIC].name.replace('Blisters on The Land', 'Blisters on the Land')
+    classic_quests[305][CLASSIC].name = classic_quests[305][CLASSIC].name.replace('In Search of The Excavation Team', 'In Search of the Excavation Team')
+    classic_quests[310][CLASSIC].description = classic_quests[310][CLASSIC].description.replace('distract the guard ...', 'distract the guard...')
+    classic_quests[387][CLASSIC].name = classic_quests[387][CLASSIC].name.replace('Quell The Uprising', 'Quell the Uprising')
+    classic_quests[2139][CLASSIC].description = classic_quests[2139][CLASSIC].description.replace('eased - even', 'eased--even')
+    classic_quests[4641][CLASSIC].name = classic_quests[4641][CLASSIC].name.replace('Your Place In The World', 'Your Place in the World')
+    classic_quests[5063][CLASSIC].description = classic_quests[5063][CLASSIC].description.replace('hide of the beast.', 'hide of the Beast.')
+    classic_quests[6386][CLASSIC].name = classic_quests[6386][CLASSIC].name.replace('Return to the Crossroads.', 'Return to the Crossroads')
+
 
 def fix_classic_sod_quests(classic_quests: dict[int, dict[str, QuestEntity]], sod_quests: dict[int, dict[str, QuestEntity]]):
     # sod_quests[79592][SOD].accept_text_additions(classic_quests[7882][CLASSIC])
@@ -1232,9 +1245,206 @@ def fix_classic_sod_quests(classic_quests: dict[int, dict[str, QuestEntity]], so
 
     sod_quests[78307][SOD].objective = None
     sod_quests[78307][SOD].description = None
-    if 78699 in sod_quests:
-        sod_quests[78699][SOD].objective = None
-        sod_quests[78699][SOD].description = None
+    sod_quests[78699][SOD].objective = None
+    sod_quests[78699][SOD].description = None
+
+    # Fixes from Forever:
+    sod_quests[76156][SOD].description = sod_quests[76156][SOD].description.replace('infilrate', 'infiltrate')
+    sod_quests[78148][SOD].name = sod_quests[78148][SOD].name.replace('Sorceror', 'Sorcerer')
+
+
+def fix_forever_quests(forever_quests: dict[int, dict[str, QuestEntity]]):
+    # Temp fix for Wowhead discrepancy with next expansions
+    forever_quests[8249][FOREVER].progress = forever_quests[8249][FOREVER].progress.replace("even a <class> in training", "even a rogue in training")
+
+    # Fixes from TBC
+    forever_quests[123][FOREVER].objective += '.'
+    forever_quests[279][FOREVER].description = forever_quests[279][FOREVER].description.replace(' Murloc', ' murloc').replace(' Bluegill', ' bluegill')
+    forever_quests[345][FOREVER].description = forever_quests[345][FOREVER].description.replace('very quickly Unfortunately', 'very quickly. Unfortunately')
+    forever_quests[353][FOREVER].progress = forever_quests[353][FOREVER].progress.replace('to prove their worth', 'to prove his worth')
+    forever_quests[607][FOREVER].objective += '.'
+    forever_quests[621][FOREVER].description = forever_quests[621][FOREVER].description.replace('Jubuwai', 'Jubuwal')
+    forever_quests[682][FOREVER].objective = forever_quests[682][FOREVER].objective.replace('Bring Stromgarde', 'Bring 15 Stromgarde')
+    forever_quests[686][FOREVER].description = forever_quests[686][FOREVER].description.replace('Mablesten', 'Marblesten')
+    forever_quests[729][FOREVER].description = forever_quests[729][FOREVER].description.replace('prospector is ok!', 'prospector is okay!')
+    forever_quests[1062][FOREVER].description = forever_quests[1062][FOREVER].description.replace(" -- ", "--")
+    forever_quests[1168][FOREVER].objective = forever_quests[1168][FOREVER].objective.replace("Firemane Guards", "Firemane Scalebanes")
+    forever_quests[1264][FOREVER].description = forever_quests[1264][FOREVER].description.replace("discretely", "discreetly")
+    forever_quests[1489][FOREVER].objective += '.'
+    forever_quests[1505][FOREVER].description = forever_quests[1505][FOREVER].description.replace("Durotar to the east.", "Durotar.")
+    forever_quests[1578][FOREVER].objective += '.'
+    forever_quests[1582][FOREVER].objective = forever_quests[1582][FOREVER].objective.replace("Embossed Leather Glove", "Embossed Leather Gloves")
+    forever_quests[1658][FOREVER].objective = forever_quests[1658][FOREVER].objective.replace("in Tirisfal Glade.", "in Tirisfal Glades.")
+    forever_quests[1658][FOREVER].description = forever_quests[1658][FOREVER].description.replace(" Tirisfal Glade ", " Tirisfal Glades ")
+    forever_quests[1678][FOREVER].description = forever_quests[1678][FOREVER].description.replace("south of Frostmane Hold", "south of Frostmane Hold.")
+    forever_quests[1795][FOREVER].description = forever_quests[1795][FOREVER].description.replace("If you're are", "If you are")
+    forever_quests[1842][FOREVER].objective += '.'
+    forever_quests[1844][FOREVER].description = forever_quests[1844][FOREVER].description.replace(" the northwestern reaches ", " the southwestern reaches ").replace(" Mountains there lies ", " Mountains lies ")
+    forever_quests[1899][FOREVER].objective = forever_quests[1899][FOREVER].objective.replace("Astor's Ledger", "Andron's Ledger")
+    forever_quests[1921][FOREVER].objective = forever_quests[1921][FOREVER].objective.replace("10 Linen and", "10 Linen Cloth and")
+    forever_quests[1961][FOREVER].objective = forever_quests[1961][FOREVER].objective.replace("10 Linen and", "10 Linen Cloth and")
+    forever_quests[2200][FOREVER].objective = forever_quests[2200][FOREVER].objective.replace("who has it", "who had it")
+    forever_quests[3904][FOREVER].description = forever_quests[3904][FOREVER].description.replace("Bring me those crates!", "Bring me those buckets!")
+    forever_quests[4245][FOREVER].description = forever_quests[4245][FOREVER].description.replace("if your prepared", "if you're prepared")
+    forever_quests[4506][FOREVER].objective = forever_quests[4506][FOREVER].objective.replace("moon well", "moonwell")
+    forever_quests[4506][FOREVER].description = forever_quests[4506][FOREVER].description.replace("moon well", "moonwell")
+    forever_quests[5064][FOREVER].objective += '.'
+    forever_quests[5863][FOREVER].description = forever_quests[5863][FOREVER].description.replace("large bank of", "large band of")
+    forever_quests[6482][FOREVER].objective = forever_quests[6482][FOREVER].objective.replace("Spintertree Post", "Splintertree Post")
+    forever_quests[6805][FOREVER].objective = forever_quests[6805][FOREVER].objective.replace("Desert Rumbers", "Desert Rumblers")
+    forever_quests[7845][FOREVER].objective = forever_quests[7845][FOREVER].objective.replace("Raventusk", "Revantusk")
+    forever_quests[7846][FOREVER].objective = forever_quests[7846][FOREVER].objective.replace("Elder Torn'tusk", "Elder Torntusk")
+    forever_quests[7927][FOREVER].progress = forever_quests[7927][FOREVER].progress.replace("of portals!", "of Portals!")
+    forever_quests[7927][FOREVER].completion = forever_quests[7927][FOREVER].completion.replace("darkmoon", "Darkmoon")
+    forever_quests[7929][FOREVER].progress = forever_quests[7929][FOREVER].progress.replace("of elementals!", "of Elementals!")
+    forever_quests[7929][FOREVER].completion = forever_quests[7929][FOREVER].completion.replace("darkmoon", "Darkmoon")
+    forever_quests[8115][FOREVER].description = forever_quests[8115][FOREVER].description.replace("are are needed", "are as needed")
+    forever_quests[8584][FOREVER].objective = forever_quests[8584][FOREVER].objective.replace("Quickcleave", "Quikcleave")
+    forever_quests[8584][FOREVER].description = forever_quests[8584][FOREVER].description.replace("Quickcleave", "Quikcleave")
+    forever_quests[8585][FOREVER].objective = forever_quests[8585][FOREVER].objective.replace("Quickcleave", "Quikcleave")
+    forever_quests[8586][FOREVER].objective = forever_quests[8586][FOREVER].objective.replace("Quickcleave", "Quikcleave")
+    forever_quests[8625][FOREVER].objective = forever_quests[8625][FOREVER].objective.replace("2 Idols of Rebirth, 5 Silver Scarabs and 5 Ivory Scarabs", "2 Idols of Death, 5 Stone Scarabs and 5 Bronze Scarabs")
+    forever_quests[8918][FOREVER].objective = forever_quests[8918][FOREVER].objective.replace(" of the Elements", " of Elements")
+    forever_quests[8942][FOREVER].objective = forever_quests[8942][FOREVER].objective.replace(" of the Elements", " of Elements")
+    forever_quests[8968][FOREVER].description = forever_quests[8968][FOREVER].description.replace(" the Left Piece of Lord Valthalak's Amulet ", " the left piece of Lord Valthalak's amulet ")
+    forever_quests[8991][FOREVER].description = forever_quests[8991][FOREVER].description.replace(" the Right Piece of Lord Valthalak's Amulet ", " the right piece of Lord Valthalak's amulet ")
+    forever_quests[9416][FOREVER].completion = forever_quests[9416][FOREVER].completion.replace(" you're hear, ", " you're here, ")
+    forever_quests[65604][FOREVER].completion = forever_quests[65604][FOREVER].completion.replace("You strength is growing,", "Your strength is growing,").replace("that <race> for many years", "that orc for many years")
+
+    #Fixes from Wrath:
+    forever_quests[136][FOREVER].name = forever_quests[136][FOREVER].name.replace(" Sander's ", " Sanders' ")
+    forever_quests[138][FOREVER].name = forever_quests[138][FOREVER].name.replace(" Sander's ", " Sanders' ")
+    forever_quests[139][FOREVER].name = forever_quests[139][FOREVER].name.replace(" Sander's ", " Sanders' ")
+    forever_quests[140][FOREVER].name = forever_quests[140][FOREVER].name.replace(" Sander's ", " Sanders' ")
+    forever_quests[140][FOREVER].description = forever_quests[140][FOREVER].description.replace(" Sander's ", " Sanders' ")
+    forever_quests[1821][FOREVER].description = forever_quests[1821][FOREVER].description.replace("lurking scourge", "lurking Scourge")
+    forever_quests[4771][FOREVER].description = forever_quests[4771][FOREVER].description.replace(" a team of scourge scholars...", " a team of Scourge scholars...")
+    forever_quests[5713][FOREVER].description = forever_quests[5713][FOREVER].description.replace(" will be able deliver ", " will be able to deliver ")
+    forever_quests[7631][FOREVER].completion = forever_quests[7631][FOREVER].completion.replace(" a dreadsteed.", " a Dreadsteed.")
+    forever_quests[7907][FOREVER].progress = forever_quests[7907][FOREVER].progress.replace(" of beasts!", " of Beasts!")
+    forever_quests[7907][FOREVER].completion = forever_quests[7907][FOREVER].completion.replace(" darkmoon cards ", " Darkmoon cards ")
+    forever_quests[7928][FOREVER].progress = forever_quests[7928][FOREVER].progress.replace(" of warlords!", " of Warlords!")
+    forever_quests[7928][FOREVER].completion = forever_quests[7928][FOREVER].completion.replace(" darkmoon cards ", " Darkmoon cards ")
+    forever_quests[8279][FOREVER].description = forever_quests[8279][FOREVER].description.replace(" Twilight Keepers, look ", " Twilight Keepers. Look ")
+    forever_quests[8903][FOREVER].description = forever_quests[8903][FOREVER].description.replace(" the the ", " the ")
+    forever_quests[8983][FOREVER].objective = forever_quests[8983][FOREVER].objective.replace(" Mage Quarter.", " Magic Quarter.")
+    forever_quests[8983][FOREVER].description = forever_quests[8983][FOREVER].description.replace(" Mage Quarter.", " Magic Quarter.")
+    forever_quests[8984][FOREVER].description = forever_quests[8984][FOREVER].description.replace(" point you in the right direction", " point you in the right direction.")
+    forever_quests[9310][FOREVER].description = forever_quests[9310][FOREVER].description.replace(" a crystal that is faintly ", " a crystal faintly ")
+
+    #Fixes from ClassicDB/Wowpedia (WarningDB7):
+    forever_quests[33][FOREVER].description = forever_quests[33][FOREVER].description.replace('\ntough wolf meat', '\nTough wolf meat')
+    forever_quests[156][FOREVER].description = forever_quests[156][FOREVER].description.replace('\nrot blossoms grow', '\nRot blossoms grow')
+    forever_quests[812][FOREVER].completion += ' <sigh>'
+    forever_quests[842][FOREVER].completion = "Alright, <name>. You want to earn your keep with the Horde? Well there's plenty to do here, so listen close and do what you're told.\n\n<I see that look in your eyes, do not think I will tolerate any insolence. Thrall himself has declared the Hordes females to be on equal footing with you men. Disrespect me in the slightest, and you will know true pain./I'm happy to have met you. Thrall will be glad to know that more females like you and I are taking the initiative to push forward in the Barrens.>"
+    forever_quests[4981][FOREVER].completion = forever_quests[4981][FOREVER].completion.replace("\n\n\n\n", "\n\n<Bijou laughs.>\n\n")
+    forever_quests[5282][FOREVER].progress = 'Compassion is what separates us from the animals, <name>. Remember that...'
+    forever_quests[5713][FOREVER].progress = 'Have you seen of Sentinel Aynasha on the road? She left on an important mission but she has not yet returned.'
+    forever_quests[6482][FOREVER].progress = 'Have you seen my brother Ruul? He walked into the forest days ago and has not returned...'
+    forever_quests[7936][FOREVER].completion = forever_quests[7936][FOREVER].completion.replace('A prize fit for a king!', 'A prize fit for a <king/queen>!')
+    forever_quests[8044][FOREVER].progress = forever_quests[8044][FOREVER].progress.replace("\n\n\n\n", "\n\n<Jin'rokh bows.>\n\n")
+    forever_quests[8046][FOREVER].completion += "\n\n<Jin'rokh shudders.>"
+    forever_quests[8052][FOREVER].progress = forever_quests[8052][FOREVER].progress.replace("\n\n\n\n", "\n\n<Al'tabim sighs.>\n\n")
+    forever_quests[8146][FOREVER].progress = forever_quests[8146][FOREVER].progress.replace("\n\n\n\n", "\n\n<Falthir grins.>\n\n")
+    forever_quests[8316][FOREVER].completion = forever_quests[8316][FOREVER].completion.replace("\n\n\n\n", "\n\n<Geologist Larksbane turns pale.>\n\n")
+    forever_quests[8376][FOREVER].completion = forever_quests[8376][FOREVER].completion.replace("\n\n\n\n", "\n\n<Geologist Larksbane turns pale.>\n\n")
+    forever_quests[8377][FOREVER].completion = forever_quests[8377][FOREVER].completion.replace("\n\n\n\n", "\n\n<Geologist Larksbane turns pale.>\n\n")
+    forever_quests[8378][FOREVER].completion = forever_quests[8378][FOREVER].completion.replace("\n\n\n\n", "\n\n<Geologist Larksbane turns pale.>\n\n")
+    forever_quests[8379][FOREVER].completion = forever_quests[8379][FOREVER].completion.replace("\n\n\n\n", "\n\n<Geologist Larksbane turns pale.>\n\n")
+    forever_quests[8380][FOREVER].completion = forever_quests[8380][FOREVER].completion.replace("\n\n\n\n", "\n\n<Geologist Larksbane turns pale.>\n\n")
+    forever_quests[8381][FOREVER].completion = forever_quests[8381][FOREVER].completion.replace("\n\n\n\n", "\n\n<Geologist Larksbane turns pale.>\n\n")
+    forever_quests[8382][FOREVER].completion = forever_quests[8382][FOREVER].completion.replace("\n\n\n\n", "\n\n<Geologist Larksbane turns pale.>\n\n")
+    forever_quests[8742][FOREVER].progress = 'The Scepter of the Shifting Sands is whole once more, <name>.\n\nIt must be you who uses the scepter. It must be you who heralds the next age of your people.\n\nYou must wait for the armies of the Horde and the Alliance to arrive in Silithus before you may ring the Scarab Gong.'
+    forever_quests[9269][FOREVER].progress = 'I must not interfere, <race>.'
+    forever_quests[9269][FOREVER].completion = 'The magnitude of this accomplishment must not be understated, <name>. You have done what most would have thought to be impossible. Alas, it was fated. The staff has made its choice...'
+    forever_quests[9319][FOREVER].progress = 'Have you found your way through the dark?'
+    forever_quests[9319][FOREVER].completion = forever_quests[9319][FOREVER].completion.replace("\n\n\n\n", "\n\n<The Flamekeeper mutters an incantation in a strange, arcane tongue, then pulls out a glowing bottle.>\n\n")
+    forever_quests[9322][FOREVER].progress = 'Are the flames of Kalimdor burning brightly?'
+    forever_quests[9323][FOREVER].progress = 'Are the flames of Eastern Kingdoms burning brightly?'
+
+    #Fixes from ClassicDB/Wowpedia (WarningDB8):
+    forever_quests[172][FOREVER].completion = forever_quests[172][FOREVER].completion.replace('be like a big brother to me', 'be like a big <brother/sister> to me')
+    forever_quests[895][FOREVER].description = forever_quests[895][FOREVER].description.replace('and is WANTED on', 'and is wanted on')
+    forever_quests[1468][FOREVER].completion = forever_quests[1468][FOREVER].completion.replace('be like a big brother to me', 'be like a big <brother/sister> to me').replace(', yes sir.', ', yes <sir/lady>.')
+    forever_quests[4081][FOREVER].progress = "What is it, <race>? Can't you see I have a platoon to command?"
+    forever_quests[5044][FOREVER].completion += ' <snort>'
+    forever_quests[5265][FOREVER].description = forever_quests[5265][FOREVER].description.replace('\nthe Argent Hold ', '\nThe Argent Hold ')
+    forever_quests[9136][FOREVER].completion = forever_quests[9136][FOREVER].completion.replace("\n\n\n\n", "\n\n<Rayne bows.>\n\n")
+
+    #Fixes from Cata:
+    forever_quests[47][FOREVER].description = forever_quests[47][FOREVER].description.replace('The Kobolds', 'The kobolds')
+    forever_quests[60][FOREVER].description = forever_quests[60][FOREVER].description.replace('mines ... the Fargodeep mine', 'mines... the Fargodeep Mine')
+    forever_quests[85][FOREVER].description = forever_quests[85][FOREVER].description.replace('necklace, and think that', 'necklace and I think that').replace('Maclure vineyards', 'Maclure Vineyards').replace('back for me, and you', 'back for me and you')
+    forever_quests[112][FOREVER].description = forever_quests[112][FOREVER].description.replace('the Liquor, I need', 'the liquor, I need')
+    forever_quests[930][FOREVER].description = forever_quests[930][FOREVER].description.replace('beneath its fronds', 'beneath the fronds')
+    forever_quests[3093][FOREVER].description = forever_quests[3093][FOREVER].description.replace("reading it's contents", 'reading its contents')
+    forever_quests[5893][FOREVER].objective = forever_quests[5893][FOREVER].objective.replace('Quatermaster', 'Quartermaster')
+    forever_quests[6961][FOREVER].objective = forever_quests[6961][FOREVER].objective.replace('Greatfather', 'Great-father')
+    forever_quests[6961][FOREVER].description = forever_quests[6961][FOREVER].description.replace('Greatfather', 'Great-father')
+    forever_quests[6962][FOREVER].objective = forever_quests[6962][FOREVER].objective.replace('Greatfather', 'Great-father')
+    forever_quests[6962][FOREVER].description = forever_quests[6962][FOREVER].description.replace('Greatfather', 'Great-father')
+    forever_quests[7021][FOREVER].objective = forever_quests[7021][FOREVER].objective.replace('Greatfather', 'Great-father')
+    forever_quests[7021][FOREVER].description = forever_quests[7021][FOREVER].description.replace('Greatfather', 'Great-father')
+    forever_quests[7024][FOREVER].objective = forever_quests[7024][FOREVER].objective.replace('Greatfather', 'Great-father')
+    forever_quests[7024][FOREVER].description = forever_quests[7024][FOREVER].description.replace('Greatfather', 'Great-father')
+    forever_quests[7062][FOREVER].objective = forever_quests[7062][FOREVER].objective.replace("Explorer's League", "Explorers' League")
+    forever_quests[7062][FOREVER].description = forever_quests[7062][FOREVER].description.replace("Explorer's League", "Explorers' League")
+    forever_quests[8827][FOREVER].description = forever_quests[8827][FOREVER].description.replace('Smokeywood', "Smokywood")
+    forever_quests[8828][FOREVER].description = forever_quests[8828][FOREVER].description.replace('Smokeywood', "Smokywood")
+
+    # SoD's fixes
+    forever_quests[78307][FOREVER].objective = None
+    forever_quests[78307][FOREVER].description = None
+
+    # Blizzard's edits that Forever's pages undo, though its game most likely keeps them: the names it replaced in 2021, and the sexism taken out of #3504
+    forever_quests[915][FOREVER].objective = forever_quests[915][FOREVER].objective.replace("Tigule and Foror's", "Tigule's")
+    forever_quests[915][FOREVER].description = forever_quests[915][FOREVER].description.replace("Tigule and Foror's", "Tigule's")
+    forever_quests[915][FOREVER].completion = forever_quests[915][FOREVER].completion.replace("Tigule and Foror know to", "Tigule knows how to")
+    forever_quests[3441][FOREVER].objective = forever_quests[3441][FOREVER].objective.replace('Kalaran Windblade', 'Velarok Windblade')
+    forever_quests[3442][FOREVER].objective = forever_quests[3442][FOREVER].objective.replace('Kalaran Windblade', 'Velarok Windblade')
+    forever_quests[3443][FOREVER].objective = forever_quests[3443][FOREVER].objective.replace('Kalaran Windblade', 'Velarok Windblade')
+    forever_quests[3452][FOREVER].objective = forever_quests[3452][FOREVER].objective.replace('Kalaran Windblade', 'Velarok Windblade')
+    forever_quests[3453][FOREVER].objective = forever_quests[3453][FOREVER].objective.replace('Kalaran Windblade', 'Velarok Windblade')
+    forever_quests[3504][FOREVER].description = forever_quests[3504][FOREVER].description.replace('thieving woman!', 'thieving elf!').replace("blood elf. What's worse, I trusted a woman!", 'blood elf. ')
+    forever_quests[4022][FOREVER].objective = forever_quests[4022][FOREVER].objective.replace('Kalaran Windblade', 'Velarok Windblade')
+    forever_quests[4822][FOREVER].objective = forever_quests[4822][FOREVER].objective.replace("Tigule and Foror's", "Tigule's")
+    forever_quests[4822][FOREVER].description = forever_quests[4822][FOREVER].description.replace("Tigule and Foror's", "Tigule's")
+    forever_quests[5047][FOREVER].name = forever_quests[5047][FOREVER].name.replace('Finkle Einhorn', 'Pip Quickwit')
+    forever_quests[5047][FOREVER].description = forever_quests[5047][FOREVER].description.replace("'Finkle is A-OK'", "'Pip is A-OK'").replace('<Finkle hands you', '<Pip hands you')
+    forever_quests[5214][FOREVER].name = forever_quests[5214][FOREVER].name.replace('Fras Siabi', 'Ezra Grimm')
+    forever_quests[5214][FOREVER].objective = forever_quests[5214][FOREVER].objective.replace("Fras Siabi's", "Ezra Grimm's").replace("Siabi's Premium Tobacco", "Grimm's Premium Tobacco")
+    forever_quests[5214][FOREVER].description = forever_quests[5214][FOREVER].description.replace('Fras', 'Ezra')
+    forever_quests[7481][FOREVER].objective = forever_quests[7481][FOREVER].objective.replace('Kariel Winthalus', 'Telmius Dreamseeker')
+    forever_quests[7481][FOREVER].description = forever_quests[7481][FOREVER].description.replace('Kariel Winthalus', 'Telmius Dreamseeker')
+    forever_quests[7482][FOREVER].objective = forever_quests[7482][FOREVER].objective.replace('Kariel Winthalus', 'Telmius Dreamseeker')
+    forever_quests[7482][FOREVER].description = forever_quests[7482][FOREVER].description.replace('Kariel Winthalus', 'Telmius Dreamseeker')
+    forever_quests[7483][FOREVER].description = forever_quests[7483][FOREVER].description.replace('Master Winthalus', 'Master Dreamseeker')
+    forever_quests[7507][FOREVER].name = forever_quests[7507][FOREVER].name.replace("Foror's Compendium", "Nostro's Compendium")
+    forever_quests[7507][FOREVER].objective = forever_quests[7507][FOREVER].objective.replace("Foror's Compendium", "Nostro's Compendium")
+    forever_quests[7782][FOREVER].objective = forever_quests[7782][FOREVER].objective.replace('Field Marshal Afrasiabi', 'Field Marshal Stonebridge')
+    forever_quests[7782][FOREVER].description = forever_quests[7782][FOREVER].description.replace('Field Marshal Afrasiabi', 'Field Marshal Stonebridge')
+
+    # Forever's restyling of classic's and SoD's texts, which no translation needs: they keep their form
+    forever_quests[23][FOREVER].description = forever_quests[23][FOREVER].description.removeprefix('<').removesuffix('>')
+    forever_quests[167][FOREVER].name = forever_quests[167][FOREVER].name.replace('Oh Brother...', 'Oh Brother. . .')
+    forever_quests[169][FOREVER].name = forever_quests[169][FOREVER].name.replace('WANTED:', 'Wanted:')
+    forever_quests[176][FOREVER].name = forever_quests[176][FOREVER].name.replace('WANTED:', 'Wanted:')
+    forever_quests[180][FOREVER].name = forever_quests[180][FOREVER].name.replace('WANTED:', 'Wanted:')
+    forever_quests[398][FOREVER].name = forever_quests[398][FOREVER].name.replace('WANTED:', 'Wanted:')
+    forever_quests[960][FOREVER].name = forever_quests[960][FOREVER].name.replace('Onu is Meditating', 'Onu is meditating')
+    forever_quests[961][FOREVER].name = forever_quests[961][FOREVER].name.replace('Onu is Meditating', 'Onu is meditating')
+    forever_quests[79007][FOREVER].name = forever_quests[79007][FOREVER].name.replace('... and', '...and')
+    forever_quests[79007][FOREVER].description = forever_quests[79007][FOREVER].description.replace('<The faint radiance', 'The faint radiance').replace('blistered note.> "', 'blistered note. "')
+    forever_quests[79008][FOREVER].name = forever_quests[79008][FOREVER].name.replace('... and', '...and')
+    forever_quests[79008][FOREVER].description = forever_quests[79008][FOREVER].description.replace('<The faint radiance', 'The faint radiance').replace('blistered note.> "', 'blistered note. "')
+    forever_quests[79092][FOREVER].name = forever_quests[79092][FOREVER].name.replace("Theocritus'", "Theocritus's")
+    forever_quests[79974][FOREVER].description = forever_quests[79974][FOREVER].description.removeprefix('"').removesuffix('"')
+    forever_quests[79976][FOREVER].description = forever_quests[79976][FOREVER].description.replace('" <The paper is torn', '" The paper is torn').replace('onto your feet...>', 'onto your feet...')
+    forever_quests[79980][FOREVER].description = forever_quests[79980][FOREVER].description.removeprefix('"').removesuffix('"')
+
+    # Errors of Forever's pages
+    forever_quests[2139][FOREVER].description = forever_quests[2139][FOREVER].description.replace('<name>. You have', '<name>.\n\nYou have').replace('moment. I have', 'moment.\n\nI have').replace('<name>. In a cave', '<name>.\n\nIn a cave')
+    forever_quests[8801][FOREVER].objective = forever_quests[8801][FOREVER].objective.replace("Caelastrasz", "Caelestrasz")
 
 
 def fix_tbc_quests(tbc_quests: dict[int, dict[str, QuestEntity]]):
@@ -1391,6 +1601,20 @@ def fix_tbc_quests(tbc_quests: dict[int, dict[str, QuestEntity]]):
     tbc_quests[12133][TBC].description = tbc_quests[12133][TBC].description.replace('pumpking', 'pumpkin')
     tbc_quests[12155][TBC].description = tbc_quests[12155][TBC].description.replace('pumpking', 'pumpkin')
 
+    # Fixes from Forever:
+    tbc_quests[174][TBC].name = tbc_quests[174][TBC].name.replace('Look To The Stars', 'Look to the Stars')
+    tbc_quests[175][TBC].name = tbc_quests[175][TBC].name.replace('Look To The Stars', 'Look to the Stars')
+    tbc_quests[177][TBC].name = tbc_quests[177][TBC].name.replace('Look To The Stars', 'Look to the Stars')
+    tbc_quests[181][TBC].name = tbc_quests[181][TBC].name.replace('Look To The Stars', 'Look to the Stars')
+    tbc_quests[275][TBC].name = tbc_quests[275][TBC].name.replace('Blisters on The Land', 'Blisters on the Land')
+    tbc_quests[305][TBC].name = tbc_quests[305][TBC].name.replace('In Search of The Excavation Team', 'In Search of the Excavation Team')
+    tbc_quests[310][TBC].description = tbc_quests[310][TBC].description.replace('distract the guard ...', 'distract the guard...')
+    tbc_quests[387][TBC].name = tbc_quests[387][TBC].name.replace('Quell The Uprising', 'Quell the Uprising')
+    tbc_quests[2139][TBC].description = tbc_quests[2139][TBC].description.replace('eased - even', 'eased--even')
+    tbc_quests[4641][TBC].name = tbc_quests[4641][TBC].name.replace('Your Place In The World', 'Your Place in the World')
+    tbc_quests[5063][TBC].description = tbc_quests[5063][TBC].description.replace('hide of the beast.', 'hide of the Beast.')
+    tbc_quests[6386][TBC].name = tbc_quests[6386][TBC].name.replace('Return to the Crossroads.', 'Return to the Crossroads')
+
 
 def fix_wrath_quests(wrath_quests: dict[int, dict[str, QuestEntity]]):
     # Common fixes
@@ -1544,6 +1768,20 @@ def fix_wrath_quests(wrath_quests: dict[int, dict[str, QuestEntity]]):
     wrath_quests[25248][WRATH].completion = "May you find what you're looking for, <brother/sister>."
     wrath_quests[25249][WRATH].completion = "May you find what you're looking for, <brother/sister>."
 
+    # Fixes from Forever:
+    wrath_quests[174][WRATH].name = wrath_quests[174][WRATH].name.replace('Look To The Stars', 'Look to the Stars')
+    wrath_quests[175][WRATH].name = wrath_quests[175][WRATH].name.replace('Look To The Stars', 'Look to the Stars')
+    wrath_quests[177][WRATH].name = wrath_quests[177][WRATH].name.replace('Look To The Stars', 'Look to the Stars')
+    wrath_quests[181][WRATH].name = wrath_quests[181][WRATH].name.replace('Look To The Stars', 'Look to the Stars')
+    wrath_quests[275][WRATH].name = wrath_quests[275][WRATH].name.replace('Blisters on The Land', 'Blisters on the Land')
+    wrath_quests[305][WRATH].name = wrath_quests[305][WRATH].name.replace('In Search of The Excavation Team', 'In Search of the Excavation Team')
+    wrath_quests[310][WRATH].description = wrath_quests[310][WRATH].description.replace('distract the guard ...', 'distract the guard...')
+    wrath_quests[387][WRATH].name = wrath_quests[387][WRATH].name.replace('Quell The Uprising', 'Quell the Uprising')
+    wrath_quests[2139][WRATH].description = wrath_quests[2139][WRATH].description.replace('eased - even', 'eased--even')
+    wrath_quests[4641][WRATH].name = wrath_quests[4641][WRATH].name.replace('Your Place In The World', 'Your Place in the World')
+    wrath_quests[5063][WRATH].description = wrath_quests[5063][WRATH].description.replace('hide of the beast.', 'hide of the Beast.')
+    wrath_quests[6386][WRATH].name = wrath_quests[6386][WRATH].name.replace('Return to the Crossroads.', 'Return to the Crossroads')
+
 
 def fix_cata_quests(cata_quests: dict[int, dict[str, QuestEntity]]):
     # Common fixes
@@ -1596,6 +1834,9 @@ def fix_cata_quests(cata_quests: dict[int, dict[str, QuestEntity]]):
     cata_quests[26489][CATA].completion = cata_quests[26489][CATA].completion.replace("boss-man", "boss-<man/lady>")
     cata_quests[26965][CATA].progress = cata_quests[26965][CATA].progress.replace("Meowstermagnub", "<name>")
     cata_quests[26989][CATA].completion = cata_quests[26989][CATA].completion.replace("Szaggynub", "<name>")
+
+    # Fixes from Forever:
+    cata_quests[310][CATA].description = cata_quests[310][CATA].description.replace('distract the guard ...', 'distract the guard...')
 
 
 
@@ -1658,10 +1899,7 @@ def populate_cache_db_with_quest_data() -> dict[int, dict[str, QuestEntity]]:
 
     fix_classic_quests(wowhead_quests)
     fix_classic_sod_quests(wowhead_quests, wowhead_quests_sod)
-    # Forever carries classic's and SoD's texts as they were, so its quests take their corrections too
-    forever_quests = {id: quests[FOREVER] for id, quests in wowhead_quests_forever.items()}
-    fix_classic_quests({id: {CLASSIC: quest} for id, quest in forever_quests.items()})
-    fix_classic_sod_quests(wowhead_quests, {id: {SOD: quest} for id, quest in forever_quests.items()})
+    fix_forever_quests(wowhead_quests_forever)
     fix_tbc_quests(wowhead_quests_tbc)
     fix_wrath_quests(wowhead_quests_wrath)
     fix_cata_quests(wowhead_quests_cata)
