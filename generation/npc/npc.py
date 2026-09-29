@@ -33,7 +33,6 @@ INDEX = 'index'
 METADATA_FILTERS = 'metadata_filters'
 SOD = 'sod'
 FORCE_DOWNLOAD = 'force_download'
-RETRIEVE_QUOTES = 'retrieve_quotes'
 PARENT_EXPANSIONS = 'parent_expansions'
 FORCE_LOAD_NAME = 'FORCE LOAD'  # placeholder until the real name is read off the NPC page
 
@@ -70,7 +69,6 @@ expansion_data = {
         METADATA_FILTERS: ('13:', '5:', '11500:'),
         IGNORES: [],
         FORCE_DOWNLOAD: UNLISTED_TOTEMS + [CRAFTICUS],
-        RETRIEVE_QUOTES: True,
         PARENT_EXPANSIONS: []
     },
     SOD: {
@@ -81,7 +79,6 @@ expansion_data = {
         METADATA_FILTERS: ('13:', '2:', '11500:'),
         IGNORES: [],
         FORCE_DOWNLOAD: [207795, 209889, 212157, 222231, 222240, 223739, 242756],
-        RETRIEVE_QUOTES: True,
         PARENT_EXPANSIONS: [CLASSIC]
     },
     # WoW: Forever, in beta since 2026-09-17: a branch of classic and SoD, merged against them and kept out of the mainline.
@@ -93,7 +90,6 @@ expansion_data = {
         METADATA_FILTERS: ('', '', ''),
         IGNORES: [],
         FORCE_DOWNLOAD: [],
-        RETRIEVE_QUOTES: False,  # the names and tags come with the search; the quotes can wait
         PARENT_EXPANSIONS: [CLASSIC, SOD]
     },
     TBC: {
@@ -104,7 +100,6 @@ expansion_data = {
         METADATA_FILTERS: ('', '', ''),
         IGNORES: [],
         FORCE_DOWNLOAD: UNLISTED_TOTEMS,
-        RETRIEVE_QUOTES: True,
         PARENT_EXPANSIONS: [CLASSIC]
     },
     WRATH: {
@@ -115,7 +110,6 @@ expansion_data = {
         METADATA_FILTERS: ('', '', ''),
         IGNORES: [],
         FORCE_DOWNLOAD: UNLISTED_TOTEMS + [CRAFTICUS],
-        RETRIEVE_QUOTES: True,
         PARENT_EXPANSIONS: [CLASSIC, TBC]
     },
     CATA: {
@@ -126,7 +120,6 @@ expansion_data = {
         METADATA_FILTERS: ('', '', ''),
         IGNORES: [],
         FORCE_DOWNLOAD: CURRENT_TOTEMS + [CRAFTICUS],
-        RETRIEVE_QUOTES: True,
         PARENT_EXPANSIONS: [CLASSIC, TBC, WRATH]
     },
     MISTS: {
@@ -137,7 +130,6 @@ expansion_data = {
         METADATA_FILTERS: ('', '', ''),
         IGNORES: [],
         FORCE_DOWNLOAD: CURRENT_TOTEMS + [CRAFTICUS],
-        RETRIEVE_QUOTES: True,
         PARENT_EXPANSIONS: [CLASSIC, TBC, WRATH, CATA]
     }
 }
@@ -148,7 +140,7 @@ class NPC_MD:
     # def __init__(self, id: int, name: str, tag: str = None, type: int = None, boss: int = None,
     #              classification: int = None, displayName: str = None, displayNames: list[str] = None,
     #              location: list[int] = None, names: list[str] = None, react: list[int] = None, expansion: str = None):
-    def __init__(self, id, name, tag=None, name_ua=None, tag_ua=None, type=None, boss=None, classification=None, location=None, names=None, react=None, expansion=None):
+    def __init__(self, id, name, tag=None, name_ua=None, tag_ua=None, type=None, boss=None, classification=None, location=None, names=None, react=None, expansion=None, display=None):
         self.id = id
         self.name = name
         self.tag = tag
@@ -161,6 +153,7 @@ class NPC_MD:
         self.names = names
         self.react = react
         self.expansion = expansion
+        self.display = display  # the model its page shows: the clients' CreatureDisplayInfo tells its sex and race
         def get_classification(self):
             if self.classification == 0:
                 return 'normal'
@@ -191,13 +184,15 @@ class NPC_Short:
 
 
 class NPC_Data:
-    def __init__(self, id, expansion, name: str = None, quotes: list[str] = [], tag: str = None, name_ua: str = None):
+    def __init__(self, id, expansion, name: str = None, quotes: list[str] = [], tag: str = None, name_ua: str = None,
+                 display: int = None):
         self.id = id
         self.expansion = expansion
         self.name = name
         self.tag = tag
         self.name_ua = name_ua
         self.quotes = quotes
+        self.display = display
 
 
 class PendingNpc:
@@ -347,7 +342,8 @@ def save_npcs_to_db(all_npcs: dict[int, dict[str, NPC_MD]]):
                         classification TEXT,
                         location TEXT,
                         names TEXT,
-                        react TEXT
+                        react TEXT,
+                        display INT
                 )''')
     conn.commit()
     with conn:
@@ -364,8 +360,8 @@ def save_npcs_to_db(all_npcs: dict[int, dict[str, NPC_MD]]):
                     continue
                 npc_tag = f'<{npc.tag}>' if npc.tag else None
                 npc_location = ', '.join(map(lambda x: f"'{x}'", npc.location)) if npc.location else None
-                conn.execute('INSERT INTO npcs(id, expansion, name, tag, name_ua, tag_ua, type, boss, classification, location, names, react) VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
-                            (npc.id, expansion, npc.name, npc_tag, npc.__dict__.get('name_ua'), npc.__dict__.get('tag_ua'), npc.type, npc.boss, npc.classification, npc_location, str(npc.names), str(npc.react)))
+                conn.execute('INSERT INTO npcs(id, expansion, name, tag, name_ua, tag_ua, type, boss, classification, location, names, react, display) VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+                            (npc.id, expansion, npc.name, npc_tag, npc.__dict__.get('name_ua'), npc.__dict__.get('tag_ua'), npc.type, npc.boss, npc.classification, npc_location, str(npc.names), str(npc.react), npc.__dict__.get('display')))
 
 
 def load_npcs_from_db(db_path = 'cache/npcs.db') -> dict[int, dict[str, NPC_MD]]:
@@ -390,8 +386,9 @@ def load_npcs_from_db(db_path = 'cache/npcs.db') -> dict[int, dict[str, NPC_MD]]
             location = row[9]
             names = row[10]
             react = row[11]
+            display = row[12] if len(row) > 12 else None
             npc = NPC_MD(npc_id, name, expansion=expansion, tag=tag, name_ua=name_ua, tag_ua=tag_ua, type=type, boss=boss,
-                         classification=classification, location=location, names=names, react=react)
+                         classification=classification, location=location, names=names, react=react, display=display)
             npcs[npc_id] = npcs.get(npc_id, dict())
             npcs[npc_id][expansion] = npc
 
@@ -440,6 +437,7 @@ def apply_page_data_to_metadata(expansion, metadata: dict[int, dict[str, NPC_MD]
             if npc_md.name == FORCE_LOAD_NAME:
                 unavailable.append(id)
             continue
+        npc_md.display = page_npc.display
         if npc_md.name == FORCE_LOAD_NAME:
             npc_md.name = page_npc.name
             npc_md.tag = page_npc.tag
@@ -454,29 +452,17 @@ def apply_page_data_to_metadata(expansion, metadata: dict[int, dict[str, NPC_MD]
         log.warning('no-page', 'npc', 'force-loaded, but Wowhead has no page for it', id=id, expansion=expansion)
 
 
-def retrieve_forced_npc_pages(expansion, force_ids: list[int]) -> dict[int, NPC_Data]:
-    # For expansions we don't pull quotes for, only the force-loaded pages are fetched - their name/tag
-    # exists nowhere else, and the full page set would be a multi-hour download.
-    save_htmls_from_wowhead(expansion, set(force_ids))
-    html_cache = f'cache/{expansion_data[expansion][HTML_CACHE]}'
-    return {id: parse_wowhead_npc_page(expansion, id) for id in force_ids
-            if os.path.exists(f'{html_cache}/{id}.html')}
-
-
 def retrieve_npc_data() -> tuple[dict[int, dict[str, NPC_MD]], dict[str, dict[int, NPC_Data]]]:
+    # Every NPC's page, the force-loaded ones included: the quotes and the name and tag of a force-loaded NPC come
+    # from there
     all_npcs = dict()
     npc_quotes = dict()
 
-    for expansion, expansion_properties in expansion_data.items():
+    for expansion in expansion_data:
         wowhead_md = get_wowhead_npc_metadata(expansion)
-
-        if expansion_properties[RETRIEVE_QUOTES]:
-            save_htmls_from_wowhead(expansion, set(wowhead_md.keys()))
-            npc_quotes[expansion] = parse_wowhead_pages(expansion, wowhead_md)
-            apply_page_data_to_metadata(expansion, wowhead_md, npc_quotes[expansion])
-        elif expansion_properties[FORCE_DOWNLOAD]:
-            forced_pages = retrieve_forced_npc_pages(expansion, expansion_properties[FORCE_DOWNLOAD])
-            apply_page_data_to_metadata(expansion, wowhead_md, forced_pages)
+        save_htmls_from_wowhead(expansion, set(wowhead_md.keys()))
+        npc_quotes[expansion] = parse_wowhead_pages(expansion, wowhead_md)
+        apply_page_data_to_metadata(expansion, wowhead_md, npc_quotes[expansion])
 
         print(f'Merging with {expansion}')
         all_npcs = merge_expansions(all_npcs, wowhead_md)
@@ -717,7 +703,9 @@ def parse_wowhead_npc_page(expansion, id) -> NPC_Data:
             # npc_quote = npc_quote.replace('  ', ' ')
             npc_quotes.append(npc_quote)
 
-    return NPC_Data(id, expansion, name=npc_name, quotes=npc_quotes, tag=npc_tag)
+    display = re.search(r'data-mv-display-id="(\d+)"', html)  # the model viewer's button: the NPC's own model
+    return NPC_Data(id, expansion, name=npc_name, quotes=npc_quotes, tag=npc_tag,
+                    display=int(display[1]) if display else None)
 
 
 def parse_wowhead_pages(expansion, metadata: dict[int, dict[str, NPC_MD]]) -> dict[int, NPC_Data]:
@@ -726,11 +714,15 @@ def parse_wowhead_pages(expansion, metadata: dict[int, dict[str, NPC_MD]]) -> di
     from functools import partial
     cache_path = f'cache/tmp/{expansion_data[expansion][NPC_CACHE]}.pkl'
 
+    wowhead_npcs = None
     if os.path.exists(cache_path):
         print(f'Loading cached Wowhead({expansion}) NPCs')
         with open(cache_path, 'rb') as f:
             wowhead_npcs = pickle.load(f)
-    else:
+        if wowhead_npcs and not hasattr(next(iter(wowhead_npcs.values())), 'display'):
+            print(f'Cached Wowhead({expansion}) NPCs were parsed before the model was, parsing again')
+            wowhead_npcs = None
+    if wowhead_npcs is None:
         print(f'Parsing Wowhead({expansion}) NPC pages')
         # wowhead_npcs = {id: parse_wowhead_npc_page(expansion, id) for id in metadata.keys()}
         parse_func = partial(parse_wowhead_npc_page, expansion)

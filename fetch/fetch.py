@@ -13,8 +13,7 @@ writes is appended to fetch/manifest.txt, which pack.py turns into an archive.
 Per module this is the download half of retrieve_*_data():
   items    search metadata, an XML per item, an HTML page for readable items
   spells   search metadata, a page per spell
-  npc      search metadata, a page per NPC where RETRIEVE_QUOTES is on, and
-           the forced ids everywhere
+  npc      search metadata, a page per NPC, the forced ids included
   quests   search metadata, a page per quest
   objects  search metadata, a page per object
 """
@@ -112,8 +111,7 @@ def fetch_npc(m, run: Run, expansion: str):
     props = m.expansion_data[expansion]
     md = m.get_wowhead_npc_metadata(expansion)  # applies IGNORES and adds FORCE_DOWNLOAD
     run.note_metadata(props[m.METADATA_CACHE])
-    ids = set(md) if props[m.RETRIEVE_QUOTES] else set(props[m.FORCE_DOWNLOAD])
-    for id in sorted(ids):
+    for id in sorted(md):
         run.fetch(props[m.HTML_CACHE], id, 'html', lambda: m.save_page(expansion, id))
 
 
