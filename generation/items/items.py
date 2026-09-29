@@ -80,7 +80,7 @@ expansion_data = {
         BOOK_CACHE: 'wowhead_sod_book_cache',
         METADATA_FILTERS: ('82:', '2:', '11500:'),
         # METADATA_FILTERS: ('82:82:', '2:4:', '11500:11506:'),
-        IGNORES: [759, 9232, 202256, 202316, 215235, 215394, 215405, 215406, 215410, 215412, 215450, 231752, 235583, 239061],
+        IGNORES: [759, 9232, 202256, 202316, 215235, 215394, 215405, 215406, 215410, 215412, 215450, 231752, 235583],
         FORCE_DOWNLOAD: []
     },
     # WoW: Forever, in beta since 2026-09-17: a branch of classic and SoD, merged against them and kept out of the mainline.
