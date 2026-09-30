@@ -22,4 +22,3 @@ __pycache__/
 fetch/inventory.json
 fetch/manifest.txt
 fetch/*.tar.gz
-fetch/packed_*.txt
