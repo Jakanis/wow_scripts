@@ -38,7 +38,11 @@ the new pages.
     python3 -m venv venv && venv/bin/pip install -r requirements.txt
     # copy fetch/inventory.json from home: scp fetch/inventory.json root@<host>:wow_scripts/fetch/
     tmux new -s fetch
-    venv/bin/python fetch/fetch.py --module items spells --expansion forever
+    venv/bin/python fetch/fetch.py --module items spells --expansion forever 2>&1 | tee -a fetch.log
+
+`tee -a` appends, so a restart keeps the earlier log; `tail -f fetch.log` from
+another session follows it. Detach from tmux with Ctrl-B then D, return with
+`tmux attach -t fetch`. A restart resumes: every page already on disk is skipped.
 
 A CX22 is enough: nothing here renders a page, every file is a plain download.
 
